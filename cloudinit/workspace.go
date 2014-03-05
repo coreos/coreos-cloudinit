@@ -59,3 +59,8 @@ func PersistScriptInWorkspace(script Script, workspace string) (string, error) {
 
 	return f.Name(), nil
 }
+
+func PersistScriptUnitNameInWorkspace(name string, workspace string) error {
+	unitPath := path.Join(workspace, "scripts", "unit-name")
+	return ioutil.WriteFile(unitPath, []byte(name), 644)
+}

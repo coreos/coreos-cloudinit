@@ -75,7 +75,9 @@ func main() {
 		var path string
 		path, err = cloudinit.PersistScriptInWorkspace(t, workspace)
 		if err == nil {
-			err = cloudinit.ExecuteScript(path)
+			var name string
+			name, err = cloudinit.ExecuteScript(path)
+			cloudinit.PersistScriptUnitNameInWorkspace(name, workspace)
 		}
 	}
 
