@@ -22,12 +22,12 @@ func StartUnit(name string) error {
 
 func ExecuteScript(scriptPath string) error {
 	props := []dbus.Property{
-		dbus.PropDescription("Unit generated and executed by coreos-init on behalf of user"),
+		dbus.PropDescription("Unit generated and executed by coreos-cloudinit on behalf of user"),
 		dbus.PropExecStart([]string{"/bin/bash", scriptPath}, false),
 	}
 
 	base := path.Base(scriptPath)
-	name := fmt.Sprintf("coreos-init-%s.service", base)
+	name := fmt.Sprintf("coreos-cloudinit-%s.service", base)
 
 	log.Printf("Creating transient systemd unit '%s'", name)
 

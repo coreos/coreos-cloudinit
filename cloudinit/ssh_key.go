@@ -19,7 +19,7 @@ func AuthorizeSSHKeys(keys []string) error {
 	// also ends with a newline
 	joined := fmt.Sprintf("%s\n", strings.Join(keys, "\n"))
 
-	cmd := exec.Command("update-ssh-keys", "-u", "core", "-a", "coreos-init")
+	cmd := exec.Command("update-ssh-keys", "-u", "core", "-a", "coreos-cloudinit")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err
