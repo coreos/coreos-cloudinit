@@ -37,7 +37,7 @@ echo 'Hello, world!'
 
 ## Examples
 
-### Inject an SSH key and bootstrap an etcd cluster using cloud-config
+### Inject an SSH key, bootstrap etcd, and start fleet using a cloud-config
 
 ```
 #cloud-config
@@ -45,6 +45,8 @@ echo 'Hello, world!'
 coreos:
 	etcd:
 		discovery_url: https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877
+    fleet:
+        autostart: yes
 
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
