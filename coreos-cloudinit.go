@@ -73,7 +73,7 @@ func main() {
 
 	switch t := parsed.(type) {
 	case cloudinit.CloudConfig:
-		err = cloudinit.ResolveCloudConfig(t, sshKeyName)
+		err = cloudinit.ApplyCloudConfig(t, sshKeyName)
 	case cloudinit.Script:
 		var path string
 		path, err = cloudinit.PersistScriptInWorkspace(t, workspace)

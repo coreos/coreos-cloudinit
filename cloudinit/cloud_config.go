@@ -28,7 +28,7 @@ func (cc CloudConfig) String() string {
 	}
 }
 
-func ResolveCloudConfig(cfg CloudConfig, sshKeyName string) error {
+func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 	if len(cfg.SSH_Authorized_Keys) > 0 {
 		err := AuthorizeSSHKeys(sshKeyName, cfg.SSH_Authorized_Keys)
 		if err == nil {
