@@ -20,7 +20,10 @@ func main() {
 	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
 
 	var file string
-	flag.StringVar(&file, "from-file", "", "Read user-data from file rather than metadata service")
+	flag.StringVar(&file, "from-file", "", "Read user-data from provided file")
+
+	var url string
+	flag.StringVar(&url, "from-url", "", "Download user-data from provided url")
 
 	var workspace string
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
@@ -32,19 +35,27 @@ func main() {
 		os.Exit(0)
 	}
 
+	if file != "" && url != "" {
+		fmt.Println("Provide one of --from-file or --from-url")
+		os.Exit(1)
+	}
+
 	if file != "" {
 		log.Printf("Reading user-data from file: %s", file)
 		userdata, err = ioutil.ReadFile(file)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-	} else {
+	} else if url != "" {
 		log.Printf("Reading user-data from metadata service")
-		svc := cloudinit.NewMetadataService()
+		svc := cloudinit.NewMetadataService(url)
 		userdata, err = svc.UserData()
 		if err != nil {
 			log.Fatal(err.Error())
 		}
+	} else {
+		fmt.Println("Provide one of --from-file or --from-url")
+		os.Exit(1)
 	}
 
 	parsed, err := cloudinit.ParseUserData(userdata)

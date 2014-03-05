@@ -6,15 +6,16 @@ import (
 )
 
 type metadataService struct {
+	url    string
 	client http.Client
 }
 
-func NewMetadataService() *metadataService {
-	return &metadataService{http.Client{}}
+func NewMetadataService(url string) *metadataService {
+	return &metadataService{url, http.Client{}}
 }
 
 func (ms *metadataService) UserData() ([]byte, error) {
-	resp, err := ms.client.Get("http://169.254.169.254/2012-01-12/user-data")
+	resp, err := ms.client.Get(ms.url)
 	if err != nil {
 		return []byte{}, err
 	}
