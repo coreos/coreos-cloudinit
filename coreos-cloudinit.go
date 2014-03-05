@@ -10,7 +10,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/cloudinit"
 )
 
-const version = "0.1.1"
+const version = "0.1.1+git"
 
 func main() {
 	var userdata []byte
