@@ -15,6 +15,9 @@ Only a subset of [cloud-config functionality][cloud-config] is implemented. A se
 
 Provided public SSH keys will be authorized for the `core` user.
 
+The keys will be named "coreos-cloudinit" by default.
+Override this with the `--ssh-key-name` flag when calling `coreos-cloudinit`.
+
 ### Custom cloud-config Parameters
 
 #### coreos.etcd.discovery_url
