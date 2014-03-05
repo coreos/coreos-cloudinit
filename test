@@ -1,0 +1,8 @@
+#!/bin/bash -e
+
+echo "Building bin/coreos-cloudinit"
+. build
+
+echo "Running tests..."
+go test -i github.com/coreos/coreos-cloudinit/cloudinit
+go test -v github.com/coreos/coreos-cloudinit/cloudinit
