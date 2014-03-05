@@ -6,6 +6,8 @@ import (
 	"launchpad.net/goyaml"
 )
 
+const DefaultSSHKeyName = "coreos-cloudinit"
+
 type CloudConfig struct {
 	SSH_Authorized_Keys []string
 	Coreos struct{Etcd struct{ Discovery_URL string }; Fleet struct{ Autostart bool } }
@@ -26,9 +28,9 @@ func (cc CloudConfig) String() string {
 	}
 }
 
-func ResolveCloudConfig(cfg CloudConfig) error {
+func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 	if len(cfg.SSH_Authorized_Keys) > 0 {
-		err := AuthorizeSSHKeys(cfg.SSH_Authorized_Keys)
+		err := AuthorizeSSHKeys(sshKeyName, cfg.SSH_Authorized_Keys)
 		if err == nil {
 			log.Printf("Authorized SSH keys for core user")
 		} else {

@@ -10,7 +10,7 @@ import (
 
 // Add the provide SSH public key to the core user's list of
 // authorized keys
-func AuthorizeSSHKeys(keys []string) error {
+func AuthorizeSSHKeys(name string, keys []string) error {
 	for i, key := range keys {
 		keys[i] = strings.TrimSpace(key)
 	}
@@ -19,7 +19,7 @@ func AuthorizeSSHKeys(keys []string) error {
 	// also ends with a newline
 	joined := fmt.Sprintf("%s\n", strings.Join(keys, "\n"))
 
-	cmd := exec.Command("update-ssh-keys", "-u", "core", "-a", "coreos-cloudinit")
+	cmd := exec.Command("update-ssh-keys", "-u", "core", "-a", name)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err

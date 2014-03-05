@@ -28,6 +28,9 @@ func main() {
 	var workspace string
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 
+	var sshKeyName string
+	flag.StringVar(&sshKeyName, "ssh-key-name", cloudinit.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
+
 	flag.Parse()
 
 	if printVersion == true {
@@ -70,7 +73,7 @@ func main() {
 
 	switch t := parsed.(type) {
 	case cloudinit.CloudConfig:
-		err = cloudinit.ResolveCloudConfig(t)
+		err = cloudinit.ApplyCloudConfig(t, sshKeyName)
 	case cloudinit.Script:
 		var path string
 		path, err = cloudinit.PersistScriptInWorkspace(t, workspace)
