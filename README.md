@@ -1,6 +1,6 @@
 # coreos-cloudinit
 
-coreos-cloudinit allows a user to customize CoreOS machiens by providing either an executable script or a cloud-config document as instance user-data. See below to learn how to use these features.
+coreos-cloudinit allows a user to customize CoreOS machines by providing either an executable script or a cloud-config document as instance user-data. See below to learn how to use these features.
 
 
 ## cloud-config
