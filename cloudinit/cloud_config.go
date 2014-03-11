@@ -10,7 +10,10 @@ const DefaultSSHKeyName = "coreos-cloudinit"
 
 type CloudConfig struct {
 	SSH_Authorized_Keys []string
-	Coreos struct{Etcd struct{ Discovery_URL string }; Fleet struct{ Autostart bool } }
+	Coreos              struct {
+		Etcd  struct{ Discovery_URL string }
+		Fleet struct{ Autostart bool }
+	}
 }
 
 func NewCloudConfig(contents []byte) (*CloudConfig, error) {
