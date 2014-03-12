@@ -10,7 +10,11 @@ const DefaultSSHKeyName = "coreos-cloudinit"
 
 type CloudConfig struct {
 	SSH_Authorized_Keys []string
-	Coreos struct{Etcd struct{ Discovery_URL string }; Fleet struct{ Autostart bool } }
+	Coreos              struct {
+		Etcd  struct{ Discovery_URL string }
+		Fleet struct{ Autostart bool }
+	}
+	Write_Files []WriteFile
 }
 
 func NewCloudConfig(contents []byte) (*CloudConfig, error) {
@@ -35,6 +39,15 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 			log.Printf("Authorized SSH keys for core user")
 		} else {
 			return err
+		}
+	}
+
+	if len(cfg.Write_Files) > 0 {
+		for _, file := range cfg.Write_Files {
+			if err := ProcessWriteFile("/", &file); err != nil {
+				return err
+			}
+			log.Printf("Wrote file %s to filesystem", file.Path)
 		}
 	}
 
