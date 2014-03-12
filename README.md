@@ -27,6 +27,16 @@ The value of `coreos.etcd.discovery_url` will be used to discover the instance's
 [disco-proto]: https://github.com/coreos/etcd/blob/master/Documentation/discovery-protocol.md
 [disco-service]: http://discovery.etcd.io
 
+#### coreos.units
+
+Arbitrary systemd units may be provided in the `coreos.units` attribute.
+`coreos.units` is a list of objects with the following fields:
+
+- **name**: string representing unit's name
+- **runtime**: boolean indicating whether or not to persist the unit across reboots. This is analagous to the `--runtime` flag to `systemd enable`.
+- **content**: plaintext string representing entire unit file
+
+See docker example below.
 
 ## user-data Script
 
@@ -40,8 +50,7 @@ echo 'Hello, world!'
 
 ## Examples
 
-### Inject an SSH key, bootstrap etcd, and start fleet using a cloud-config
-
+### Inject an SSH key, bootstrap etcd, and start fleet
 ```
 #cloud-config
 
@@ -50,8 +59,29 @@ coreos:
 		discovery_url: https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877
     fleet:
         autostart: yes
-
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
 ```
 
+### Start a docker container on boot
+
+```
+#cloud-config
+
+coreos:
+    units:
+      - name: docker-redis.service
+        content: |
+          [Unit]
+          Description=Redis container
+          Author=Me
+          After=docker.service
+
+          [Service]
+          Restart=always
+          ExecStart=/usr/bin/docker start -a redis_server
+          ExecStop=/usr/bin/docker stop -t 2 redis_server
+          
+          [Install]
+          WantedBy=local.target
+```
