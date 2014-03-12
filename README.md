@@ -27,6 +27,14 @@ The value of `coreos.etcd.discovery_url` will be used to discover the instance's
 [disco-proto]: https://github.com/coreos/etcd/blob/master/Documentation/discovery-protocol.md
 [disco-service]: http://discovery.etcd.io
 
+#### coreos.update
+
+The `coreos.update` namespace has two keys:
+
+- `coreos.update.server` is the auto update URL.
+- `coreos.update.group` is the group your machine will join.
+
+These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
 
 ## user-data Script
 
