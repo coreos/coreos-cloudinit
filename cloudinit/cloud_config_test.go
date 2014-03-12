@@ -37,6 +37,19 @@ coreos:
     discovery_url: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
   fleet:
     autostart: Yes
+  units:
+    - name: 50-eth0.network
+      runtime: yes
+      content: '[Match]
+ 
+    Name=eth47
+ 
+ 
+    [Network]
+ 
+    Address=10.209.171.177/19
+ 
+'
 ssh_authorized_keys:
   - foobar
   - foobaz
@@ -90,6 +103,31 @@ write_files:
 			t.Errorf("WriteFile has incorrect owner %s", wf.Owner)
 		}
 	}
+
+	if len(cfg.Coreos.Units) != 1 {
+		t.Error("Failed to parse correct number of units")
+	} else {
+		u := cfg.Coreos.Units[0]
+		expect := `[Match]
+Name=eth47
+
+[Network]
+Address=10.209.171.177/19
+`
+		if u.Content != expect {
+			t.Errorf("Unit has incorrect contents '%s'.\nExpected '%s'.", u.Content, expect)
+		}
+		if u.Runtime != true {
+			t.Errorf("Unit has incorrect runtime value")
+		}
+		if u.Name != "50-eth0.network" {
+			t.Errorf("Unit has incorrect name %s", u.Name)
+		}
+		if u.Type() != "network" {
+			t.Errorf("Unit has incorrect type '%s'", u.Type())
+		}
+	}
+
 }
 
 // Assert that our interface conversion doesn't panic

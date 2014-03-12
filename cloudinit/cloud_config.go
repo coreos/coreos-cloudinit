@@ -13,6 +13,7 @@ type CloudConfig struct {
 	Coreos              struct {
 		Etcd  struct{ Discovery_URL string }
 		Fleet struct{ Autostart bool }
+		Units []Unit
 	}
 	Write_Files []WriteFile
 }
@@ -60,8 +61,25 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 		}
 	}
 
+	if len(cfg.Coreos.Units) > 0 {
+		for _, unit := range cfg.Coreos.Units {
+			dst, err := PlaceUnit("/", &unit)
+			if err != nil {
+				return err
+			}
+			log.Printf("Placed unit %s at %s", unit.Name, dst)
+
+			if err := EnableUnitFile(dst, unit.Runtime); err != nil {
+				return err
+			}
+			log.Printf("Enabled unit %s", unit.Name)
+		}
+		DaemonReload()
+		StartUnits(cfg.Coreos.Units)
+	}
+
 	if cfg.Coreos.Fleet.Autostart {
-		err := StartUnit("fleet.service")
+		err := StartUnitByName("fleet.service")
 		if err == nil {
 			log.Printf("Started fleet service.")
 		} else {
