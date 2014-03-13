@@ -1,6 +1,7 @@
 package cloudinit
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -144,5 +145,14 @@ ssh_authorized_keys:
 	keys := cfg.SSH_Authorized_Keys
 	if len(keys) != 0 {
 		t.Error("Parsed incorrect number of SSH keys")
+	}
+}
+
+func TestCloudConfigSerializationHeader(t *testing.T) {
+	cfg, _ := NewCloudConfig([]byte{})
+	contents := cfg.String()
+	header := strings.SplitN(contents, "\n", 2)[0]
+	if header != "#cloud-config" {
+		t.Fatalf("Serialized config did not have expected header")
 	}
 }

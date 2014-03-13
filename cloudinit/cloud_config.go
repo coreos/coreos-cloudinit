@@ -1,6 +1,7 @@
 package cloudinit
 
 import (
+	"fmt"
 	"log"
 
 	"launchpad.net/goyaml"
@@ -26,11 +27,14 @@ func NewCloudConfig(contents []byte) (*CloudConfig, error) {
 
 func (cc CloudConfig) String() string {
 	bytes, err := goyaml.Marshal(cc)
-	if err == nil {
-		return string(bytes)
-	} else {
+	if err != nil {
 		return ""
 	}
+
+	stringified := string(bytes)
+	stringified = fmt.Sprintf("#cloud-config\n%s", stringified)
+
+	return stringified
 }
 
 func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
