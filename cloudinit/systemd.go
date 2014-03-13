@@ -115,7 +115,7 @@ func RestartUnitByName(name string) error {
 		return err
 	}
 
-	output, err = conn.RestartUnit(name, "replace")
+	output, err := conn.RestartUnit(name, "replace")
 	log.Printf("Restart completed with '%s'", output)
 
 	return err
