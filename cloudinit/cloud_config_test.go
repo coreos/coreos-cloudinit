@@ -12,7 +12,7 @@ func TestCloudConfigEmpty(t *testing.T) {
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
 
-	keys := cfg.SSH_Authorized_Keys
+	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 0 {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
@@ -72,7 +72,7 @@ hostname: trontastic
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
 
-	keys := cfg.SSH_Authorized_Keys
+	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 2 {
 		t.Error("Parsed incorrect number of SSH keys")
 	} else if keys[0] != "foobar" {
@@ -150,7 +150,7 @@ ssh_authorized_keys:
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
 
-	keys := cfg.SSH_Authorized_Keys
+	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 0 {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
