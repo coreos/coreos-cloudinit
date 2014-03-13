@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"launchpad.net/goyaml"
+	"github.com/coreos/coreos-cloudinit/third_party/launchpad.net/goyaml"
 )
 
 const DefaultSSHKeyName = "coreos-cloudinit"
