@@ -28,6 +28,10 @@ func TestCloudConfigEmpty(t *testing.T) {
 	if len(cfg.Write_Files) != 0 {
 		t.Error("Expected zero Write_Files")
 	}
+
+	if cfg.Hostname != "" {
+		t.Errorf("Expected hostname to be empty, got '%s'", cfg.Hostname)
+	}
 }
 
 // Assert that the parsing of a cloud config file "generally works"
@@ -61,6 +65,7 @@ write_files:
     path: /etc/dogepack.conf
     permissions: '0644'
     owner: root:dogepack
+hostname: trontastic
 `)
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
@@ -129,6 +134,9 @@ Address=10.209.171.177/19
 		}
 	}
 
+	if cfg.Hostname != "trontastic" {
+		t.Errorf("Failed to parse hostname")
+	}
 }
 
 // Assert that our interface conversion doesn't panic

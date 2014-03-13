@@ -17,6 +17,7 @@ type CloudConfig struct {
 		Units []Unit
 	}
 	Write_Files []WriteFile
+	Hostname    string
 }
 
 func NewCloudConfig(contents []byte) (*CloudConfig, error) {
@@ -38,6 +39,13 @@ func (cc CloudConfig) String() string {
 }
 
 func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
+	if cfg.Hostname != "" {
+		if err := SetHostname(cfg.Hostname); err != nil {
+			return err
+		}
+		log.Printf("Set hostname to %s", cfg.Hostname)
+	}
+
 	if len(cfg.SSH_Authorized_Keys) > 0 {
 		err := AuthorizeSSHKeys(sshKeyName, cfg.SSH_Authorized_Keys)
 		if err == nil {

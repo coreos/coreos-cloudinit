@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -149,4 +150,8 @@ func ExecuteScript(scriptPath string) (string, error) {
 
 	_, err = conn.StartTransientUnit(name, "replace", props...)
 	return name, err
+}
+
+func SetHostname(hostname string) error {
+	return exec.Command("hostnamectl", "set-hostname", hostname).Run()
 }
