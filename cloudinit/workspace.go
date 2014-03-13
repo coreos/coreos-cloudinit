@@ -15,7 +15,7 @@ func PrepWorkspace(workspace string) error {
 			return fmt.Errorf("%s is not a directory", workspace)
 		}
 	} else {
-		err = os.MkdirAll(workspace, 0644)
+		err = os.MkdirAll(workspace, 0755)
 		if err != nil {
 			return err
 		}
@@ -29,7 +29,7 @@ func PrepWorkspace(workspace string) error {
 			return fmt.Errorf("%s is not a directory", scripts)
 		}
 	} else {
-		err = os.Mkdir(scripts, 0644)
+		err = os.Mkdir(scripts, 0755)
 		if err != nil {
 			return err
 		}
@@ -62,5 +62,5 @@ func PersistScriptInWorkspace(script Script, workspace string) (string, error) {
 
 func PersistScriptUnitNameInWorkspace(name string, workspace string) error {
 	unitPath := path.Join(workspace, "scripts", "unit-name")
-	return ioutil.WriteFile(unitPath, []byte(name), 644)
+	return ioutil.WriteFile(unitPath, []byte(name), 0644)
 }
