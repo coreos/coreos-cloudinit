@@ -12,7 +12,7 @@ func TestCloudConfigEmpty(t *testing.T) {
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
 
-	keys := cfg.SSH_Authorized_Keys
+	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 0 {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
@@ -25,8 +25,8 @@ func TestCloudConfigEmpty(t *testing.T) {
 		t.Error("Expected AutostartFleet not to be defined")
 	}
 
-	if len(cfg.Write_Files) != 0 {
-		t.Error("Expected zero Write_Files")
+	if len(cfg.WriteFiles) != 0 {
+		t.Error("Expected zero WriteFiles")
 	}
 
 	if cfg.Hostname != "" {
@@ -72,7 +72,7 @@ hostname: trontastic
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
 
-	keys := cfg.SSH_Authorized_Keys
+	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 2 {
 		t.Error("Parsed incorrect number of SSH keys")
 	} else if keys[0] != "foobar" {
@@ -89,10 +89,10 @@ hostname: trontastic
 		t.Error("Expected AutostartFleet to be true")
 	}
 
-	if len(cfg.Write_Files) != 1 {
+	if len(cfg.WriteFiles) != 1 {
 		t.Error("Failed to parse correct number of write_files")
 	} else {
-		wf := cfg.Write_Files[0]
+		wf := cfg.WriteFiles[0]
 		if wf.Content != "penny\nelroy\n" {
 			t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
 		}
@@ -150,7 +150,7 @@ ssh_authorized_keys:
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
 
-	keys := cfg.SSH_Authorized_Keys
+	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 0 {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
