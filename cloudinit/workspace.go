@@ -15,7 +15,7 @@ func PrepWorkspace(workspace string) error {
 			return fmt.Errorf("%s is not a directory", workspace)
 		}
 	} else {
-		err = os.MkdirAll(workspace, 0644)
+		err = os.MkdirAll(workspace, 0755)
 		if err != nil {
 			return err
 		}
@@ -29,7 +29,7 @@ func PrepWorkspace(workspace string) error {
 			return fmt.Errorf("%s is not a directory", scripts)
 		}
 	} else {
-		err = os.Mkdir(scripts, 0644)
+		err = os.Mkdir(scripts, 0755)
 		if err != nil {
 			return err
 		}
