@@ -10,7 +10,7 @@ import (
 
 // Add the provide SSH public key to the core user's list of
 // authorized keys
-func AuthorizeSSHKeys(name string, keys []string) error {
+func AuthorizeSSHKeys(user string, keysName string, keys []string) error {
 	for i, key := range keys {
 		keys[i] = strings.TrimSpace(key)
 	}
@@ -19,7 +19,7 @@ func AuthorizeSSHKeys(name string, keys []string) error {
 	// also ends with a newline
 	joined := fmt.Sprintf("%s\n", strings.Join(keys, "\n"))
 
-	cmd := exec.Command("update-ssh-keys", "-u", "core", "-a", name)
+	cmd := exec.Command("update-ssh-keys", "-u", user, "-a", keysName)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err
