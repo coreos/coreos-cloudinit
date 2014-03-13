@@ -25,8 +25,8 @@ func TestCloudConfigEmpty(t *testing.T) {
 		t.Error("Expected AutostartFleet not to be defined")
 	}
 
-	if len(cfg.Write_Files) != 0 {
-		t.Error("Expected zero Write_Files")
+	if len(cfg.WriteFiles) != 0 {
+		t.Error("Expected zero WriteFiles")
 	}
 
 	if cfg.Hostname != "" {
@@ -89,10 +89,10 @@ hostname: trontastic
 		t.Error("Expected AutostartFleet to be true")
 	}
 
-	if len(cfg.Write_Files) != 1 {
+	if len(cfg.WriteFiles) != 1 {
 		t.Error("Failed to parse correct number of write_files")
 	} else {
-		wf := cfg.Write_Files[0]
+		wf := cfg.WriteFiles[0]
 		if wf.Content != "penny\nelroy\n" {
 			t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
 		}

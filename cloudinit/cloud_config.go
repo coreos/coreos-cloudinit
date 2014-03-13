@@ -16,8 +16,8 @@ type CloudConfig struct {
 		Fleet struct{ Autostart bool }
 		Units []Unit
 	}
-	Write_Files []WriteFile
-	Hostname    string
+	WriteFiles []WriteFile `yaml:"write_files"`
+	Hostname   string
 }
 
 func NewCloudConfig(contents []byte) (*CloudConfig, error) {
@@ -55,8 +55,8 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 		}
 	}
 
-	if len(cfg.Write_Files) > 0 {
-		for _, file := range cfg.Write_Files {
+	if len(cfg.WriteFiles) > 0 {
+		for _, file := range cfg.WriteFiles {
 			if err := ProcessWriteFile("/", &file); err != nil {
 				return err
 			}
