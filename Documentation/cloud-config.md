@@ -65,6 +65,7 @@ The `coreos.update` namespace has two keys:
 
 The value of `coreos.update.group` will signify the channel which should be used for automatic updates.  This value defaults to "alpha".  Valid options include:
 
+- **master**
 - **alpha**
 - **beta**
 - **stable**
