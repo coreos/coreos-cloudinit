@@ -18,6 +18,7 @@ type CloudConfig struct {
 	}
 	WriteFiles []WriteFile `yaml:"write_files"`
 	Hostname   string
+	Users      []User
 }
 
 func NewCloudConfig(contents []byte) (*CloudConfig, error) {
@@ -46,8 +47,41 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 		log.Printf("Set hostname to %s", cfg.Hostname)
 	}
 
+	if len(cfg.Users) > 0 {
+		for _, user := range cfg.Users {
+			if user.Name == "" {
+				log.Printf("User object has no 'name' field, skipping")
+				continue
+			}
+
+			if UserExists(&user) {
+				log.Printf("User '%s' exists, ignoring creation-time fields", user.Name)
+				if user.PasswordHash != "" {
+					log.Printf("Setting '%s' user's password", user.Name)
+					if err := SetUserPassword(user.Name, user.PasswordHash); err != nil {
+						log.Printf("Failed setting '%s' user's password: %v", user.Name, err)
+						return err
+					}
+				}
+			} else {
+				log.Printf("Creating user '%s'", user.Name)
+				if err := CreateUser(&user); err != nil {
+					log.Printf("Failed creating user '%s': %v", user.Name, err)
+					return err
+				}
+			}
+
+			if len(user.SSHAuthorizedKeys) > 0 {
+				log.Printf("Authorizing %d SSH keys for user '%s'", len(user.SSHAuthorizedKeys), user.Name)
+				if err := AuthorizeSSHKeys(user.Name, sshKeyName, user.SSHAuthorizedKeys); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	if len(cfg.SSHAuthorizedKeys) > 0 {
-		err := AuthorizeSSHKeys(sshKeyName, cfg.SSHAuthorizedKeys)
+		err := AuthorizeSSHKeys("core", sshKeyName, cfg.SSHAuthorizedKeys)
 		if err == nil {
 			log.Printf("Authorized SSH keys for core user")
 		} else {

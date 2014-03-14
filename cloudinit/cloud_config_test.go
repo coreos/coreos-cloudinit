@@ -164,3 +164,89 @@ func TestCloudConfigSerializationHeader(t *testing.T) {
 		t.Fatalf("Serialized config did not have expected header")
 	}
 }
+
+func TestCloudConfigUsers(t *testing.T) {
+	contents := []byte(`
+users:
+  - name: elroy
+    passwd: somehash
+    ssh-authorized-keys:
+      - somekey
+    gecos: arbitrary comment
+    homedir: /home/place
+    no-create-home: yes
+    primary-group: things
+    groups:
+      - ping
+      - pong
+    no-user-group: true
+    system: y
+    no-log-init: True
+`)
+	cfg, err := NewCloudConfig(contents)
+	if err != nil {
+		t.Fatalf("Encountered unexpected error: %v", err)
+	}
+
+	if len(cfg.Users) != 1 {
+		t.Fatalf("Parsed %d users, expected 1", cfg.Users)
+	}
+
+	user := cfg.Users[0]
+
+	if user.Name != "elroy" {
+		t.Errorf("User name is %q, expected 'elroy'", user.Name)
+	}
+
+	if user.PasswordHash != "somehash" {
+		t.Errorf("User passwd is %q, expected 'somehash'", user.PasswordHash)
+	}
+
+	if keys := user.SSHAuthorizedKeys; len(keys) != 1 {
+		t.Errorf("Parsed %d ssh keys, expected 1", len(keys))
+	} else {
+		key := user.SSHAuthorizedKeys[0]
+		if key != "somekey" {
+			t.Errorf("User SSH key is %q, expected 'somekey'", key)
+		}
+	}
+
+	if user.GECOS != "arbitrary comment" {
+		t.Errorf("Failed to parse gecos field, got %q", user.GECOS)
+	}
+
+	if user.Homedir != "/home/place" {
+		t.Errorf("Failed to parse homedir field, got %q", user.Homedir)
+	}
+
+	if !user.NoCreateHome {
+		t.Errorf("Failed to parse no-create-home field")
+	}
+
+	if user.PrimaryGroup != "things"{
+		t.Errorf("Failed to parse primary-group field, got %q", user.PrimaryGroup)
+	}
+
+	if len(user.Groups) != 2 {
+		t.Errorf("Failed to parse 2 goups, got %d", len(user.Groups))
+	} else {
+		if user.Groups[0] != "ping" {
+			t.Errorf("First group was %q, not expected value 'ping'", user.Groups[0])
+		}
+		if user.Groups[1] != "pong" {
+			t.Errorf("First group was %q, not expected value 'pong'", user.Groups[1])
+		}
+	}
+
+	if !user.NoUserGroup {
+		t.Errorf("Failed to parse no-user-group field")
+	}
+
+	if !user.System {
+		t.Errorf("Failed to parse system field")
+	}
+
+	if !user.NoLogInit {
+		t.Errorf("Failed to parse no-log-init field")
+	}
+}
