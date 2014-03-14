@@ -61,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if userdata == "" {
+	if len(userdata) == 0 {
 		log.Printf("No user data to handle, exiting.")
 		os.Exit(0)
 	}

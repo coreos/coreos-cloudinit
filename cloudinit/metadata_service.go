@@ -21,7 +21,7 @@ func (ms *metadataService) UserData() ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp/100 != 2 {
+	if resp.StatusCode / 100 != 2 {
 		return []byte{}, nil
 	}
 
