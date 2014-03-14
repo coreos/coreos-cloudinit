@@ -19,8 +19,12 @@ func (ms *metadataService) UserData() ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-
 	defer resp.Body.Close()
+
+	if resp/100 != 2 {
+		return []byte{}, nil
+	}
+
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

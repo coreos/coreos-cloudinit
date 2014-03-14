@@ -61,6 +61,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if userdata == "" {
+		log.Printf("No user data to handle, exiting.")
+		os.Exit(0)
+	}
+
 	parsed, err := cloudinit.ParseUserData(userdata)
 	if err != nil {
 		log.Fatalf("Failed parsing user-data: %v", err)
