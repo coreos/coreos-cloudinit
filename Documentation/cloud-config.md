@@ -63,6 +63,13 @@ The `coreos.update` namespace has two keys:
 - `coreos.update.server` is the auto update URL.
 - `coreos.update.group` is the group your machine will join.
 
+The value of `coreos.update.group` will signify the channel which should be used for automatic updates.  This value defaults to "dev-channel".  Valid options include:
+
+- **canary-channel**
+- **dev-channel**
+- **beta-channel**
+- **stable-channel**
+
 These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
 
 ### coreos.units
