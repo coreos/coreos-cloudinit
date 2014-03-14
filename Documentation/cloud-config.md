@@ -13,7 +13,12 @@ Provided public SSH keys will be authorized for the `core` user.
 The keys will be named "coreos-cloudinit" by default.
 Override this with the `--ssh-key-name` flag when calling `coreos-cloudinit`.
 
-#### users
+### hostname
+
+The provided value will be used to set the system's hostname.
+This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.example.com`).
+
+### users
 
 Add or modify users with the `users` directive by providing a list of user objects, each consisting of the following fields.
 Each field is optional and of type string unless otherwise noted.
@@ -56,6 +61,16 @@ Generating a safe hash is important to the security of your system.  Currently w
     perl -e 'print crypt("password","\$6\$SALT\$") . "\n"'
 
 Using a higher number of rounds will help create more secure passwords, but given enough time, password hashes can be reversed.  On most RPM based distributions there is a tool called mkpasswd available in the `expect` package, but this does not handle "rounds" nor advanced hashing algorithms. 
+
+### write_files
+
+Inject an arbitrary set of files to the local filesystem.
+Provide a list of objects with the following attributes:
+
+- **path**: Absolute location on disk where contents should be written
+- **content**: Data to write at the provided `path`
+- **permissions**: String representing file permissions in octal notation (i.e. '0644')
+- **owner**: User and group that should own the file written to disk. This is equivalent to the `<user>:<group>` argument to `chown <user>:<group> <path>`.
 
 ## Custom cloud-config Parameters
 
@@ -138,4 +153,20 @@ users:
 	  - docker
 	ssh-authorized-keys:
 	  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
+```
+
+### Inject configuration files
+
+```
+#cloud-config
+
+write_files:
+  - path: /etc/hosts
+    contents: |
+      127.0.0.1    localhost
+      192.0.2.211  buildbox
+  - path: /etc/resolv.conf
+    contents: |
+      nameserver 192.0.2.13
+      nameserver 192.0.2.14
 ```
