@@ -77,6 +77,12 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 					return err
 				}
 			}
+			if user.SSHImportGithubUser != "" {
+				log.Printf("Authorizing github user %s SSH keys for CoreOS user '%s'", user.SSHImportGithubUser, user.Name)
+				if err := SSHImportGithubUser(user.Name, user.SSHImportGithubUser); err != nil {
+					return err
+				}
+			}
 		}
 	}
 

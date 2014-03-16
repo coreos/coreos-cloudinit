@@ -1,25 +1,29 @@
 package cloudinit
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os/exec"
 	"os/user"
 	"strings"
 )
 
 type User struct {
-	Name              string   `yaml:"name"`
-	PasswordHash      string   `yaml:"passwd"`
-	SSHAuthorizedKeys []string `yaml:"ssh-authorized-keys"`
-	GECOS             string   `yaml:"gecos"`
-	Homedir           string   `yaml:"homedir"`
-	NoCreateHome      bool     `yaml:"no-create-home"`
-	PrimaryGroup      string   `yaml:"primary-group"`
-	Groups            []string `yaml:"groups"`
-	NoUserGroup       bool     `yaml:"no-user-group"`
-	System            bool     `yaml:"system"`
-	NoLogInit         bool     `yaml:"no-log-init"`
+	Name                string   `yaml:"name"`
+	PasswordHash        string   `yaml:"passwd"`
+	SSHAuthorizedKeys   []string `yaml:"ssh-authorized-keys"`
+	SSHImportGithubUser string   `yaml:"ssh-import-github"`
+	GECOS               string   `yaml:"gecos"`
+	Homedir             string   `yaml:"homedir"`
+	NoCreateHome        bool     `yaml:"no-create-home"`
+	PrimaryGroup        string   `yaml:"primary-group"`
+	Groups              []string `yaml:"groups"`
+	NoUserGroup         bool     `yaml:"no-user-group"`
+	System              bool     `yaml:"system"`
+	NoLogInit           bool     `yaml:"no-log-init"`
 }
 
 func UserExists(u *User) bool {
@@ -102,5 +106,46 @@ func SetUserPassword(user, hash string) error {
 		return err
 	}
 
+	return nil
+}
+
+type GithubUserKey struct {
+	Id  int    `json:"id"`
+	Key string `json:"key"`
+}
+
+func fetchGithubKeys(github_user string) ([]string, error) {
+	url := fmt.Sprintf("https://api.github.com/users/%s/keys", github_user)
+	res, err := http.Get(url)
+	defer res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var data []GithubUserKey
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, err
+	}
+	keys := make([]string, 0)
+	for _, key := range data {
+		keys = append(keys, key.Key)
+	}
+	return keys, err
+
+}
+func SSHImportGithubUser(system_user string, github_user string) error {
+	keys, err := fetchGithubKeys(github_user)
+	if err != nil {
+		return err
+	}
+	key_name := fmt.Sprintf("github-%s", github_user)
+	err = AuthorizeSSHKeys(system_user, key_name, keys)
+	if err != nil {
+		return err
+	}
 	return nil
 }
