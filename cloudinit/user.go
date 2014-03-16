@@ -114,9 +114,8 @@ type GithubUserKey struct {
 	Key string `json:"key"`
 }
 
-func fetchGithubKeys(github_user string) ([]string, error) {
-	url := fmt.Sprintf("https://api.github.com/users/%s/keys", github_user)
-	res, err := http.Get(url)
+func fetchGithubKeys(github_url string) ([]string, error) {
+	res, err := http.Get(github_url)
 	defer res.Body.Close()
 	if err != nil {
 		return nil, err
@@ -138,7 +137,8 @@ func fetchGithubKeys(github_user string) ([]string, error) {
 
 }
 func SSHImportGithubUser(system_user string, github_user string) error {
-	keys, err := fetchGithubKeys(github_user)
+	url := fmt.Sprintf("https://api.github.com/users/%s/keys", github_user)
+	keys, err := fetchGithubKeys(url)
 	if err != nil {
 		return err
 	}
