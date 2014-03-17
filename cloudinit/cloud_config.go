@@ -12,7 +12,7 @@ const DefaultSSHKeyName = "coreos-cloudinit"
 type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
-		Etcd  struct{ Discovery_URL string }
+		Etcd  EtcdEnvironment
 		Fleet struct{ Autostart bool }
 		Units []Unit
 	}
@@ -98,13 +98,12 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 		}
 	}
 
-	if cfg.Coreos.Etcd.Discovery_URL != "" {
-		err := PersistEtcdDiscoveryURL(cfg.Coreos.Etcd.Discovery_URL)
-		if err == nil {
-			log.Printf("Consumed etcd discovery url")
-		} else {
-			log.Fatalf("Failed to persist etcd discovery url to filesystem: %v", err)
+	if len(cfg.Coreos.Etcd) > 0 {
+		if err := WriteEtcdEnvironment("/", cfg.Coreos.Etcd); err != nil {
+			log.Fatalf("Failed to write etcd config to filesystem: %v", err)
 		}
+
+		log.Printf("Wrote etcd config file to filesystem")
 	}
 
 	if len(cfg.Coreos.Units) > 0 {
