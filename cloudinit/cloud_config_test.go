@@ -223,7 +223,7 @@ users:
 		t.Errorf("Failed to parse no-create-home field")
 	}
 
-	if user.PrimaryGroup != "things"{
+	if user.PrimaryGroup != "things" {
 		t.Errorf("Failed to parse primary-group field, got %q", user.PrimaryGroup)
 	}
 
