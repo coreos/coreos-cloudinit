@@ -74,6 +74,30 @@ Provide a list of objects with the following attributes:
 
 ## Custom cloud-config Parameters
 
+### coreos.oem
+
+These fields are borrowed from the [os-release spec][os-release] and repurposed
+as a way for cloud-init to know about the OEM partition on this machine.
+
+- **id**: A lower case string identifying the oem.
+- **version-id**: A lower case string identifying the version of the OEM. Example: `168.0.0`
+- **name**: A name without the version that is suitable for presentation to the user.
+- **home-url**: Link to the homepage of the provider or OEM.
+- **bug-report-url***: Link to a place to file bug reports about this OEM partition.
+
+cloudinit must render these fields down to an /etc/oem-release file on disk in the following format:
+
+```
+NAME=Rackspace
+ID=rackspace
+VERSION_ID=168.0.0
+PRETTY_NAME="Rackspace Cloud Servers"
+HOME_URL="http://www.rackspace.com/cloud/servers/"
+BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
+```
+
+[os-release]: http://www.freedesktop.org/software/systemd/man/os-release.html
+
 ### coreos.etcd.discovery_url
 
 The value of `coreos.etcd.discovery_url` will be used to discover the instance's etcd peers using the [etcd discovery protocol][disco-proto]. Usage of the [public discovery service][disco-service] is encouraged.
