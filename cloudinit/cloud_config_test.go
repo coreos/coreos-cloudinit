@@ -17,10 +17,6 @@ func TestCloudConfigEmpty(t *testing.T) {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
 
-	if cfg.Coreos.Etcd.Discovery_URL != "" {
-		t.Error("Parsed incorrect value of discovery url")
-	}
-
 	if cfg.Coreos.Fleet.Autostart {
 		t.Error("Expected AutostartFleet not to be defined")
 	}
@@ -79,10 +75,6 @@ hostname: trontastic
 		t.Error("Expected first SSH key to be 'foobar'")
 	} else if keys[1] != "foobaz" {
 		t.Error("Expected first SSH key to be 'foobaz'")
-	}
-
-	if cfg.Coreos.Etcd.Discovery_URL != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
-		t.Error("Failed to parse etcd discovery url")
 	}
 
 	if !cfg.Coreos.Fleet.Autostart {
