@@ -38,7 +38,7 @@ func ProcessWriteFile(base string, wf *WriteFile) error {
 
 	fullPath := path.Join(base, wf.Path)
 
-	if err := os.MkdirAll(path.Dir(fullPath), os.FileMode(0744)); err != nil {
+	if err := os.MkdirAll(path.Dir(fullPath), os.FileMode(0755)); err != nil {
 		return err
 	}
 
