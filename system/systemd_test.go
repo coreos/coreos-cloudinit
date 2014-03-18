@@ -100,3 +100,17 @@ Where=/media/state
 	}
 }
 
+func TestMachineID(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+	if err != nil {
+		t.Fatalf("Unable to create tempdir: %v", err)
+	}
+	defer syscall.Rmdir(dir)
+
+	os.Mkdir(path.Join(dir, "etc"), os.FileMode(0755))
+	ioutil.WriteFile(path.Join(dir, "etc", "machine-id"), []byte("node007\n"), os.FileMode(0444))
+
+	if MachineID(dir) != "node007" {
+		t.Fatalf("File has incorrect contents")
+	}
+}

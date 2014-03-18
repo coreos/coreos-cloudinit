@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -160,4 +161,9 @@ func ExecuteScript(scriptPath string) (string, error) {
 
 func SetHostname(hostname string) error {
 	return exec.Command("hostnamectl", "set-hostname", hostname).Run()
+}
+
+func MachineID(root string) string {
+	contents, _ := ioutil.ReadFile(path.Join(root, "etc", "machine-id"))
+	return strings.TrimSpace(string(contents))
 }

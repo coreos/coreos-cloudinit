@@ -31,11 +31,18 @@ func (ec EtcdEnvironment) String() (out string) {
 
 		out += fmt.Sprintf("Environment=\"ETCD_%s=%s\"\n", key, val)
 	}
+
 	return
 }
 
 // Write an EtcdEnvironment to the appropriate path on disk for etcd.service
 func WriteEtcdEnvironment(env EtcdEnvironment, root string) error {
+	if _, ok := env["name"]; !ok {
+		if name := system.MachineID(root); name != "" {
+			env["name"] = name
+		}
+	}
+
 	file := system.File{
 		Path: path.Join(root, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf"),
 		RawFilePermissions: "0644",
