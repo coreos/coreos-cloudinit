@@ -11,12 +11,45 @@ import (
 
 func TestEtcdEnvironment(t *testing.T) {
 	cfg := make(EtcdEnvironment, 0)
+	cfg["discovery"] = "http://disco.example.com/foobar"
+	cfg["peer-bind-addr"] = "127.0.0.1:7002"
+
+	env := cfg.String()
+	expect := `[Service]
+Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
+Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
+`
+
+	if env != expect {
+		t.Errorf("Generated environment:\n%s\nExpected environment:\n%s", env, expect)
+	}
+}
+
+func TestEtcdEnvironmentDiscoveryURLTranslated(t *testing.T) {
+	cfg := make(EtcdEnvironment, 0)
 	cfg["discovery_url"] = "http://disco.example.com/foobar"
 	cfg["peer-bind-addr"] = "127.0.0.1:7002"
 
 	env := cfg.String()
 	expect := `[Service]
-Environment="ETCD_DISCOVERY_URL=http://disco.example.com/foobar"
+Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
+Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
+`
+
+	if env != expect {
+		t.Errorf("Generated environment:\n%s\nExpected environment:\n%s", env, expect)
+	}
+}
+
+func TestEtcdEnvironmentDiscoveryOverridesDiscoveryURL(t *testing.T) {
+	cfg := make(EtcdEnvironment, 0)
+	cfg["discovery_url"] = "ping"
+	cfg["discovery"] = "pong"
+	cfg["peer-bind-addr"] = "127.0.0.1:7002"
+
+	env := cfg.String()
+	expect := `[Service]
+Environment="ETCD_DISCOVERY=pong"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `
 
@@ -47,7 +80,7 @@ Environment="ETCD_PEER_BIND_ADDR=192.0.2.13:7001"
 func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	ec := EtcdEnvironment{
 		"name": "node001",
-		"discovery_url": "http://disco.example.com/foobar",
+		"discovery": "http://disco.example.com/foobar",
 		"peer-bind-addr": "127.0.0.1:7002",
 	}
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
@@ -78,7 +111,7 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 
 	expect := `[Service]
 Environment="ETCD_NAME=node001"
-Environment="ETCD_DISCOVERY_URL=http://disco.example.com/foobar"
+Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `
 	if string(contents) != expect {
