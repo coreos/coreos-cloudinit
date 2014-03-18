@@ -13,6 +13,10 @@ import (
 	"github.com/coreos/coreos-cloudinit/third_party/github.com/coreos/go-systemd/dbus"
 )
 
+// fakeMachineID is placed on non-usr CoreOS images and should
+// never be used as a true MachineID
+const fakeMachineID = "42000000000000000000000000000042"
+
 type Unit struct {
 	Name    string
 	Runtime bool
@@ -163,7 +167,20 @@ func SetHostname(hostname string) error {
 	return exec.Command("hostnamectl", "set-hostname", hostname).Run()
 }
 
+func Hostname() (string, error) {
+	cmd := exec.Command("hostname")
+	output, err := cmd.CombinedOutput()
+	hostname := strings.TrimSpace(string(output))
+	return hostname, err
+}
+
 func MachineID(root string) string {
 	contents, _ := ioutil.ReadFile(path.Join(root, "etc", "machine-id"))
-	return strings.TrimSpace(string(contents))
+	id := strings.TrimSpace(string(contents))
+
+	if id == fakeMachineID {
+		id = ""
+	}
+
+	return id
 }

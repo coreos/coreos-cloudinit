@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -38,8 +39,12 @@ func (ec EtcdEnvironment) String() (out string) {
 // Write an EtcdEnvironment to the appropriate path on disk for etcd.service
 func WriteEtcdEnvironment(env EtcdEnvironment, root string) error {
 	if _, ok := env["name"]; !ok {
-		if name := system.MachineID(root); name != "" {
-			env["name"] = name
+		if machineID := system.MachineID(root); machineID != "" {
+			env["name"] = machineID
+		} else if hostname, err := system.Hostname(); err == nil {
+			env["name"] = hostname
+		} else {
+			return errors.New("Unable to determine default etcd name")
 		}
 	}
 
