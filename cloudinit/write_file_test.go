@@ -10,9 +10,8 @@ import (
 
 func TestWriteFileUnencodedContent(t *testing.T) {
 	wf := WriteFile{
-		Path:        "/tmp/foo",
-		Content:     "bar",
-		Permissions: "0644",
+		Path:               "/tmp/foo",
+		Content:            "bar",
 	}
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
@@ -47,9 +46,9 @@ func TestWriteFileUnencodedContent(t *testing.T) {
 
 func TestWriteFileInvalidPermission(t *testing.T) {
 	wf := WriteFile{
-		Path:        "/tmp/foo",
-		Content:     "bar",
-		Permissions: "pants",
+		Path:               "/tmp/foo",
+		Content:            "bar",
+		RawFilePermissions: "pants",
 	}
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
@@ -62,10 +61,37 @@ func TestWriteFileInvalidPermission(t *testing.T) {
 	}
 }
 
+func TestWriteFilePermissions(t *testing.T) {
+	wf := WriteFile{
+		Path:               "/tmp/foo",
+		RawFilePermissions: "0755",
+	}
+	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+	if err != nil {
+		t.Fatalf("Unable to create tempdir: %v", err)
+	}
+	defer syscall.Rmdir(dir)
+
+	if err := ProcessWriteFile(dir, &wf); err != nil {
+		t.Fatalf("Processing of WriteFile failed: %v", err)
+	}
+
+	fullPath := path.Join(dir, "tmp", "foo")
+
+	fi, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatalf("Unable to stat file: %v", err)
+	}
+
+	if fi.Mode() != os.FileMode(0755) {
+		t.Errorf("File has incorrect mode: %v", fi.Mode())
+	}
+}
+
 func TestWriteFileEncodedContent(t *testing.T) {
 	wf := WriteFile{
-		Path: "/tmp/foo",
-		Content: "",
+		Path:     "/tmp/foo",
+		Content:  "",
 		Encoding: "base64",
 	}
 
