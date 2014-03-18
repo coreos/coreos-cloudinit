@@ -168,10 +168,7 @@ func SetHostname(hostname string) error {
 }
 
 func Hostname() (string, error) {
-	cmd := exec.Command("hostname")
-	output, err := cmd.CombinedOutput()
-	hostname := strings.TrimSpace(string(output))
-	return hostname, err
+	return os.Hostname()
 }
 
 func MachineID(root string) string {
