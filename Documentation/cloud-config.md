@@ -87,7 +87,7 @@ For example, the following cloud-config document...
 coreos:
     etcd:
         name: node001
-        discovery-url: https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8
+        discovery: https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8
         bind-addr: $public_ipv4:4001
         peer-bind-addr: $private_ipv4:7001
 ```
@@ -97,7 +97,7 @@ coreos:
 ```
 [Service]
 Environment="ETCD_NAME=node001""
-Environment="ETCD_DISCOVERY_URL=https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8"
+Environment="ETCD_DISCOVERY=https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8"
 Environment="ETCD_BIND_ADDR=203.0.113.29:4001"
 Environment="ETCD_PEER_BIND_ADDR=192.0.2.13:7001"
 ```
@@ -136,7 +136,7 @@ echo 'Hello, world!'
 
 coreos:
 	etcd:
-		discovery_url: https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877
+		discovery: https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877
     fleet:
         autostart: yes
 ssh_authorized_keys:

@@ -35,7 +35,7 @@ func TestCloudConfig(t *testing.T) {
 	contents := []byte(`
 coreos: 
   etcd:
-    discovery_url: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
+    discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
   fleet:
     autostart: Yes
   units:

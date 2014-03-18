@@ -12,16 +12,32 @@ import (
 
 type EtcdEnvironment map[string]string
 
+func (ec EtcdEnvironment) normalized() map[string]string {
+	out := make(map[string]string, len(ec))
+	for key, val := range ec {
+		key = strings.ToUpper(key)
+		key = strings.Replace(key, "-", "_", -1)
+		out[key] = val
+	}
+	return out
+}
+
 func (ec EtcdEnvironment) String() (out string) {
+	norm := ec.normalized()
+
+	if val, ok := norm["DISCOVERY_URL"]; ok {
+		delete(norm, "DISCOVERY_URL")
+		if _, ok := norm["DISCOVERY"]; !ok {
+			norm["DISCOVERY"] = val
+		}
+	}
+
 	public := os.Getenv("COREOS_PUBLIC_IPV4")
 	private := os.Getenv("COREOS_PRIVATE_IPV4")
 
 	out += "[Service]\n"
 
-	for key, val := range ec {
-		key = strings.ToUpper(key)
-		key = strings.Replace(key, "-", "_", -1)
-
+	for key, val := range norm {
 		if public != "" {
 			val = strings.Replace(val, "$public_ipv4", public, -1)
 		}
