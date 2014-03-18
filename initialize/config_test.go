@@ -1,4 +1,4 @@
-package cloudinit
+package initialize
 
 import (
 	"strings"

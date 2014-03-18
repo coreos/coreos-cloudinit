@@ -4,5 +4,7 @@ echo "Building bin/coreos-cloudinit"
 . build
 
 echo "Running tests..."
-go test -i github.com/coreos/coreos-cloudinit/cloudinit
-go test -v github.com/coreos/coreos-cloudinit/cloudinit
+for pkg in "./initialize ./system"; do
+	go test -i $pkg
+	go test -v $pkg
+done

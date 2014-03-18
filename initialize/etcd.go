@@ -1,11 +1,12 @@
-package cloudinit
+package initialize
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 type EtcdEnvironment map[string]string
@@ -34,15 +35,12 @@ func (ec EtcdEnvironment) String() (out string) {
 }
 
 // Write an EtcdEnvironment to the appropriate path on disk for etcd.service
-func WriteEtcdEnvironment(root string, env EtcdEnvironment) error {
-	cfgDir := path.Join(root, "etc", "systemd", "system", "etcd.service.d")
-	cfgFile := path.Join(cfgDir, "20-cloudinit.conf")
-
-	if _, err := os.Stat(cfgDir); err != nil {
-		if err := os.MkdirAll(cfgDir, os.FileMode(0755)); err != nil {
-			return err
-		}
+func WriteEtcdEnvironment(env EtcdEnvironment, root string) error {
+	file := system.File{
+		Path: path.Join(root, "etc", "systemd", "system", "etcd.service.d", "20-cloudinit.conf"),
+		RawFilePermissions: "0644",
+		Content: env.String(),
 	}
 
-	return ioutil.WriteFile(cfgFile, []byte(env.String()), os.FileMode(0644))
+	return system.WriteFile(&file)
 }

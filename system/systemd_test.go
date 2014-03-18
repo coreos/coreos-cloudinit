@@ -1,4 +1,4 @@
-package cloudinit
+package system
 
 import (
 	"io/ioutil"
@@ -26,7 +26,7 @@ Address=10.209.171.177/19
 	}
 	defer syscall.Rmdir(dir)
 
-	if _, err := PlaceUnit(dir, &u); err != nil {
+	if _, err := PlaceUnit(&u, dir); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
 	}
 
@@ -72,7 +72,7 @@ Where=/media/state
 	}
 	defer syscall.Rmdir(dir)
 
-	if _, err := PlaceUnit(dir, &u); err != nil {
+	if _, err := PlaceUnit(&u, dir); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
 	}
 
