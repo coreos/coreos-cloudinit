@@ -1,21 +1,22 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
+	"bytes"
 	"flag"
-	"io/ioutil"
-	"os"
+	"fmt"
 	"log"
+	"os"
+	"strings"
 
-	"github.com/coreos/coreos-cloudinit/cloudinit"
+	"github.com/coreos/coreos-cloudinit/datasource"
+	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 const version = "0.1.2+git"
 
 func main() {
-	var userdata []byte
-	var err error
-
 	var printVersion bool
 	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
 
@@ -29,7 +30,7 @@ func main() {
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 
 	var sshKeyName string
-	flag.StringVar(&sshKeyName, "ssh-key-name", cloudinit.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
+	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
 
 	flag.Parse()
 
@@ -43,22 +44,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	var ds datasource.Datasource
 	if file != "" {
-		log.Printf("Reading user-data from file: %s", file)
-		userdata, err = ioutil.ReadFile(file)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		ds = datasource.NewLocalFile(file)
 	} else if url != "" {
-		log.Printf("Reading user-data from metadata service")
-		svc := cloudinit.NewMetadataService(url)
-		userdata, err = svc.UserData()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		ds = datasource.NewMetadataService(url)
 	} else {
 		fmt.Println("Provide one of --from-file or --from-url")
 		os.Exit(1)
+	}
+
+	log.Printf("Fetching user-data from datasource of type %q", ds.Type())
+	userdata, err := ds.Fetch()
+	if err != nil {
+		log.Fatalf("Failed fetching user-data from datasource: %v", err)
 	}
 
 	if len(userdata) == 0 {
@@ -66,30 +65,52 @@ func main() {
 		os.Exit(0)
 	}
 
-	parsed, err := cloudinit.ParseUserData(userdata)
+	parsed, err := ParseUserData(userdata)
 	if err != nil {
 		log.Fatalf("Failed parsing user-data: %v", err)
 	}
 
-	err = cloudinit.PrepWorkspace(workspace)
+	env := initialize.NewEnvironment("/", workspace)
+	err = initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
 		log.Fatalf("Failed preparing workspace: %v", err)
 	}
 
 	switch t := parsed.(type) {
-	case cloudinit.CloudConfig:
-		err = cloudinit.ApplyCloudConfig(t, sshKeyName)
-	case cloudinit.Script:
+	case initialize.CloudConfig:
+		err = initialize.Apply(t, env)
+	case system.Script:
 		var path string
-		path, err = cloudinit.PersistScriptInWorkspace(t, workspace)
+		path, err = initialize.PersistScriptInWorkspace(t, env.Workspace())
 		if err == nil {
 			var name string
-			name, err = cloudinit.ExecuteScript(path)
-			cloudinit.PersistScriptUnitNameInWorkspace(name, workspace)
+			name, err = system.ExecuteScript(path)
+			initialize.PersistUnitNameInWorkspace(name, workspace)
 		}
 	}
 
 	if err != nil {
 		log.Fatalf("Failed resolving user-data: %v", err)
+	}
+}
+
+func ParseUserData(contents []byte) (interface{}, error) {
+	bytereader := bytes.NewReader(contents)
+	bufreader := bufio.NewReader(bytereader)
+	header, _ := bufreader.ReadString('\n')
+
+	if strings.HasPrefix(header, "#!") {
+		log.Printf("Parsing user-data as script")
+		return system.Script(contents), nil
+
+	} else if header == "#cloud-config\n" {
+		log.Printf("Parsing user-data as cloud-config")
+		cfg, err := initialize.NewCloudConfig(contents)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		return *cfg, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized user-data header: %s", header)
 	}
 }

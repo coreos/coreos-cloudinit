@@ -1,4 +1,4 @@
-package cloudinit
+package datasource
 
 import (
 	"io/ioutil"
@@ -14,7 +14,7 @@ func NewMetadataService(url string) *metadataService {
 	return &metadataService{url, http.Client{}}
 }
 
-func (ms *metadataService) UserData() ([]byte, error) {
+func (ms *metadataService) Fetch() ([]byte, error) {
 	resp, err := ms.client.Get(ms.url)
 	if err != nil {
 		return []byte{}, err
@@ -33,4 +33,6 @@ func (ms *metadataService) UserData() ([]byte, error) {
 	return respBytes, nil
 }
 
-
+func (ms *metadataService) Type() string {
+	return "metadata-service"
+}

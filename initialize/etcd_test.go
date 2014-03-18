@@ -1,4 +1,4 @@
-package cloudinit
+package initialize
 
 import (
 	"io/ioutil"
@@ -55,7 +55,7 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 	defer syscall.Rmdir(dir)
 
-	if err := WriteEtcdEnvironment(dir, ec); err != nil {
+	if err := WriteEtcdEnvironment(ec, dir); err != nil {
 		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
 	}
 

@@ -1,8 +1,7 @@
-package cloudinit
+package system
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -36,7 +35,7 @@ func (u *Unit) Group() (group string) {
 
 type Script []byte
 
-func PlaceUnit(root string, u *Unit) (string, error) {
+func PlaceUnit(u *Unit, root string) (string, error) {
 	dir := "etc"
 	if u.Runtime {
 		dir = "run"
@@ -50,7 +49,14 @@ func PlaceUnit(root string, u *Unit) (string, error) {
 	}
 
 	dst = path.Join(dst, u.Name)
-	err := ioutil.WriteFile(dst, []byte(u.Content), os.FileMode(0644))
+
+	file := File{
+		Path: dst,
+		Content: u.Content,
+		RawFilePermissions: "0644",
+	}
+
+	err := WriteFile(&file)
 	if err != nil {
 		return "", err
 	}

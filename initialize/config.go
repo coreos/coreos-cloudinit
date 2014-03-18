@@ -1,24 +1,25 @@
-package cloudinit
+package initialize
 
 import (
 	"fmt"
 	"log"
+	"path"
 
 	"github.com/coreos/coreos-cloudinit/third_party/launchpad.net/goyaml"
-)
 
-const DefaultSSHKeyName = "coreos-cloudinit"
+	"github.com/coreos/coreos-cloudinit/system"
+)
 
 type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
 		Etcd  EtcdEnvironment
 		Fleet struct{ Autostart bool }
-		Units []Unit
+		Units []system.Unit
 	}
-	WriteFiles []WriteFile `yaml:"write_files"`
+	WriteFiles []system.File `yaml:"write_files"`
 	Hostname   string
-	Users      []User
+	Users      []system.User
 }
 
 func NewCloudConfig(contents []byte) (*CloudConfig, error) {
@@ -39,9 +40,9 @@ func (cc CloudConfig) String() string {
 	return stringified
 }
 
-func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
+func Apply(cfg CloudConfig, env *Environment) error {
 	if cfg.Hostname != "" {
-		if err := SetHostname(cfg.Hostname); err != nil {
+		if err := system.SetHostname(cfg.Hostname); err != nil {
 			return err
 		}
 		log.Printf("Set hostname to %s", cfg.Hostname)
@@ -54,18 +55,18 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 				continue
 			}
 
-			if UserExists(&user) {
+			if system.UserExists(&user) {
 				log.Printf("User '%s' exists, ignoring creation-time fields", user.Name)
 				if user.PasswordHash != "" {
 					log.Printf("Setting '%s' user's password", user.Name)
-					if err := SetUserPassword(user.Name, user.PasswordHash); err != nil {
+					if err := system.SetUserPassword(user.Name, user.PasswordHash); err != nil {
 						log.Printf("Failed setting '%s' user's password: %v", user.Name, err)
 						return err
 					}
 				}
 			} else {
 				log.Printf("Creating user '%s'", user.Name)
-				if err := CreateUser(&user); err != nil {
+				if err := system.CreateUser(&user); err != nil {
 					log.Printf("Failed creating user '%s': %v", user.Name, err)
 					return err
 				}
@@ -73,7 +74,7 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 
 			if len(user.SSHAuthorizedKeys) > 0 {
 				log.Printf("Authorizing %d SSH keys for user '%s'", len(user.SSHAuthorizedKeys), user.Name)
-				if err := AuthorizeSSHKeys(user.Name, sshKeyName, user.SSHAuthorizedKeys); err != nil {
+				if err := system.AuthorizeSSHKeys(user.Name, env.SSHKeyName(), user.SSHAuthorizedKeys); err != nil {
 					return err
 				}
 			}
@@ -81,7 +82,7 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 	}
 
 	if len(cfg.SSHAuthorizedKeys) > 0 {
-		err := AuthorizeSSHKeys("core", sshKeyName, cfg.SSHAuthorizedKeys)
+		err := system.AuthorizeSSHKeys("core", env.SSHKeyName(), cfg.SSHAuthorizedKeys)
 		if err == nil {
 			log.Printf("Authorized SSH keys for core user")
 		} else {
@@ -91,7 +92,8 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 
 	if len(cfg.WriteFiles) > 0 {
 		for _, file := range cfg.WriteFiles {
-			if err := ProcessWriteFile("/", &file); err != nil {
+			file.Path = path.Join(env.Root(), file.Path)
+			if err := system.WriteFile(&file); err != nil {
 				return err
 			}
 			log.Printf("Wrote file %s to filesystem", file.Path)
@@ -99,7 +101,7 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 	}
 
 	if len(cfg.Coreos.Etcd) > 0 {
-		if err := WriteEtcdEnvironment("/", cfg.Coreos.Etcd); err != nil {
+		if err := WriteEtcdEnvironment(cfg.Coreos.Etcd, env.Root()); err != nil {
 			log.Fatalf("Failed to write etcd config to filesystem: %v", err)
 		}
 
@@ -109,7 +111,7 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 	if len(cfg.Coreos.Units) > 0 {
 		for _, unit := range cfg.Coreos.Units {
 			log.Printf("Placing unit %s on filesystem", unit.Name)
-			dst, err := PlaceUnit("/", &unit)
+			dst, err := system.PlaceUnit(&unit, env.Root())
 			if err != nil {
 				return err
 			}
@@ -117,7 +119,7 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 
 			if unit.Group() != "network" {
 				log.Printf("Enabling unit file %s", dst)
-				if err := EnableUnitFile(dst, unit.Runtime); err != nil {
+				if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
 					return err
 				}
 				log.Printf("Enabled unit %s", unit.Name)
@@ -125,12 +127,12 @@ func ApplyCloudConfig(cfg CloudConfig, sshKeyName string) error {
 				log.Printf("Skipping enable for network-like unit %s", unit.Name)
 			}
 		}
-		DaemonReload()
-		StartUnits(cfg.Coreos.Units)
+		system.DaemonReload()
+		system.StartUnits(cfg.Coreos.Units)
 	}
 
 	if cfg.Coreos.Fleet.Autostart {
-		err := StartUnitByName("fleet.service")
+		err := system.StartUnitByName("fleet.service")
 		if err == nil {
 			log.Printf("Started fleet service.")
 		} else {

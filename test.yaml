@@ -1,0 +1,7 @@
+#cloud-config
+
+coreos:
+    etcd:
+        discovery_url: https://discovery.etcd.io/0022cb5027f8f5167a874794c3a13e0d
+        bind-addr: $public_ipv4:4001
+        name: polvi
