@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -31,11 +32,22 @@ func (ec EtcdEnvironment) String() (out string) {
 
 		out += fmt.Sprintf("Environment=\"ETCD_%s=%s\"\n", key, val)
 	}
+
 	return
 }
 
 // Write an EtcdEnvironment to the appropriate path on disk for etcd.service
 func WriteEtcdEnvironment(env EtcdEnvironment, root string) error {
+	if _, ok := env["name"]; !ok {
+		if machineID := system.MachineID(root); machineID != "" {
+			env["name"] = machineID
+		} else if hostname, err := system.Hostname(); err == nil {
+			env["name"] = hostname
+		} else {
+			return errors.New("Unable to determine default etcd name")
+		}
+	}
+
 	file := system.File{
 		Path: path.Join(root, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf"),
 		RawFilePermissions: "0644",

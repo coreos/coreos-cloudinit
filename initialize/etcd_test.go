@@ -46,6 +46,7 @@ Environment="ETCD_PEER_BIND_ADDR=192.0.2.13:7001"
 
 func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	ec := EtcdEnvironment{
+		"name": "node001",
 		"discovery_url": "http://disco.example.com/foobar",
 		"peer-bind-addr": "127.0.0.1:7002",
 	}
@@ -76,8 +77,42 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 
 	expect := `[Service]
+Environment="ETCD_NAME=node001"
 Environment="ETCD_DISCOVERY_URL=http://disco.example.com/foobar"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
+`
+	if string(contents) != expect {
+		t.Fatalf("File has incorrect contents")
+	}
+}
+
+func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
+	ec := EtcdEnvironment{}
+	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+	if err != nil {
+		t.Fatalf("Unable to create tempdir: %v", err)
+	}
+	defer syscall.Rmdir(dir)
+
+	os.Mkdir(path.Join(dir, "etc"), os.FileMode(0755))
+	err = ioutil.WriteFile(path.Join(dir, "etc", "machine-id"), []byte("node007"), os.FileMode(0444))
+	if err != nil {
+		t.Fatalf("Failed writing out /etc/machine-id: %v", err)
+	}
+
+	if err := WriteEtcdEnvironment(ec, dir); err != nil {
+		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
+	}
+
+	fullPath := path.Join(dir, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
+
+	contents, err := ioutil.ReadFile(fullPath)
+	if err != nil {
+		t.Fatalf("Unable to read expected file: %v", err)
+	}
+
+	expect := `[Service]
+Environment="ETCD_NAME=node007"
 `
 	if string(contents) != expect {
 		t.Fatalf("File has incorrect contents")
