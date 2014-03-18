@@ -91,8 +91,8 @@ hostname: trontastic
 		if wf.Encoding != "" {
 			t.Errorf("WriteFile has incorrect encoding %s", wf.Encoding)
 		}
-		if wf.Permissions != "0644" {
-			t.Errorf("WriteFile has incorrect permissions %s", wf.Permissions)
+		if perm, _ := wf.Permissions(); perm != 0644 {
+			t.Errorf("WriteFile has incorrect permissions %s", perm)
 		}
 		if wf.Path != "/etc/dogepack.conf" {
 			t.Errorf("WriteFile has incorrect path %s", wf.Path)
