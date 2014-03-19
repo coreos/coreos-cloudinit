@@ -20,6 +20,9 @@ func main() {
 	var printVersion bool
 	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
 
+	var ignoreFailure bool
+	flag.BoolVar(&ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
+
 	var file string
 	flag.StringVar(&file, "from-file", "", "Read user-data from provided file")
 
@@ -57,7 +60,12 @@ func main() {
 	log.Printf("Fetching user-data from datasource of type %q", ds.Type())
 	userdata, err := ds.Fetch()
 	if err != nil {
-		log.Fatalf("Failed fetching user-data from datasource: %v", err)
+		log.Printf("Failed fetching user-data from datasource: %v", err)
+		if ignoreFailure {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
 	if len(userdata) == 0 {
@@ -67,7 +75,12 @@ func main() {
 
 	parsed, err := ParseUserData(userdata)
 	if err != nil {
-		log.Fatalf("Failed parsing user-data: %v", err)
+		log.Printf("Failed parsing user-data: %v", err)
+		if ignoreFailure {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
 	env := initialize.NewEnvironment("/", workspace)
