@@ -133,16 +133,6 @@ func RestartUnitByName(name string) error {
 	return err
 }
 
-func StartUnitByName(name string) error {
-	conn, err := dbus.New()
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.StartUnit(name, "replace")
-	return err
-}
-
 func ExecuteScript(scriptPath string) (string, error) {
 	props := []dbus.Property{
 		dbus.PropDescription("Unit generated and executed by coreos-cloudinit on behalf of user"),

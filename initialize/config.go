@@ -14,7 +14,6 @@ type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
 		Etcd  EtcdEnvironment
-		Fleet struct{ Autostart bool }
 		Units []system.Unit
 	}
 	WriteFiles []system.File `yaml:"write_files"`
@@ -135,15 +134,6 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 		system.DaemonReload()
 		system.StartUnits(cfg.Coreos.Units)
-	}
-
-	if cfg.Coreos.Fleet.Autostart {
-		err := system.StartUnitByName("fleet.service")
-		if err == nil {
-			log.Printf("Started fleet service.")
-		} else {
-			return err
-		}
 	}
 
 	return nil

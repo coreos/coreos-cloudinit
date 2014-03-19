@@ -17,10 +17,6 @@ func TestCloudConfigEmpty(t *testing.T) {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
 
-	if cfg.Coreos.Fleet.Autostart {
-		t.Error("Expected AutostartFleet not to be defined")
-	}
-
 	if len(cfg.WriteFiles) != 0 {
 		t.Error("Expected zero WriteFiles")
 	}
@@ -36,8 +32,6 @@ func TestCloudConfig(t *testing.T) {
 coreos: 
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
-  fleet:
-    autostart: Yes
   units:
     - name: 50-eth0.network
       runtime: yes
@@ -75,10 +69,6 @@ hostname: trontastic
 		t.Error("Expected first SSH key to be 'foobar'")
 	} else if keys[1] != "foobaz" {
 		t.Error("Expected first SSH key to be 'foobaz'")
-	}
-
-	if !cfg.Coreos.Fleet.Autostart {
-		t.Error("Expected AutostartFleet to be true")
 	}
 
 	if len(cfg.WriteFiles) != 1 {
