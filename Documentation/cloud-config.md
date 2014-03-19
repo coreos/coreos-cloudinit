@@ -28,9 +28,16 @@ coreos:
 Arbitrary systemd units may be provided in the `coreos.units` attribute.
 `coreos.units` is a list of objects with the following fields:
 
-- **name**: string representing unit's name
-- **runtime**: boolean indicating whether or not to persist the unit across reboots. This is analagous to the `--runtime` flag to `systemd enable`.
-- **content**: plaintext string representing entire unit file
+- **name**: String representing unit's name. Required.
+- **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analagous to the `--runtime` argument to `systemd enable`. Default value is false.
+- **content**: Plaintext string representing entire unit file. If no value is provided, the unit is assumed to exist already.
+- **command**: Command to execute on unit: start, stop, reload, restart, try-restart, reload-or-restart, reload-or-try-restart. Default value is restart.
+
+**NOTE:** The command field is ignored for all network, netdev, and link units. The systemd-networkd.service unit will be restarted in their place.
+
+##### Examples
+
+Write a unit to disk, automatically starting it.
 
 ```
 #cloud-config
@@ -52,6 +59,19 @@ coreos:
           [Install]
           WantedBy=local.target
 ```
+
+Start the builtin `etcd` and `fleet` services:
+
+```
+# cloud-config
+
+coreos:
+    units:
+      - name: etcd.service
+        command: start
+      - name: fleet.service
+        command: start
+
 
 ## Cloud-Config Parameters
 
