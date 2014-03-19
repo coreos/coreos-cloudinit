@@ -21,6 +21,7 @@ type Unit struct {
 	Name    string
 	Runtime bool
 	Content string
+	Command string
 }
 
 func (u *Unit) Type() string {
@@ -80,34 +81,33 @@ func EnableUnitFile(file string, runtime bool) error {
 	return err
 }
 
-func separateNetworkUnits(units []Unit) ([]Unit, []Unit) {
-	networkUnits := make([]Unit, 0)
-	nonNetworkUnits := make([]Unit, 0)
-	for _, unit := range units {
-		if unit.Group() == "network" {
-			networkUnits = append(networkUnits, unit)
-		} else {
-			nonNetworkUnits = append(nonNetworkUnits, unit)
-		}
-	}
-	return networkUnits, nonNetworkUnits
-}
-
-func StartUnits(units []Unit) error {
-	networkUnits, nonNetworkUnits := separateNetworkUnits(units)
-	if len(networkUnits) > 0 {
-		if err := RestartUnitByName("systemd-networkd.service"); err != nil {
-			return err
-		}
+func RunUnitCommand(command, unit string) (string, error) {
+	conn, err := dbus.New()
+	if err != nil {
+		return "", err
 	}
 
-	for _, unit := range nonNetworkUnits {
-		if err := RestartUnitByName(unit.Name); err != nil {
-			return err
-		}
+	var fn func(string, string) (string, error)
+	switch command {
+	case "start":
+		fn = conn.StartUnit
+	case "stop":
+		fn = conn.StopUnit
+	case "restart":
+		fn = conn.RestartUnit
+	case "reload":
+		fn = conn.ReloadUnit
+	case "try-restart":
+		fn = conn.TryRestartUnit
+	case "reload-or-restart":
+		fn = conn.ReloadOrRestartUnit
+	case "reload-or-try-restart":
+		fn = conn.ReloadOrTryRestartUnit
+	default:
+		return "", fmt.Errorf("Unsupported systemd command %q", command)
 	}
 
-	return nil
+	return fn(unit, "replace")
 }
 
 func DaemonReload() error {
@@ -117,29 +117,6 @@ func DaemonReload() error {
 	}
 
 	_, err = conn.Reload()
-	return err
-}
-
-func RestartUnitByName(name string) error {
-	log.Printf("Restarting unit %s", name)
-	conn, err := dbus.New()
-	if err != nil {
-		return err
-	}
-
-	output, err := conn.RestartUnit(name, "replace")
-	log.Printf("Restart completed with '%s'", output)
-
-	return err
-}
-
-func StartUnitByName(name string) error {
-	conn, err := dbus.New()
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.StartUnit(name, "replace")
 	return err
 }
 

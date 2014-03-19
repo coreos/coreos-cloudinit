@@ -14,7 +14,6 @@ type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
 		Etcd  EtcdEnvironment
-		Fleet struct{ Autostart bool }
 		Units []system.Unit
 	}
 	WriteFiles []system.File `yaml:"write_files"`
@@ -115,34 +114,48 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	if len(cfg.Coreos.Units) > 0 {
+		commands := make(map[string]string, 0)
+
 		for _, unit := range cfg.Coreos.Units {
-			log.Printf("Placing unit %s on filesystem", unit.Name)
-			dst, err := system.PlaceUnit(&unit, env.Root())
+			if unit.Content != "" {
+				log.Printf("Writing unit %s to filesystem", unit.Name)
+				dst, err := system.PlaceUnit(&unit, env.Root())
+				if err != nil {
+					return err
+				}
+				log.Printf("Placed unit %s at %s", unit.Name, dst)
+
+				if unit.Group() != "network" {
+					log.Printf("Enabling unit file %s", dst)
+					if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
+						return err
+					}
+					log.Printf("Enabled unit %s", unit.Name)
+				} else {
+					log.Printf("Skipping enable for network-like unit %s", unit.Name)
+				}
+			}
+
+			if unit.Group() != "network" {
+				command := unit.Command
+				if command == "" {
+					command = "restart"
+				}
+				commands[unit.Name] = command
+			} else {
+				commands["systemd-networkd.service"] = "restart"
+			}
+		}
+
+		system.DaemonReload()
+
+		for unit, command := range commands {
+			log.Printf("Calling unit command '%s %s'", command, unit)
+			res, err := system.RunUnitCommand(command, unit)
 			if err != nil {
 				return err
 			}
-			log.Printf("Placed unit %s at %s", unit.Name, dst)
-
-			if unit.Group() != "network" {
-				log.Printf("Enabling unit file %s", dst)
-				if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
-					return err
-				}
-				log.Printf("Enabled unit %s", unit.Name)
-			} else {
-				log.Printf("Skipping enable for network-like unit %s", unit.Name)
-			}
-		}
-		system.DaemonReload()
-		system.StartUnits(cfg.Coreos.Units)
-	}
-
-	if cfg.Coreos.Fleet.Autostart {
-		err := system.StartUnitByName("fleet.service")
-		if err == nil {
-			log.Printf("Started fleet service.")
-		} else {
-			return err
+			log.Printf("Result of '%s %s': %s", command, unit, res)
 		}
 	}
 
