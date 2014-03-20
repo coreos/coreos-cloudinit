@@ -89,7 +89,7 @@ coreos:
         command: start
       - name: fleet.service
         command: start
-
+```
 
 ## Cloud-Config Parameters
 
