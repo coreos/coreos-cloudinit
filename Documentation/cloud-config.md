@@ -30,7 +30,7 @@ coreos:
 
 ```
 [Service]
-Environment="ETCD_NAME=node001""
+Environment="ETCD_NAME=node001"
 Environment="ETCD_DISCOVERY=https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8"
 Environment="ETCD_ADDR=203.0.113.29:4001"
 Environment="ETCD_PEER_ADDR=192.0.2.13:7001"
