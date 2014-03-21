@@ -33,7 +33,6 @@ write_files:
         nameserver 192.0.2.3
 ```
 
-
 ## Executing a Script
 
 coreos-cloudinit supports executing user-data as a script instead of parsing it as a cloud-config document.
@@ -43,4 +42,38 @@ Make sure the first line of your user-data is a shebang and coreos-cloudinit wil
 #!/bin/bash
 
 echo 'Hello, world!'
+```
+
+## user-data Field Substitution
+
+coreos-cloudinit will replace the following set of tokens in your user-data with system-generated values.
+
+| Token         | Description |
+| ------------- | ----------- |
+| $public_ipv4  | Public IPv4 address of machine |
+| $private_ipv4 | Private IPv4 address of machine |
+
+These values are determined by CoreOS based on the given provider on which your machine is running.
+Read more about provider-specific functionality in the [CoreOS OEM documentation][oem-doc].
+
+[oem-doc]: https://coreos.com/docs/sdk-distributors/distributors/notes-for-distributors/
+
+For example, submitting the following user-data...
+
+```
+#cloud-config
+coreos:
+    etcd:
+        addr: $public_ipv4:4001
+        peer-addr: $private_ipv4:7001
+```
+
+...will result in this cloud-config document being executed:
+
+```
+#cloud-config
+coreos:
+    etcd:
+        addr: 203.0.113.29:4001
+        peer-addr: 192.0.2.13:7001
 ```
