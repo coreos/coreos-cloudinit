@@ -45,11 +45,11 @@ func TestCloudConfigUsersGithubMarshal(t *testing.T) {
 }
 func TestCloudConfigUsersGithubUser(t *testing.T) {
 
-	contents := []byte(`
+	contents := `
 users:
   - name: elroy
     coreos-ssh-import-github: bcwaldon
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
 		t.Fatalf("Encountered unexpected error: %v", err)

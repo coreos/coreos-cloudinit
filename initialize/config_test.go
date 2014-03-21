@@ -7,7 +7,7 @@ import (
 
 // Assert that the parsing of a cloud config file "generally works"
 func TestCloudConfigEmpty(t *testing.T) {
-	cfg, err := NewCloudConfig([]byte{})
+	cfg, err := NewCloudConfig("")
 	if err != nil {
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
@@ -28,7 +28,7 @@ func TestCloudConfigEmpty(t *testing.T) {
 
 // Assert that the parsing of a cloud config file "generally works"
 func TestCloudConfig(t *testing.T) {
-	contents := []byte(`
+	contents := `
 coreos: 
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
@@ -56,7 +56,7 @@ write_files:
     permissions: '0644'
     owner: root:dogepack
 hostname: trontastic
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
 		t.Fatalf("Encountered unexpected error :%v", err)
@@ -123,10 +123,10 @@ Address=10.209.171.177/19
 
 // Assert that our interface conversion doesn't panic
 func TestCloudConfigKeysNotList(t *testing.T) {
-	contents := []byte(`
+	contents := `
 ssh_authorized_keys:
   - foo: bar
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
 		t.Fatalf("Encountered unexpected error :%v", err)
@@ -139,7 +139,7 @@ ssh_authorized_keys:
 }
 
 func TestCloudConfigSerializationHeader(t *testing.T) {
-	cfg, _ := NewCloudConfig([]byte{})
+	cfg, _ := NewCloudConfig("")
 	contents := cfg.String()
 	header := strings.SplitN(contents, "\n", 2)[0]
 	if header != "#cloud-config" {
@@ -148,7 +148,7 @@ func TestCloudConfigSerializationHeader(t *testing.T) {
 }
 
 func TestCloudConfigUsers(t *testing.T) {
-	contents := []byte(`
+	contents := `
 users:
   - name: elroy
     passwd: somehash
@@ -164,7 +164,7 @@ users:
     no-user-group: true
     system: y
     no-log-init: True
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
 		t.Fatalf("Encountered unexpected error: %v", err)

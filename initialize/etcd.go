@@ -3,7 +3,6 @@ package initialize
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
@@ -32,20 +31,9 @@ func (ec EtcdEnvironment) String() (out string) {
 		}
 	}
 
-	public := os.Getenv("COREOS_PUBLIC_IPV4")
-	private := os.Getenv("COREOS_PRIVATE_IPV4")
-
 	out += "[Service]\n"
 
 	for key, val := range norm {
-		if public != "" {
-			val = strings.Replace(val, "$public_ipv4", public, -1)
-		}
-
-		if private != "" {
-			val = strings.Replace(val, "$private_ipv4", private, -1)
-		}
-
 		out += fmt.Sprintf("Environment=\"ETCD_%s=%s\"\n", key, val)
 	}
 

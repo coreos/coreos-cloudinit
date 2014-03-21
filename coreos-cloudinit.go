@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
 	"log"
@@ -58,7 +56,7 @@ func main() {
 	}
 
 	log.Printf("Fetching user-data from datasource of type %q", ds.Type())
-	userdata, err := ds.Fetch()
+	userdataBytes, err := ds.Fetch()
 	if err != nil {
 		log.Printf("Failed fetching user-data from datasource: %v", err)
 		if ignoreFailure {
@@ -68,10 +66,15 @@ func main() {
 		}
 	}
 
-	if len(userdata) == 0 {
+	if len(userdataBytes) == 0 {
 		log.Printf("No user data to handle, exiting.")
 		os.Exit(0)
 	}
+
+	env := initialize.NewEnvironment("/", workspace)
+
+	userdata := string(userdataBytes)
+	userdata = env.Apply(userdata)
 
 	parsed, err := ParseUserData(userdata)
 	if err != nil {
@@ -83,7 +86,6 @@ func main() {
 		}
 	}
 
-	env := initialize.NewEnvironment("/", workspace)
 	err = initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
 		log.Fatalf("Failed preparing workspace: %v", err)
@@ -107,16 +109,14 @@ func main() {
 	}
 }
 
-func ParseUserData(contents []byte) (interface{}, error) {
-	bytereader := bytes.NewReader(contents)
-	bufreader := bufio.NewReader(bytereader)
-	header, _ := bufreader.ReadString('\n')
+func ParseUserData(contents string) (interface{}, error) {
+	header := strings.SplitN(contents, "\n", 2)[0]
 
 	if strings.HasPrefix(header, "#!") {
 		log.Printf("Parsing user-data as script")
 		return system.Script(contents), nil
 
-	} else if header == "#cloud-config\n" {
+	} else if header == "#cloud-config" {
 		log.Printf("Parsing user-data as cloud-config")
 		cfg, err := initialize.NewCloudConfig(contents)
 		if err != nil {
