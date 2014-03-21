@@ -21,9 +21,9 @@ type CloudConfig struct {
 	Users      []system.User
 }
 
-func NewCloudConfig(contents []byte) (*CloudConfig, error) {
+func NewCloudConfig(contents string) (*CloudConfig, error) {
 	var cfg CloudConfig
-	err := goyaml.Unmarshal(contents, &cfg)
+	err := goyaml.Unmarshal([]byte(contents), &cfg)
 	return &cfg, err
 }
 

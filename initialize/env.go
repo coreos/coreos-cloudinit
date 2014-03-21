@@ -1,19 +1,26 @@
 package initialize
 
 import (
+	"os"
 	"path"
+	"strings"
 )
 
 const DefaultSSHKeyName = "coreos-cloudinit"
 
 type Environment struct {
-	root      string
-	workspace string
-	sshKeyName string
+	root          string
+	workspace     string
+	sshKeyName    string
+	substitutions map[string]string
 }
 
 func NewEnvironment(root, workspace string) *Environment {
-	return &Environment{root, workspace, DefaultSSHKeyName}
+	substitutions := map[string]string{
+		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
+		"$private_ipv4": os.Getenv("COREOS_PRIVATE_IPV4"),
+	}
+	return &Environment{root, workspace, DefaultSSHKeyName, substitutions}
 }
 
 func (self *Environment) Workspace() string {
@@ -30,4 +37,11 @@ func (self *Environment) SSHKeyName() string {
 
 func (self *Environment) SetSSHKeyName(name string) {
 	self.sshKeyName = name
+}
+
+func (self *Environment) Apply(data string) string {
+	for key, val := range self.substitutions {
+		data = strings.Replace(data, key, val, -1)
+	}
+	return data
 }
