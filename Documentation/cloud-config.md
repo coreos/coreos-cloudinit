@@ -132,6 +132,7 @@ All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the use
 - **no-user-group**: Boolean. Skip default group creation.
 - **ssh-authorized-keys**: List of public SSH keys to authorize for this user
 - **coreos-ssh-import-github**: Authorize SSH keys from Github user
+- **coreos-ssh-import-url**: Authorize SSH keys imported from a url endpoint.
 - **system**: Create the user as a system user. No home directory will be created.
 - **no-log-init**: Boolean. Skip initialization of lastlog and faillog databases.
 
@@ -175,6 +176,41 @@ perl -e 'print crypt("password","\$6\$SALT\$") . "\n"'
 ```
 
 Using a higher number of rounds will help create more secure passwords, but given enough time, password hashes can be reversed.  On most RPM based distributions there is a tool called mkpasswd available in the `expect` package, but this does not handle "rounds" nor advanced hashing algorithms. 
+
+#### Retrieving ssh authorized keys from a GitHub user
+
+Using the field `coreos-ssh-import-github` you can make coreos-cloudinit to add the public ssh keys from a GitHub user as authorized keys to a server.
+
+```
+#cloud-config
+
+users:
+  - name: elroy
+  coreos-ssh-import-github: elroy
+```
+
+#### Retrieving ssh authorized keys from an http endpoint
+
+Coreos-cloudinit can also pull authorized keys from any http endpoint that matches (GitHub's API response format)[http://developer.github.com/v3/users/keys/#list-public-keys-for-a-user].
+This is useful if you have an installation of GitHub Enterprise, you can provide a complete url with an authentication token:
+
+```
+#cloud-config
+
+users:
+  - name: elroy
+  coreos-ssh-import-url: https://token:[OAUTH-TOKEN]@githubenterprise.com/users/elroy/keys
+```
+
+You can also provide any url which response matches that json format for public keys:
+
+```
+#cloud-config
+
+users:
+  - name: elroy
+  coreos-ssh-import-url: https://example.com/public-keys
+```
 
 ### write_files
 

@@ -83,6 +83,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 					return err
 				}
 			}
+			if user.SSHImportURL != "" {
+				log.Printf("Authorizing SSH keys for CoreOS user '%s' from '%s'", user.Name, user.SSHImportURL)
+				if err := SSHImportKeysFromURL(user.Name, user.SSHImportURL); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
