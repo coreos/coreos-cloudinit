@@ -74,7 +74,7 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
 	}
 
-	fullPath := path.Join(dir, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
+	fullPath := path.Join(dir, "etc", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
 
 	fi, err := os.Stat(fullPath)
 	if err != nil {
@@ -118,7 +118,7 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
 	}
 
-	fullPath := path.Join(dir, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
+	fullPath := path.Join(dir, "etc", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
 
 	contents, err := ioutil.ReadFile(fullPath)
 	if err != nil {

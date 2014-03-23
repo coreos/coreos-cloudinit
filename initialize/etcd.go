@@ -53,7 +53,7 @@ func WriteEtcdEnvironment(env EtcdEnvironment, root string) error {
 	}
 
 	file := system.File{
-		Path: path.Join(root, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf"),
+		Path: path.Join(root, "etc", "systemd", "system", "etcd.service.d", "20-cloudinit.conf"),
 		RawFilePermissions: "0644",
 		Content: env.String(),
 	}
