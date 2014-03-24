@@ -144,14 +144,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 				}
 			}
 
-			if unit.Group() != "network" {
-				command := unit.Command
-				if command == "" {
-					command = "restart"
-				}
-				commands[unit.Name] = command
-			} else {
+			if unit.Group() == "network" {
 				commands["systemd-networkd.service"] = "restart"
+			} else {
+				if unit.Command != "" {
+				    commands[unit.Name] = unit.Command
+				}
 			}
 		}
 
