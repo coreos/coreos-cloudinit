@@ -15,6 +15,7 @@ type CloudConfig struct {
 	Coreos            struct {
 		Etcd  EtcdEnvironment
 		Units []system.Unit
+		OEM   OEMRelease
 	}
 	WriteFiles []system.File `yaml:"write_files"`
 	Hostname   string
@@ -45,6 +46,13 @@ func Apply(cfg CloudConfig, env *Environment) error {
 			return err
 		}
 		log.Printf("Set hostname to %s", cfg.Hostname)
+	}
+
+	if cfg.Coreos.OEM.ID != "" {
+		if err := WriteOEMRelease(&cfg.Coreos.OEM, env.Root()); err != nil {
+			return err
+		}
+		log.Printf("Wrote /etc/oem-release to filesystem")
 	}
 
 	if len(cfg.Users) > 0 {

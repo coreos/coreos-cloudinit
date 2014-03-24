@@ -45,6 +45,12 @@ coreos:
     Address=10.209.171.177/19
  
 '
+  oem:
+    id: rackspace
+    name: Rackspace Cloud Servers
+    version-id: 168.0.0
+    home-url: https://www.rackspace.com/cloud/servers/
+    bug-report-url: https://github.com/coreos/coreos-overlay
 ssh_authorized_keys:
   - foobar
   - foobaz
@@ -114,6 +120,10 @@ Address=10.209.171.177/19
 		if u.Type() != "network" {
 			t.Errorf("Unit has incorrect type '%s'", u.Type())
 		}
+	}
+
+	if cfg.Coreos.OEM.ID != "rackspace" {
+		t.Errorf("Failed parsing coreos.oem. Expected ID 'rackspace', got %q.", cfg.Coreos.OEM.ID)
 	}
 
 	if cfg.Hostname != "trontastic" {
