@@ -111,13 +111,7 @@ func RunUnitCommand(command, unit string) (string, error) {
 }
 
 func DaemonReload() error {
-	conn, err := dbus.New()
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.Reload()
-	return err
+	return exec.Command("systemctl", "daemon-reload").Run()
 }
 
 func ExecuteScript(scriptPath string) (string, error) {
