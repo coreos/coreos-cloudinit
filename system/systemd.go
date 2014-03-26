@@ -116,8 +116,7 @@ func DaemonReload() error {
 		return err
 	}
 
-	_, err = conn.Reload()
-	return err
+	return conn.Reload()
 }
 
 func ExecuteScript(scriptPath string) (string, error) {

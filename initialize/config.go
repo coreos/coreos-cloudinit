@@ -153,7 +153,9 @@ func Apply(cfg CloudConfig, env *Environment) error {
 			}
 		}
 
-		system.DaemonReload()
+		if err := system.DaemonReload(); err != nil {
+			log.Fatalf("Failed systemd daemon-reload: %v", err)
+		}
 
 		for unit, command := range commands {
 			log.Printf("Calling unit command '%s %s'", command, unit)
