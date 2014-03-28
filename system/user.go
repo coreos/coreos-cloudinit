@@ -13,6 +13,7 @@ type User struct {
 	PasswordHash        string   `yaml:"passwd"`
 	SSHAuthorizedKeys   []string `yaml:"ssh-authorized-keys"`
 	SSHImportGithubUser string   `yaml:"coreos-ssh-import-github"`
+	SSHImportURL        string   `yaml:"coreos-ssh-import-url"`
 	GECOS               string   `yaml:"gecos"`
 	Homedir             string   `yaml:"homedir"`
 	NoCreateHome        bool     `yaml:"no-create-home"`
