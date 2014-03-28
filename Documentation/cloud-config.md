@@ -225,20 +225,20 @@ Using the field `coreos-ssh-import-github` you can make coreos-cloudinit to add 
 
 users:
   - name: elroy
-  coreos-ssh-import-github: elroy
+    coreos-ssh-import-github: elroy
 ```
 
 #### Retrieving ssh authorized keys from an http endpoint
 
-Coreos-cloudinit can also pull authorized keys from any http endpoint that matches (GitHub's API response format)[http://developer.github.com/v3/users/keys/#list-public-keys-for-a-user].
-This is useful if you have an installation of GitHub Enterprise, you can provide a complete url with an authentication token:
+coreos-cloudinit can also pull public SSH keys from any http endpoint that matches [GitHub's API response format](https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user).
+For example, if you have an installation of GitHub Enterprise, you can provide a complete url with an authentication token:
 
 ```
 #cloud-config
 
 users:
   - name: elroy
-  coreos-ssh-import-url: https://token:[OAUTH-TOKEN]@githubenterprise.com/users/elroy/keys
+    coreos-ssh-import-url: https://token:<OAUTH-TOKEN>@github-enterprise.example.com/users/elroy/keys
 ```
 
 You can also provide any url which response matches that json format for public keys:
@@ -248,7 +248,7 @@ You can also provide any url which response matches that json format for public 
 
 users:
   - name: elroy
-  coreos-ssh-import-url: https://example.com/public-keys
+    coreos-ssh-import-url: https://example.com/public-keys
 ```
 
 ### write_files
