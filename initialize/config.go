@@ -17,9 +17,10 @@ type CloudConfig struct {
 		Units []system.Unit
 		OEM   OEMRelease
 	}
-	WriteFiles []system.File `yaml:"write_files"`
-	Hostname   string
-	Users      []system.User
+	WriteFiles     []system.File `yaml:"write_files"`
+	Hostname       string
+	Users          []system.User
+	ManageEtcHosts string `yaml:"manage_etc_hosts"`
 }
 
 func NewCloudConfig(contents string) (*CloudConfig, error) {
@@ -154,7 +155,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 				commands["systemd-networkd.service"] = "restart"
 			} else {
 				if unit.Command != "" {
-				    commands[unit.Name] = unit.Command
+					commands[unit.Name] = unit.Command
 				}
 			}
 		}
@@ -167,6 +168,16 @@ func Apply(cfg CloudConfig, env *Environment) error {
 			}
 			log.Printf("Result of '%s %s': %s", command, unit, res)
 		}
+	}
+
+	if cfg.ManageEtcHosts != "" {
+
+		if err := WriteEtcHosts(cfg.ManageEtcHosts, env.Root()); err != nil {
+			log.Fatalf("Failed to write /etc/hosts to filesystem: %v", err)
+		}
+
+		log.Printf("Wrote /etc/hosts file to filesystem")
+
 	}
 
 	return nil

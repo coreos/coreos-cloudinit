@@ -260,3 +260,16 @@ Provide a list of objects with the following attributes:
 - **content**: Data to write at the provided `path`
 - **permissions**: String representing file permissions in octal notation (i.e. '0644')
 - **owner**: User and group that should own the file written to disk. This is equivalent to the `<user>:<group>` argument to `chown <user>:<group> <path>`.
+
+### manage_etc_hosts
+
+Have coreos-cloudinit manage your /etc/hosts file for local name resolution.
+The only supported value is "localhost" which will cause your system's hostname
+to resolve to "127.0.0.1".  This is helpful when the host does not have DNS
+infrastructure in place to resolve its own hostname, for example, when using Vagrant.
+
+```
+#cloud-config
+
+manage_etc_hosts: localhost
+```
