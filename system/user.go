@@ -34,6 +34,8 @@ func CreateUser(u *User) error {
 
 	if u.PasswordHash != "" {
 		args = append(args, "--password", u.PasswordHash)
+	} else {
+		args = append(args, "--password", "*")
 	}
 
 	if u.GECOS != "" {
