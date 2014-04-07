@@ -68,7 +68,7 @@ func TestEtcHostsWrittenToDisk(t *testing.T) {
 		t.Fatalf("Unable to read OS hostname: %v", err)
 	}
 
-	expect := fmt.Sprintf("%s %s", DefaultIpv4Address, hostname)
+	expect := fmt.Sprintf("%s %s\n", DefaultIpv4Address, hostname)
 
 	if string(contents) != expect {
 		t.Fatalf("File has incorrect contents")

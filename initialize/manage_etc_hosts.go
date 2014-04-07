@@ -22,7 +22,7 @@ func generateEtcHosts(option string) (out string, err error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s %s", DefaultIpv4Address, hostname), nil
+	return fmt.Sprintf("%s %s\n", DefaultIpv4Address, hostname), nil
 
 }
 
