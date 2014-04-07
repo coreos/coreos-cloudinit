@@ -69,9 +69,9 @@ coreos:
 ...would be rendered to the following `/etc/oem-release`:
 
 ```
-ID="rackspace"
+ID=rackspace
 NAME="Rackspace Cloud Servers"
-VERSION_ID="168.0.0"
+VERSION_ID=168.0.0
 HOME_URL="https://www.rackspace.com/cloud/servers/"
 BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 ```
