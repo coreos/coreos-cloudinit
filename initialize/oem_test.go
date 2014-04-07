@@ -42,9 +42,9 @@ func TestOEMReleaseWrittenToDisk(t *testing.T) {
 		t.Fatalf("Unable to read expected file: %v", err)
 	}
 
-	expect := `ID="rackspace"
+	expect := `ID=rackspace
+VERSION_ID=168.0.0
 NAME="Rackspace Cloud Servers"
-VERSION_ID="168.0.0"
 HOME_URL="https://www.rackspace.com/cloud/servers/"
 BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 `
