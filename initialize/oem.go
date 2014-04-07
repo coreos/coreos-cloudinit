@@ -18,9 +18,9 @@ type OEMRelease struct {
 
 func (oem *OEMRelease) String() string {
 	fields := []string{
-		fmt.Sprintf("ID=%q", oem.ID),
+		fmt.Sprintf("ID=%s", oem.ID),
+		fmt.Sprintf("VERSION_ID=%s", oem.VersionID),
 		fmt.Sprintf("NAME=%q", oem.Name),
-		fmt.Sprintf("VERSION_ID=%q", oem.VersionID),
 		fmt.Sprintf("HOME_URL=%q", oem.HomeURL),
 		fmt.Sprintf("BUG_REPORT_URL=%q", oem.BugReportURL),
 	}
