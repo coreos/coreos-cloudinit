@@ -19,7 +19,9 @@ We can use the templating feature of coreos-cloudinit to automate etcd configura
 coreos:
     etcd:
         name: node001
-        discovery: https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8
+	# generate a new token for each unique cluster from https://discovery.etcd.io/new
+        discovery: https://discovery.etcd.io/<token>
+	# multi-region and multi-cloud deployments need to use $public_ipv4
         addr: $public_ipv4:4001
         peer-addr: $private_ipv4:7001
 ```
@@ -29,7 +31,7 @@ coreos:
 ```
 [Service]
 Environment="ETCD_NAME=node001"
-Environment="ETCD_DISCOVERY=https://discovery.etcd.io/3445fa65423d8b04df07f59fb40218f8"
+Environment="ETCD_DISCOVERY=https://discovery.etcd.io/<token>"
 Environment="ETCD_ADDR=203.0.113.29:4001"
 Environment="ETCD_PEER_ADDR=192.0.2.13:7001"
 ```
