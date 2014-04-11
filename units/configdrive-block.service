@@ -1,0 +1,15 @@
+[Unit]
+Description=Mount config drive
+Conflicts=configdrive-virtfs.service umount.target
+ConditionPathIsMountPoint=!/media/configdrive
+# Only mount config drive block devices automatically in virtual machines
+ConditionVirtualization=vm
+
+# OpenStack defined config drive so they get to stick their name in it
+Wants=user-cloudinit@media-configdrive-openstack-latest-user_data.service
+Before=user-cloudinit@media-configdrive-openstack-latest-user_data.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/bin/mount -t auto -o ro,x-mount.mkdir LABEL=config-2 /media/configdrive

@@ -1,0 +1,18 @@
+[Unit]
+Description=Mount config drive from virtfs
+Conflicts=configdrive-block.service umount.target
+ConditionPathIsMountPoint=!/media/configdrive
+ConditionVirtualization=vm
+
+# OpenStack defined config drive so they get to stick their name in it
+Wants=user-cloudinit@media-configdrive-openstack-latest-user_data.service
+Before=user-cloudinit@media-configdrive-openstack-latest-user_data.service
+
+# Support old style setup for now
+Wants=addon-run@media-configdrive.service addon-config@media-configdrive.service
+Before=addon-run@media-configdrive.service addon-config@media-configdrive.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/bin/mount -t 9p -o trans=virtio,version=9p2000.L,x-mount.mkdir config-2 /media/configdrive

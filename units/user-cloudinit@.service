@@ -1,0 +1,12 @@
+[Unit]
+Description=Load cloud-config from %f
+Requires=system-config.target
+After=system-config.target
+Before=user-config.target
+ConditionFileNotEmpty=%f
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=-/etc/environment
+ExecStart=/usr/bin/coreos-cloudinit --from-file=%f
