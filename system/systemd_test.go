@@ -26,12 +26,17 @@ Address=10.209.171.177/19
 	}
 	defer syscall.Rmdir(dir)
 
-	if _, err := PlaceUnit(&u, dir); err != nil {
+	dst := UnitDestination(&u, dir)
+	expectDst := path.Join(dir, "run", "systemd", "network", "50-eth0.network")
+	if dst != expectDst {
+		t.Fatalf("UnitDestination returned %s, expected %s", dst, expectDst)
+	}
+
+	if err := PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
 	}
 
-	fullPath := path.Join(dir, "run", "systemd", "network", "50-eth0.network")
-	fi, err := os.Stat(fullPath)
+	fi, err := os.Stat(dst)
 	if err != nil {
 		t.Fatalf("Unable to stat file: %v", err)
 	}
@@ -40,19 +45,19 @@ Address=10.209.171.177/19
 		t.Errorf("File has incorrect mode: %v", fi.Mode())
 	}
 
-	contents, err := ioutil.ReadFile(fullPath)
+	contents, err := ioutil.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("Unable to read expected file: %v", err)
 	}
 
-	expect := `[Match]
+	expectContents := `[Match]
 Name=eth47
 
 [Network]
 Address=10.209.171.177/19
 `
-	if string(contents) != expect {
-		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expect)
+	if string(contents) != expectContents {
+		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expectContents)
 	}
 }
 
@@ -72,12 +77,17 @@ Where=/media/state
 	}
 	defer syscall.Rmdir(dir)
 
-	if _, err := PlaceUnit(&u, dir); err != nil {
+	dst := UnitDestination(&u, dir)
+	expectDst := path.Join(dir, "etc", "systemd", "system", "media-state.mount")
+	if dst != expectDst {
+		t.Fatalf("UnitDestination returned %s, expected %s", dst, expectDst)
+	}
+
+	if err := PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
 	}
 
-	fullPath := path.Join(dir, "etc", "systemd", "system", "media-state.mount")
-	fi, err := os.Stat(fullPath)
+	fi, err := os.Stat(dst)
 	if err != nil {
 		t.Fatalf("Unable to stat file: %v", err)
 	}
@@ -86,17 +96,17 @@ Where=/media/state
 		t.Errorf("File has incorrect mode: %v", fi.Mode())
 	}
 
-	contents, err := ioutil.ReadFile(fullPath)
+	contents, err := ioutil.ReadFile(dst)
 	if err != nil {
 		t.Fatalf("Unable to read expected file: %v", err)
 	}
 
-	expect := `[Mount]
+	expectContents := `[Mount]
 What=/dev/sdb1
 Where=/media/state
 `
-	if string(contents) != expect {
-		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expect)
+	if string(contents) != expectContents {
+		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expectContents)
 	}
 }
 

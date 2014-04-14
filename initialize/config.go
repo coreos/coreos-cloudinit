@@ -133,9 +133,9 @@ func Apply(cfg CloudConfig, env *Environment) error {
 
 		for _, unit := range cfg.Coreos.Units {
 			if unit.Content != "" {
-				log.Printf("Writing unit %s to filesystem", unit.Name)
-				dst, err := system.PlaceUnit(&unit, env.Root())
-				if err != nil {
+				dst := system.UnitDestination(&unit, env.Root())
+				log.Printf("Writing unit %s to filesystem at path %s", unit.Name, dst)
+				if err := system.PlaceUnit(&unit, dst); err != nil {
 					return err
 				}
 				log.Printf("Placed unit %s at %s", unit.Name, dst)
