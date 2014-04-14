@@ -140,14 +140,16 @@ func Apply(cfg CloudConfig, env *Environment) error {
 				}
 				log.Printf("Placed unit %s at %s", unit.Name, dst)
 
-				if unit.Group() != "network" {
-					log.Printf("Enabling unit file %s", dst)
-					if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
-						return err
+				if unit.Enable {
+					if unit.Group() != "network" {
+						log.Printf("Enabling unit file %s", dst)
+						if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
+							return err
+						}
+						log.Printf("Enabled unit %s", unit.Name)
+					} else {
+						log.Printf("Skipping enable for network-like unit %s", unit.Name)
 					}
-					log.Printf("Enabled unit %s", unit.Name)
-				} else {
-					log.Printf("Skipping enable for network-like unit %s", unit.Name)
 				}
 			}
 

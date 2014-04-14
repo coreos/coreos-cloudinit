@@ -19,6 +19,7 @@ const fakeMachineID = "42000000000000000000000000000042"
 
 type Unit struct {
 	Name    string
+	Enable  bool
 	Runtime bool
 	Content string
 	Command string
