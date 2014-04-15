@@ -92,6 +92,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 					return err
 				}
 			}
+			if user.SSHImportBitbucketUser != "" {
+				log.Printf("Authorizing bitbucket user %s SSH keys for CoreOS user '%s'", user.SSHImportBitbucketUser, user.Name)
+				if err := SSHImportBitbucketUser(user.Name, user.SSHImportBitbucketUser); err != nil {
+					return err
+				}
+			}
 			if user.SSHImportURL != "" {
 				log.Printf("Authorizing SSH keys for CoreOS user '%s' from '%s'", user.Name, user.SSHImportURL)
 				if err := SSHImportKeysFromURL(user.Name, user.SSHImportURL); err != nil {
