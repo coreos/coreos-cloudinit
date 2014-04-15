@@ -263,6 +263,9 @@ Provide a list of objects with the following attributes:
 - **permissions**: String representing file permissions in octal notation (i.e. '0644')
 - **owner**: User and group that should own the file written to disk. This is equivalent to the `<user>:<group>` argument to `chown <user>:<group> <path>`.
 
+Explicitly not implemented is the **encoding** attribute.
+The **content** field must represent exactly what should be written to disk.
+
 ### manage_etc_hosts
 
 Have coreos-cloudinit manage your /etc/hosts file for local name resolution.
