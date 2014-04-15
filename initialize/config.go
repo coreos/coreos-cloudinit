@@ -130,26 +130,25 @@ func Apply(cfg CloudConfig, env *Environment) error {
 
 	if len(cfg.Coreos.Units) > 0 {
 		commands := make(map[string]string, 0)
-
 		for _, unit := range cfg.Coreos.Units {
+			dst := system.UnitDestination(&unit, env.Root())
 			if unit.Content != "" {
-				dst := system.UnitDestination(&unit, env.Root())
 				log.Printf("Writing unit %s to filesystem at path %s", unit.Name, dst)
 				if err := system.PlaceUnit(&unit, dst); err != nil {
 					return err
 				}
 				log.Printf("Placed unit %s at %s", unit.Name, dst)
+			}
 
-				if unit.Enable {
-					if unit.Group() != "network" {
-						log.Printf("Enabling unit file %s", dst)
-						if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
-							return err
-						}
-						log.Printf("Enabled unit %s", unit.Name)
-					} else {
-						log.Printf("Skipping enable for network-like unit %s", unit.Name)
+			if unit.Enable {
+				if unit.Group() != "network" {
+					log.Printf("Enabling unit file %s", dst)
+					if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
+						return err
 					}
+					log.Printf("Enabled unit %s", unit.Name)
+				} else {
+					log.Printf("Skipping enable for network-like unit %s", unit.Name)
 				}
 			}
 
