@@ -1,12 +1,10 @@
 # Functionality Overview
 
-CoreOS supports customization of its initialization procedure by specifying values to use when initializing various OS-level items. Such items include network configuration, user accounts, and systemd units to launch on startup. This document defines the full list of initialization items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. 
+CoreOS allows us to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. 
 
 # Configuration File
 
-The file used by this system initialization program is called a "cloud-config" file, and it aims to implement all of the parameters of the [cloud-init][cloud-init] project's [cloud-config][cloud-config] file, which is "the defacto multi-distribution package that handles early initialization of a cloud instance" ([cloud-init docs][cloud-init-docs]). Currently, however, only a subset of that file's configuration items are implemented.
-
-In addition to the configuration items in the cloud-init project's cloud-config file, we added a few additional items which are specific to CoreOS. These CoreOS-specific items include etcd configuration, OEM definition, and systemd units to launch on startup.
+The file used by this system initialization program is called a "cloud-config" file. It is inspired by the [cloud-init][cloud-init] project's [cloud-config][cloud-config] file. which is "the defacto multi-distribution package that handles early initialization of a cloud instance" ([cloud-init docs][cloud-init-docs]). Because the cloud-init project includes tools which aren't used by CoreOS, only the relevant subset of its configuration items will be implemented in our cloud-config file. In addition to those, we added a few CoreOS-specific items, such as etcd configuration, OEM definition, and systemd units.
 
 We've designed our implementation to allow the same cloud-config file to work across all of our supported platforms.
 
@@ -76,7 +74,7 @@ Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 ### `oem`
 
-The `coreos.oem.*` options are the following fields, which are borrowed from the [os-release spec][os-release] and repurposed as a way for coreos-cloudinit to know about the OEM partition on this machine:
+The `coreos.oem.*` options follow the [os-release spec][os-release], but have been repurposed as a way for coreos-cloudinit to know about the OEM partition on this machine:
 
 - **id**: Lowercase string identifying the OEM
 - **name**: Human-friendly string representing the OEM
