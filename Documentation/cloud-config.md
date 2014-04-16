@@ -33,7 +33,7 @@ The expected values for these keys are defined in the rest of this document.
 
 CoreOS tries to conform to each platform's native method to provide user data. Each cloud provider tends to be unique, but this complexity has been abstracted by CoreOS. You can view each platform's instructions on their documentation pages. The most universal way to provide cloud-config is [via config-drive](https://github.com/coreos/coreos-cloudinit/blob/master/Documentation/config-drive.md), which attaches a read-only device to the machine, that contains your cloud-config file.
 
-# Configuration Options
+# Configuration Parameters
 
 ## CoreOS Parameters
 
@@ -41,7 +41,7 @@ CoreOS tries to conform to each platform's native method to provide user data. E
 
 ### `etcd`
 
-The `coreos.etcd.*` options will be translated to a partial systemd unit acting as an etcd configuration file.
+The `coreos.etcd.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
 We can use the templating feature of coreos-cloudinit to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. For example, the following cloud-config document...
 
 ```
@@ -67,14 +67,14 @@ Environment="ETCD_ADDR=203.0.113.29:4001"
 Environment="ETCD_PEER_ADDR=192.0.2.13:7001"
 ```
 
-For more information about the available configuration options, see the [etcd documentation][etcd-config].
+For more information about the available configuration parameters, see the [etcd documentation][etcd-config].
 Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 [etcd-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
 
 ### `oem`
 
-The `coreos.oem.*` options follow the [os-release spec][os-release], but have been repurposed as a way for coreos-cloudinit to know about the OEM partition on this machine:
+The `coreos.oem.*` parameters follow the [os-release spec][os-release], but have been repurposed as a way for coreos-cloudinit to know about the OEM partition on this machine:
 
 - **id**: Lowercase string identifying the OEM
 - **name**: Human-friendly string representing the OEM
@@ -112,8 +112,7 @@ BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 
 ### `units`
 
-The `coreos.units.*` options define arbitrary systemd units to start.
-`coreos.units` is a list of objects with the following fields:
+The `coreos.units.*` parameters define a list of arbitrary systemd units to start. Each item is an object with the following fields:
 
 - **name**: String representing unit's name. Required.
 - **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analagous to the `--runtime` argument to `systemd enable`. Default value is false.
@@ -163,7 +162,7 @@ coreos:
 
 ## `ssh_authorized_keys`
 
-The `ssh_authorized_keys` option adds public SSH keys which will be authorized for the `core` user.
+The `ssh_authorized_keys` parameter adds public SSH keys which will be authorized for the `core` user.
 
 The keys will be named "coreos-cloudinit" by default.
 Override this by using the `--ssh-key-name` flag when calling `coreos-cloudinit`.
@@ -177,7 +176,7 @@ ssh_authorized_keys:
 
 ## `hostname`
 
-The `hostname` option defines the system's hostname.
+The `hostname` parameter defines the system's hostname.
 This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.example.com`).
 
 ```
@@ -188,7 +187,7 @@ hostname: coreos1
 
 ## `users`
 
-The `users` option adds or modifies the specified list of users. Each user is an object which consists of the following fields. Each field is optional and of type string unless otherwise noted.
+The `users` parameter adds or modifies the specified list of users. Each user is an object which consists of the following fields. Each field is optional and of type string unless otherwise noted.
 All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the user already exists.
 
 - **name**: Required. Login name of user
@@ -285,7 +284,7 @@ users:
 
 ## `write_files`
 
-The `write-file` option defines a list of files to create on the local filesystem. Each file is represented as an associative array which has the following keys:
+The `write-file` parameter defines a list of files to create on the local filesystem. Each file is represented as an associative array which has the following keys:
 
 - **path**: Absolute location on disk where contents should be written
 - **content**: Data to write at the provided `path`
@@ -297,7 +296,7 @@ The **content** field must represent exactly what should be written to disk.
 
 ## `manage_etc_hosts`
 
-The `manage_etc_hosts` option configures the contents of the `/etc/hosts` file, which is used for local name resolution.
+The `manage_etc_hosts` parameter configures the contents of the `/etc/hosts` file, which is used for local name resolution.
 Currently, the only supported value is "localhost" which will cause your system's hostname
 to resolve to "127.0.0.1".  This is helpful when the host does not have DNS
 infrastructure in place to resolve its own hostname, for example, when using Vagrant.
