@@ -165,10 +165,10 @@ coreos:
 
 ## `ssh_authorized_keys`
 
-Provided public SSH keys will be authorized for the `core` user.
+The `ssh_authorized_keys` option adds public SSH keys which will be authorized for the `core` user.
 
 The keys will be named "coreos-cloudinit" by default.
-Override this with the `--ssh-key-name` flag when calling `coreos-cloudinit`.
+Override this by using the `--ssh-key-name` flag when calling `coreos-cloudinit`.
 
 ```
 #cloud-config
@@ -179,7 +179,7 @@ ssh_authorized_keys:
 
 ## `hostname`
 
-The provided value will be used to set the system's hostname.
+The `hostname` option defines the system's hostname.
 This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.example.com`).
 
 ```
@@ -190,8 +190,7 @@ hostname: coreos1
 
 ## `users`
 
-Add or modify users with the `users` directive by providing a list of user objects, each consisting of the following fields.
-Each field is optional and of type string unless otherwise noted.
+The `users` option adds or modifies the specified list of users. Each user is an object which consists of the following fields. Each field is optional and of type string unless otherwise noted.
 All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the user already exists.
 
 - **name**: Required. Login name of user
@@ -253,7 +252,7 @@ Using a higher number of rounds will help create more secure passwords, but give
 
 #### From a GitHub User
 
-Using the field `coreos-ssh-import-github`, you can make coreos-cloudinit to add the public ssh keys from a GitHub user as authorized keys to a server.
+Using the `coreos-ssh-import-github` field, we can import public SSH keys from a GitHub user to use as authorized keys to a server.
 
 ```
 #cloud-config
@@ -265,8 +264,8 @@ users:
 
 #### From an HTTP Endpoint
 
-coreos-cloudinit can also pull public SSH keys from any http endpoint that matches [GitHub's API response format](https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user).
-For example, if you have an installation of GitHub Enterprise, you can provide a complete url with an authentication token:
+We can also pull public SSH keys from any HTTP endpoint which matches [GitHub's API response format](https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user).
+For example, if you have an installation of GitHub Enterprise, you can provide a complete URL with an authentication token:
 
 ```
 #cloud-config
@@ -276,7 +275,7 @@ users:
     coreos-ssh-import-url: https://token:<OAUTH-TOKEN>@github-enterprise.example.com/users/elroy/keys
 ```
 
-You can also provide any url which response matches that json format for public keys:
+You can also specify any URL whose response matches the JSON format for public keys:
 
 ```
 #cloud-config
@@ -288,8 +287,7 @@ users:
 
 ## `write_files`
 
-Inject an arbitrary set of files to the local filesystem.
-Provide a list of objects with the following attributes:
+The `write-file` option defines a list of files to create on the local filesystem. Each file is represented as an associative array which has the following keys:
 
 - **path**: Absolute location on disk where contents should be written
 - **content**: Data to write at the provided `path`
@@ -301,8 +299,8 @@ The **content** field must represent exactly what should be written to disk.
 
 ## `manage_etc_hosts`
 
-Have coreos-cloudinit manage your /etc/hosts file for local name resolution.
-The only supported value is "localhost" which will cause your system's hostname
+The `manage_etc_hosts` option configures the contents of the `/etc/hosts` file, which is used for local name resolution.
+Currently, the only supported value is "localhost" which will cause your system's hostname
 to resolve to "127.0.0.1".  This is helpful when the host does not have DNS
 infrastructure in place to resolve its own hostname, for example, when using Vagrant.
 
