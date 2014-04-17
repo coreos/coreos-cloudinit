@@ -19,6 +19,7 @@ const fakeMachineID = "42000000000000000000000000000042"
 
 type Unit struct {
 	Name    string
+	Enable  bool
 	Runtime bool
 	Content string
 	Command string
@@ -41,20 +42,27 @@ func (u *Unit) Group() (group string) {
 
 type Script []byte
 
-func PlaceUnit(u *Unit, root string) (string, error) {
+// UnitDestination builds the appropriate absolte file path for
+// the given unit. The root argument indicates the effective base
+// directory of the system (similar to a chroot).
+func UnitDestination(u *Unit, root string) string {
 	dir := "etc"
 	if u.Runtime {
 		dir = "run"
 	}
 
-	dst := path.Join(root, dir, "systemd", u.Group())
-	if _, err := os.Stat(dst); os.IsNotExist(err) {
-		if err := os.MkdirAll(dst, os.FileMode(0755)); err != nil {
-			return "", err
+	return path.Join(root, dir, "systemd", u.Group(), u.Name)
+}
+
+// PlaceUnit writes a unit file at the provided destination, creating
+// parent directories as necessary.
+func PlaceUnit(u *Unit, dst string) error {
+	dir := filepath.Dir(dst)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, os.FileMode(0755)); err != nil {
+			return err
 		}
 	}
-
-	dst = path.Join(dst, u.Name)
 
 	file := File{
 		Path: dst,
@@ -64,10 +72,10 @@ func PlaceUnit(u *Unit, root string) (string, error) {
 
 	err := WriteFile(&file)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return dst, nil
+	return nil
 }
 
 func EnableUnitFile(file string, runtime bool) error {
