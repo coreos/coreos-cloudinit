@@ -6,6 +6,10 @@ Only a subset of [cloud-config functionality][cloud-config] is implemented. A se
 
 [cloud-config]: http://cloudinit.readthedocs.org/en/latest/topics/format.html#cloud-config-data
 
+## How to Provide Cloud-Config
+
+CoreOS tries to conform to each platform's native method to provide user data. Each cloud provider tends to be unique, but this complexity has been abstracted by CoreOS. You can view each platform's instructions on their documentation pages. The most universal way to provide cloud-config is [via config-drive](https://github.com/coreos/coreos-cloudinit/blob/master/Documentation/config-drive.md), which attaches a read-only device to the machine, that contains your cloud-config file.
+
 ## CoreOS Parameters
 
 ### coreos.etcd
