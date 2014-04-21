@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
@@ -76,7 +75,7 @@ func main() {
 	userdata := string(userdataBytes)
 	userdata = env.Apply(userdata)
 
-	parsed, err := ParseUserData(userdata)
+	parsed, err := initialize.ParseUserData(userdata)
 	if err != nil {
 		log.Printf("Failed parsing user-data: %v", err)
 		if ignoreFailure {
@@ -109,21 +108,3 @@ func main() {
 	}
 }
 
-func ParseUserData(contents string) (interface{}, error) {
-	header := strings.SplitN(contents, "\n", 2)[0]
-
-	if strings.HasPrefix(header, "#!") {
-		log.Printf("Parsing user-data as script")
-		return system.Script(contents), nil
-
-	} else if header == "#cloud-config" {
-		log.Printf("Parsing user-data as cloud-config")
-		cfg, err := initialize.NewCloudConfig(contents)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		return *cfg, nil
-	} else {
-		return nil, fmt.Errorf("Unrecognized user-data header: %s", header)
-	}
-}
