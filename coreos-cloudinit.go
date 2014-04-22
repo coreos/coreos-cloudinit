@@ -26,6 +26,9 @@ func main() {
 	var url string
 	flag.StringVar(&url, "from-url", "", "Download user-data from provided url")
 
+	var useProcCmdline bool
+	flag.BoolVar(&useProcCmdline, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
+
 	var workspace string
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 
@@ -39,8 +42,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	if file != "" && url != "" {
-		fmt.Println("Provide one of --from-file or --from-url")
+	if file != "" && url != "" && !useProcCmdline {
+		fmt.Println("Provide one of --from-file, --from-url or --from-proc-cmdline")
 		os.Exit(1)
 	}
 
@@ -49,8 +52,10 @@ func main() {
 		ds = datasource.NewLocalFile(file)
 	} else if url != "" {
 		ds = datasource.NewMetadataService(url)
+	} else if useProcCmdline {
+		ds = datasource.NewProcCmdline()
 	} else {
-		fmt.Println("Provide one of --from-file or --from-url")
+		fmt.Println("Provide one of --from-file, --from-url or --from-proc-cmdline")
 		os.Exit(1)
 	}
 
