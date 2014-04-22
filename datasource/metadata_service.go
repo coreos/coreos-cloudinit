@@ -1,36 +1,15 @@
 package datasource
 
-import (
-	"io/ioutil"
-	"net/http"
-)
-
 type metadataService struct {
-	url    string
-	client http.Client
+	url string
 }
 
 func NewMetadataService(url string) *metadataService {
-	return &metadataService{url, http.Client{}}
+	return &metadataService{url}
 }
 
 func (ms *metadataService) Fetch() ([]byte, error) {
-	resp, err := ms.client.Get(ms.url)
-	if err != nil {
-		return []byte{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode / 100 != 2 {
-		return []byte{}, nil
-	}
-
-	respBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return respBytes, nil
+	return fetchURL(ms.url)
 }
 
 func (ms *metadataService) Type() string {
