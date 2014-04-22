@@ -6,3 +6,6 @@ After=system-config.target
 # Load user_data placed by coreos-install
 Requires=user-cloudinit@var-lib-coreos\x2dinstall-user_data.service
 After=user-cloudinit@var-lib-coreos\x2dinstall-user_data.service
+
+Requires=user-cloudinit-proc-cmdline.service
+After=user-cloudinit-proc-cmdline.service
