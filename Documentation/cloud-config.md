@@ -1,8 +1,8 @@
-# Functionality Overview
+# Using Cloud-Config
 
 CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. 
 
-# Configuration File
+## Configuration File
 
 The file used by this system initialization program is called a "cloud-config" file. It is inspired by the [cloud-init][cloud-init] project's [cloud-config][cloud-config] file. which is "the defacto multi-distribution package that handles early initialization of a cloud instance" ([cloud-init docs][cloud-init-docs]). Because the cloud-init project includes tools which aren't used by CoreOS, only the relevant subset of its configuration items will be implemented in our cloud-config file. In addition to those, we added a few CoreOS-specific items, such as etcd configuration, OEM definition, and systemd units.
 
@@ -12,7 +12,7 @@ We've designed our implementation to allow the same cloud-config file to work ac
 [cloud-init-docs]: http://cloudinit.readthedocs.org/en/latest/index.html
 [cloud-config]: http://cloudinit.readthedocs.org/en/latest/topics/format.html#cloud-config-data
 
-## File Format
+### File Format
 
 The cloud-config file uses the [YAML][yaml] file format, which uses whitespace and new-lines to delimit lists, associative arrays, and values.
 
@@ -29,17 +29,15 @@ The expected values for these keys are defined in the rest of this document.
 
 [yaml]: https://en.wikipedia.org/wiki/YAML
 
-## Providing Cloud-Config with Config-Drive
+### Providing Cloud-Config with Config-Drive
 
 CoreOS tries to conform to each platform's native method to provide user data. Each cloud provider tends to be unique, but this complexity has been abstracted by CoreOS. You can view each platform's instructions on their documentation pages. The most universal way to provide cloud-config is [via config-drive](https://github.com/coreos/coreos-cloudinit/blob/master/Documentation/config-drive.md), which attaches a read-only device to the machine, that contains your cloud-config file.
 
-# Configuration Parameters
+## Configuration Parameters
 
-## CoreOS Parameters
+### coreos
 
-## `coreos`
-
-### `etcd`
+#### etcd
 
 The `coreos.etcd.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
 We can use the templating feature of coreos-cloudinit to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. For example, the following cloud-config document...
@@ -72,7 +70,7 @@ Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 [etcd-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
 
-### `oem`
+#### oem
 
 The `coreos.oem.*` parameters follow the [os-release spec][os-release], but have been repurposed as a way for coreos-cloudinit to know about the OEM partition on this machine:
 
@@ -110,7 +108,7 @@ BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 
 [os-release]: http://www.freedesktop.org/software/systemd/man/os-release.html
 
-### `units`
+#### units
 
 The `coreos.units.*` parameters define a list of arbitrary systemd units to start. Each item is an object with the following fields:
 
@@ -160,7 +158,7 @@ coreos:
         command: start
 ```
 
-## `ssh_authorized_keys`
+### ssh_authorized_keys
 
 The `ssh_authorized_keys` parameter adds public SSH keys which will be authorized for the `core` user.
 
@@ -174,7 +172,7 @@ ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
 ```
 
-## `hostname`
+### hostname
 
 The `hostname` parameter defines the system's hostname.
 This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.example.com`).
@@ -185,7 +183,7 @@ This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.exam
 hostname: coreos1
 ```
 
-## `users`
+### users
 
 The `users` parameter adds or modifies the specified list of users. Each user is an object which consists of the following fields. Each field is optional and of type string unless otherwise noted.
 All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the user already exists.
@@ -225,7 +223,7 @@ users:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
 ```
 
-### Generating a password hash
+#### Generating a password hash
 
 If you choose to use a password instead of an SSH key, generating a safe hash is extremely important to the security of your system. Simplified hashes like md5crypt are trivial to crack on modern GPU hardware. Here are a few ways to generate secure hashes:
 
@@ -245,9 +243,9 @@ perl -e 'print crypt("password","\$6\$SALT\$") . "\n"'
 
 Using a higher number of rounds will help create more secure passwords, but given enough time, password hashes can be reversed.  On most RPM based distributions there is a tool called mkpasswd available in the `expect` package, but this does not handle "rounds" nor advanced hashing algorithms. 
 
-### Retrieving SSH Authorized Keys
+#### Retrieving SSH Authorized Keys
 
-#### From a GitHub User
+##### From a GitHub User
 
 Using the `coreos-ssh-import-github` field, we can import public SSH keys from a GitHub user to use as authorized keys to a server.
 
@@ -259,7 +257,7 @@ users:
     coreos-ssh-import-github: elroy
 ```
 
-#### From an HTTP Endpoint
+##### From an HTTP Endpoint
 
 We can also pull public SSH keys from any HTTP endpoint which matches [GitHub's API response format](https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user).
 For example, if you have an installation of GitHub Enterprise, you can provide a complete URL with an authentication token:
@@ -282,7 +280,7 @@ users:
     coreos-ssh-import-url: https://example.com/public-keys
 ```
 
-## `write_files`
+### write_files
 
 The `write-file` parameter defines a list of files to create on the local filesystem. Each file is represented as an associative array which has the following keys:
 
@@ -294,7 +292,7 @@ The `write-file` parameter defines a list of files to create on the local filesy
 Explicitly not implemented is the **encoding** attribute.
 The **content** field must represent exactly what should be written to disk.
 
-## `manage_etc_hosts`
+### manage_etc_hosts
 
 The `manage_etc_hosts` parameter configures the contents of the `/etc/hosts` file, which is used for local name resolution.
 Currently, the only supported value is "localhost" which will cause your system's hostname
