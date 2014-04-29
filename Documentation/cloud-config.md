@@ -130,6 +130,7 @@ Write a unit to disk, automatically starting it.
 coreos:
     units:
       - name: docker-redis.service
+        command: start
         content: |
           [Unit]
           Description=Redis container
