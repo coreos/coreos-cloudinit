@@ -293,6 +293,16 @@ The `write-file` parameter defines a list of files to create on the local filesy
 Explicitly not implemented is the **encoding** attribute.
 The **content** field must represent exactly what should be written to disk.
 
+```
+#cloud-config
+write_files:
+  - path: /etc/fleet/fleet.conf
+    permissions: 0644
+    content: |
+      verbosity=1
+      metadata="region=us-west,type=ssd"
+```
+
 ### manage_etc_hosts
 
 The `manage_etc_hosts` parameter configures the contents of the `/etc/hosts` file, which is used for local name resolution.
