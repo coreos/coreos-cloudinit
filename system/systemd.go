@@ -65,8 +65,8 @@ func PlaceUnit(u *Unit, dst string) error {
 	}
 
 	file := File{
-		Path: dst,
-		Content: u.Content,
+		Path:               dst,
+		Content:            u.Content,
 		RawFilePermissions: "0644",
 	}
 
@@ -164,4 +164,12 @@ func MachineID(root string) string {
 	}
 
 	return id
+}
+
+func MaskUnit(unit string, root string) error {
+	masked := path.Join(root, "etc", "systemd", "system", unit)
+	if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
+		return err
+	}
+	return os.Symlink("/dev/null", masked)
 }

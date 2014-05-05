@@ -4,15 +4,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"syscall"
 	"testing"
 )
 
 func TestPlaceNetworkUnit(t *testing.T) {
 	u := Unit{
-		Name: "50-eth0.network",
-      Runtime: true,
-      Content: `[Match]
+		Name:    "50-eth0.network",
+		Runtime: true,
+		Content: `[Match]
 Name=eth47
 
 [Network]
@@ -24,7 +23,7 @@ Address=10.209.171.177/19
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	dst := UnitDestination(&u, dir)
 	expectDst := path.Join(dir, "run", "systemd", "network", "50-eth0.network")
@@ -63,9 +62,9 @@ Address=10.209.171.177/19
 
 func TestPlaceMountUnit(t *testing.T) {
 	u := Unit{
-		Name: "media-state.mount",
-      Runtime: false,
-      Content: `[Mount]
+		Name:    "media-state.mount",
+		Runtime: false,
+		Content: `[Mount]
 What=/dev/sdb1
 Where=/media/state
 `,
@@ -75,7 +74,7 @@ Where=/media/state
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	dst := UnitDestination(&u, dir)
 	expectDst := path.Join(dir, "etc", "systemd", "system", "media-state.mount")
@@ -115,12 +114,31 @@ func TestMachineID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	os.Mkdir(path.Join(dir, "etc"), os.FileMode(0755))
 	ioutil.WriteFile(path.Join(dir, "etc", "machine-id"), []byte("node007\n"), os.FileMode(0444))
 
 	if MachineID(dir) != "node007" {
 		t.Fatalf("File has incorrect contents")
+	}
+}
+func TestMaskUnit(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+	if err != nil {
+		t.Fatalf("Unable to create tempdir: %v", err)
+	}
+	defer os.RemoveAll(dir)
+	if err := MaskUnit("foo.service", dir); err != nil {
+		t.Fatalf("Unable to mask unit: %v", err)
+	}
+
+	fullPath := path.Join(dir, "etc", "systemd", "system", "foo.service")
+	target, err := os.Readlink(fullPath)
+	if err != nil {
+		t.Fatalf("Unable to read link", err)
+	}
+	if target != "/dev/null" {
+		t.Fatalf("unit not masked, got unit target", target)
 	}
 }

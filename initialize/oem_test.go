@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"syscall"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestOEMReleaseWrittenToDisk(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	if err := WriteOEMRelease(&oem, dir); err != nil {
 		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
