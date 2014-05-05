@@ -11,7 +11,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
-const version = "0.5.1+git"
+const version = "0.5.2"
 
 func main() {
 	var printVersion bool
@@ -112,4 +112,3 @@ func main() {
 		log.Fatalf("Failed resolving user-data: %v", err)
 	}
 }
-
