@@ -29,3 +29,21 @@ func TestParseHeaderCRLF(t *testing.T) {
 		}
 	}
 }
+
+func TestParseConfigCRLF(t *testing.T) {
+	contents := "#cloud-config\r\nhostname: foo\r\nssh_authorized_keys:\r\n  - foobar\r\n"
+	ud, err := ParseUserData(contents)
+	if err != nil {
+		t.Fatalf("Failed parsing config: %v", err)
+	}
+
+	cfg := ud.(CloudConfig)
+
+	if cfg.Hostname != "foo" {
+		t.Error("Failed parsing hostname from config")
+	}
+
+	if len(cfg.SSHAuthorizedKeys) != 1 {
+		t.Error("Parsed incorrect number of SSH keys")
+	}
+}
