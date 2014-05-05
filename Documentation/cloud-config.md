@@ -37,6 +37,17 @@ CoreOS tries to conform to each platform's native method to provide user data. E
 
 ### coreos
 
+#### locksmith
+
+The value of `coreos.locksmith.strategy` controls how CoreOS behaves when an
+update has been applied. There are three possible values:
+
+- etcd-lock - reboot after first taking a lock in etcd.
+- reboot - reboot immediately without taking a lock.
+- best-effort - if etcd is running then do etcd-lock otherwise simply reboot.
+
+The default strategy is `best-effort`.
+
 #### etcd
 
 The `coreos.etcd.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
