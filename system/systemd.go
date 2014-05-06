@@ -65,8 +65,8 @@ func PlaceUnit(u *Unit, dst string) error {
 	}
 
 	file := File{
-		Path: dst,
-		Content: u.Content,
+		Path:               dst,
+		Content:            u.Content,
 		RawFilePermissions: "0644",
 	}
 
