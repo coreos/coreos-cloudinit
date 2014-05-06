@@ -11,10 +11,10 @@ import (
 )
 
 type File struct {
-	Encoding    string
-	Content     string
-	Owner       string
-	Path        string
+	Encoding           string
+	Content            string
+	Owner              string
+	Path               string
 	RawFilePermissions string `yaml:"permissions"`
 }
 
@@ -30,7 +30,6 @@ func (f *File) Permissions() (os.FileMode, error) {
 	}
 	return os.FileMode(perm), nil
 }
-
 
 func WriteFile(f *File) error {
 	if f.Encoding != "" {

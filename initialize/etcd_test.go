@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"syscall"
 	"testing"
 )
 
@@ -60,15 +59,15 @@ Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 
 func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	ec := EtcdEnvironment{
-		"name": "node001",
-		"discovery": "http://disco.example.com/foobar",
+		"name":           "node001",
+		"discovery":      "http://disco.example.com/foobar",
 		"peer-bind-addr": "127.0.0.1:7002",
 	}
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	if err := WriteEtcdEnvironment(ec, dir); err != nil {
 		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
@@ -106,7 +105,7 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	os.Mkdir(path.Join(dir, "etc"), os.FileMode(0755))
 	err = ioutil.WriteFile(path.Join(dir, "etc", "machine-id"), []byte("node007"), os.FileMode(0444))
@@ -134,6 +133,6 @@ Environment="ETCD_NAME=node007"
 }
 
 func rmdir(path string) error {
-    cmd := exec.Command("rm", "-rf", path)
-    return cmd.Run()
+	cmd := exec.Command("rm", "-rf", path)
+	return cmd.Run()
 }
