@@ -123,3 +123,22 @@ func TestMachineID(t *testing.T) {
 		t.Fatalf("File has incorrect contents")
 	}
 }
+func TestMaskUnit(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+	if err != nil {
+		t.Fatalf("Unable to create tempdir: %v", err)
+	}
+	defer os.RemoveAll(dir)
+	if err := MaskUnit("foo.service", dir); err != nil {
+		t.Fatalf("Unable to mask unit: %v", err)
+	}
+
+	fullPath := path.Join(dir, "etc", "systemd", "system", "foo.service")
+	target, err := os.Readlink(fullPath)
+	if err != nil {
+		t.Fatalf("Unable to read link", err)
+	}
+	if target != "/dev/null" {
+		t.Fatalf("unit not masked, got unit target", target)
+	}
+}
