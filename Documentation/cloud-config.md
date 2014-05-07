@@ -70,6 +70,23 @@ Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 [etcd-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
 
+#### update
+
+The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
+
+- **reboot-strategy**: One of "reboot", "etcd-lock", "best-effort" or "off" for controlling when reboots are issued after an update is performed.
+  - _reboot_: Reboot immediately after an update is applied.
+  - _etcd-lock_: Reboot after first taking a distributed lock in etcd, this guarantees that only one host will reboot concurrently and that the cluster will remain available during the update.
+  - _best-effort_ - If etcd is running, "etcd-lock", otherwise simply "reboot".
+  - _off_ - Disable rebooting after updates are applied (not recommended).
+
+```
+#cloud-config
+coreos:
+  update:
+    reboot-strategy: etcd-lock
+```
+
 #### oem
 
 The `coreos.oem.*` parameters follow the [os-release spec][os-release], but have been repurposed as a way for coreos-cloudinit to know about the OEM partition on this machine:
