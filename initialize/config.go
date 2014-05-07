@@ -130,7 +130,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	if s, ok := cfg.Coreos.Update["reboot-strategy"]; ok {
-		if err := WriteLocksmithEnvironment(s, env.Root()); err != nil {
+		if err := WriteLocksmithConfig(s, env.Root()); err != nil {
 			log.Fatalf("Failed to write locksmith config to filesystem: %v", err)
 		}
 		log.Printf("Wrote locksmith config file to filesystem")

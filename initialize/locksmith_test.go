@@ -12,11 +12,11 @@ const (
 GROUP=thegroupc`
 
 	configured = base + `
-STRATEGY=awesome
+REBOOT_STRATEGY=awesome
 `
 
 	expected = base + `
-STRATEGY=etcd-lock
+REBOOT_STRATEGY=etcd-lock
 `
 )
 
@@ -44,7 +44,7 @@ func TestLocksmithEnvironmentWrittenToDisk(t *testing.T) {
 			}
 		}
 
-		if err := WriteLocksmithEnvironment("etcd-lock", dir); err != nil {
+		if err := WriteLocksmithConfig("etcd-lock", dir); err != nil {
 			t.Fatalf("Processing of LocksmithEnvironment failed: %v", err)
 		}
 
@@ -77,7 +77,7 @@ func TestLocksmithEnvironmentMasked(t *testing.T) {
 	defer os.RemoveAll(dir)
 	setupFixtures(dir)
 
-	if err := WriteLocksmithEnvironment("off", dir); err != nil {
+	if err := WriteLocksmithConfig("off", dir); err != nil {
 		t.Fatalf("Processing of LocksmithEnvironment failed: %v", err)
 	}
 

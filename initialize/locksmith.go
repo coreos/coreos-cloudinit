@@ -40,10 +40,10 @@ func addStrategy(strategy string, root string) error {
 	scanner := bufio.NewScanner(conf)
 
 	sawStrat := false
-	stratLine := "STRATEGY="+strategy
+	stratLine := "REBOOT_STRATEGY="+strategy
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "STRATEGY=") {
+		if strings.HasPrefix(line, "REBOOT_STRATEGY=") {
 			line = stratLine
 			sawStrat = true
 		}
@@ -60,8 +60,8 @@ func addStrategy(strategy string, root string) error {
 	return os.Rename(tmp.Name(), etcUpdate)
 }
 
-// WriteLocksmithEnvironment writes a drop-in unit for locksmith
-func WriteLocksmithEnvironment(strategy string, root string) error {
+// WriteLocksmithConfig updates the `update.conf` file with a REBOOT_STRATEGY for locksmith.
+func WriteLocksmithConfig(strategy string, root string) error {
 	cmd := "restart"
 	if strategy == "off" {
 		err := system.MaskUnit(locksmithUnit, root)
