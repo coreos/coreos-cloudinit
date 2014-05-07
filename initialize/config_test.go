@@ -32,6 +32,8 @@ func TestCloudConfig(t *testing.T) {
 coreos: 
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
+  update:
+    reboot-strategy: reboot
   units:
     - name: 50-eth0.network
       runtime: yes
@@ -128,6 +130,9 @@ Address=10.209.171.177/19
 
 	if cfg.Hostname != "trontastic" {
 		t.Errorf("Failed to parse hostname")
+	}
+	if cfg.Coreos.Update["reboot-strategy"] != "reboot" {
+		t.Errorf("Failed to parse locksmith strategy")
 	}
 }
 

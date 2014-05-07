@@ -13,9 +13,10 @@ import (
 type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
-		Etcd  EtcdEnvironment
-		Units []system.Unit
-		OEM   OEMRelease
+		Etcd   EtcdEnvironment
+		Update map[string]string
+		Units  []system.Unit
+		OEM    OEMRelease
 	}
 	WriteFiles     []system.File `yaml:"write_files"`
 	Hostname       string
@@ -126,6 +127,13 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 
 		log.Printf("Wrote etcd config file to filesystem")
+	}
+
+	if s, ok := cfg.Coreos.Update["reboot-strategy"]; ok {
+		if err := WriteLocksmithConfig(s, env.Root()); err != nil {
+			log.Fatalf("Failed to write locksmith config to filesystem: %v", err)
+		}
+		log.Printf("Wrote locksmith config file to filesystem")
 	}
 
 	if len(cfg.Coreos.Units) > 0 {
