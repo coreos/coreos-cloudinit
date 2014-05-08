@@ -53,7 +53,7 @@ func CreateUser(u *User) error {
 	}
 
 	if u.PrimaryGroup != "" {
-		args = append(args, "--primary-group", u.PrimaryGroup)
+		args = append(args, "--gid", u.PrimaryGroup)
 	}
 
 	if len(u.Groups) > 0 {
