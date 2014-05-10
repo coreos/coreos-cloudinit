@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 const (
@@ -42,9 +44,19 @@ func TestLocksmithEnvironmentWrittenToDisk(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
+		uc := &UpdateConfig{"reboot-strategy": "etcd-lock"}
 
-		if err := WriteLocksmithConfig("etcd-lock", dir); err != nil {
-			t.Fatalf("Processing of LocksmithEnvironment failed: %v", err)
+		f, err := uc.File(dir)
+		if err != nil {
+			t.Fatalf("Processing UpdateConfig failed: %v", err)
+		}
+		if f == nil {
+			t.Fatalf("UpdateConfig generated nil file unexpectedly")
+		}
+
+		f.Path = path.Join(dir, f.Path)
+		if err := system.WriteFile(f); err != nil {
+			t.Fatalf("Error writing update config: %v", err)
 		}
 
 		fullPath := path.Join(dir, "etc", "coreos", "update.conf")
@@ -76,9 +88,17 @@ func TestLocksmithEnvironmentMasked(t *testing.T) {
 	defer os.RemoveAll(dir)
 	setupFixtures(dir)
 
-	if err := WriteLocksmithConfig("off", dir); err != nil {
-		t.Fatalf("Processing of LocksmithEnvironment failed: %v", err)
+	uc := &UpdateConfig{"reboot-strategy": "off"}
+
+	u, err := uc.Unit(dir)
+	if err != nil {
+		t.Fatalf("Processing UpdateConfig failed: %v", err)
 	}
+	if u == nil {
+		t.Fatalf("UpdateConfig generated nil unit unexpectedly")
+	}
+
+	system.MaskUnit(u.Name, dir)
 
 	fullPath := path.Join(dir, "etc", "systemd", "system", "locksmithd.service")
 	target, err := os.Readlink(fullPath)

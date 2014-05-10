@@ -16,7 +16,7 @@ type OEMRelease struct {
 	BugReportURL string `yaml:"bug-report-url"`
 }
 
-func (oem *OEMRelease) String() string {
+func (oem OEMRelease) String() string {
 	fields := []string{
 		fmt.Sprintf("ID=%s", oem.ID),
 		fmt.Sprintf("VERSION_ID=%s", oem.VersionID),
@@ -28,12 +28,14 @@ func (oem *OEMRelease) String() string {
 	return strings.Join(fields, "\n") + "\n"
 }
 
-func WriteOEMRelease(oem *OEMRelease, root string) error {
-	file := system.File{
-		Path:               path.Join(root, "etc", "oem-release"),
-		RawFilePermissions: "0644",
-		Content:            oem.String(),
+func (oem OEMRelease) File(root string) (*system.File, error) {
+	if oem.ID == "" {
+		return nil, nil
 	}
 
-	return system.WriteFile(&file)
+	return &system.File{
+		Path:               path.Join("etc", "oem-release"),
+		RawFilePermissions: "0644",
+		Content:            oem.String(),
+	}, nil
 }

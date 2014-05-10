@@ -6,6 +6,8 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 func TestCloudConfigManageEtcHosts(t *testing.T) {
@@ -25,14 +27,9 @@ manage_etc_hosts: localhost
 }
 
 func TestManageEtcHostsInvalidValue(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer rmdir(dir)
-
-	if err := WriteEtcHosts("invalid", dir); err == nil {
-		t.Fatalf("WriteEtcHosts succeeded with invalid value: %v", err)
+	eh := EtcHosts("invalid")
+	if f, err := eh.File(""); err == nil || f != nil {
+		t.Fatalf("EtcHosts File succeeded with invalid value!")
 	}
 }
 
@@ -41,10 +38,22 @@ func TestEtcHostsWrittenToDisk(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer rmdir(dir)
+	defer os.RemoveAll(dir)
 
-	if err := WriteEtcHosts("localhost", dir); err != nil {
-		t.Fatalf("WriteEtcHosts failed: %v", err)
+	eh := EtcHosts("localhost")
+
+	f, err := eh.File(dir)
+	if err != nil {
+		t.Fatalf("Error calling File on EtcHosts: %v", err)
+	}
+	if f == nil {
+		t.Fatalf("manageEtcHosts returned nil file unexpectedly")
+	}
+
+	f.Path = path.Join(dir, f.Path)
+
+	if err := system.WriteFile(f); err != nil {
+		t.Fatalf("Error writing EtcHosts: %v", err)
 	}
 
 	fullPath := path.Join(dir, "etc", "hosts")
