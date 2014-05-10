@@ -43,10 +43,35 @@ type CloudConfig struct {
 	ManageEtcHosts EtcHosts `yaml:"manage_etc_hosts"`
 }
 
+type warner func(format string, v ...interface{})
+
+func warnOnUnrecognizedKeys(contents string, warn warner) {
+	// Generate a map of all understood cloud config options
+	var cc map[string]interface{}
+	b, _ := goyaml.Marshal(&CloudConfig{})
+	goyaml.Unmarshal(b, &cc)
+	// Now unmarshal the entire provided contents
+	var c map[string]interface{}
+	goyaml.Unmarshal([]byte(contents), &c)
+	// Check that every key in the contents exists in the cloud config
+	for k, _ := range c {
+		if _, ok := cc[k]; !ok {
+			warn("Warning: unrecognized key %q in provided cloud config - ignoring section", k)
+		}
+	}
+}
+
+// NewCloudConfig instantiates a new CloudConfig from the given contents (a
+// string of YAML), returning any error encountered. It will ignore unknown
+// fields but log encountering them.
 func NewCloudConfig(contents string) (*CloudConfig, error) {
 	var cfg CloudConfig
 	err := goyaml.Unmarshal([]byte(contents), &cfg)
-	return &cfg, err
+	if err != nil {
+		return &cfg, err
+	}
+	warnOnUnrecognizedKeys(contents, log.Printf)
+	return &cfg, nil
 }
 
 func (cc CloudConfig) String() string {

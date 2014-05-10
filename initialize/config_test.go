@@ -1,9 +1,49 @@
 package initialize
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
+
+func TestCloudConfigUnknownKeys(t *testing.T) {
+	contents := `
+coreos: 
+  etcd:
+    discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
+unknown:
+  dunno:
+    something
+foo:
+  bar
+hostname:
+  foo
+`
+	cfg, err := NewCloudConfig(contents)
+	if err != nil {
+		t.Fatalf("error instantiating CloudConfig with unknown keys: %v", err)
+	}
+	if cfg.Hostname != "foo" {
+		t.Fatalf("hostname not correctly set when invalid keys are present")
+	}
+	if len(cfg.Coreos.Etcd) < 1 {
+		t.Fatalf("etcd section not correctly set when invalid keys are present")
+	}
+
+	var warnings string
+	catchWarn := func(f string, v ...interface{}) {
+		warnings += fmt.Sprintf(f, v...)
+	}
+
+	warnOnUnrecognizedKeys(contents, catchWarn)
+
+	if !strings.Contains(warnings, "foo") {
+		t.Errorf("warnings did not catch unrecognized key foo")
+	}
+	if !strings.Contains(warnings, "unknown") {
+		t.Errorf("warnings did not catch unrecognized key unknown")
+	}
+}
 
 // Assert that the parsing of a cloud config file "generally works"
 func TestCloudConfigEmpty(t *testing.T) {
