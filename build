@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
+ORG_PATH="github.com/coreos"
+REPO_PATH="${ORG_PATH}/coreos-cloudinit"
+
 export GOBIN=${PWD}/bin
 export GOPATH=${PWD}
 
-go build -o bin/coreos-cloudinit github.com/coreos/coreos-cloudinit
+go build -o bin/coreos-cloudinit ${REPO_PATH}
