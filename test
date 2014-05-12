@@ -1,10 +1,37 @@
 #!/bin/bash -e
+#
+# Run all coreos-cloudinit tests
+#   ./test
+#   ./test -v
+#
+# Run tests for one package
+#   PKG=initialize ./test
+#
 
-echo "Building bin/coreos-cloudinit"
-. build
+# Invoke ./cover for HTML output
+COVER=${COVER:-"-cover"}
+
+source ./build
+
+declare -a TESTPKGS=(initialize system datasource)
+
+if [ -z "$PKG" ]; then
+	GOFMTPATH="$TESTPKGS coreos-cloudinit.go"
+	# prepend repo path to each package
+	TESTPKGS=${TESTPKGS[@]/#/${REPO_PATH}/}
+else
+	GOFMTPATH="$TESTPKGS"
+	# strip out slashes and dots from PKG=./foo/
+	TESTPKGS=${PKG//\//}
+	TESTPKGS=${TESTPKGS//./}
+	TESTPKGS=${TESTPKGS/#/${REPO_PATH}/}
+fi
 
 echo "Running tests..."
-for pkg in "./initialize ./system ./datasource"; do
-	go test -i $pkg
-	go test -v $pkg
-done
+go test -i ${TESTPKGS}
+go test ${COVER} $@ ${TESTPKGS}
+
+echo "Checking gofmt..."
+fmtRes=$(gofmt -l $GOFMTPATH)
+
+echo "Success"
