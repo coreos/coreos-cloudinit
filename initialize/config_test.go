@@ -18,6 +18,14 @@ section_unknown:
     something
 bare_unknown:
   bar
+write_files:
+  - content: fun
+    path: /var/party
+    file_unknown: nofun
+users:
+  - name: fry
+    passwd: somehash
+    user_unknown: philip
 hostname:
   foo
 `
@@ -30,6 +38,12 @@ hostname:
 	}
 	if len(cfg.Coreos.Etcd) < 1 {
 		t.Fatalf("etcd section not correctly set when invalid keys are present")
+	}
+	if len(cfg.WriteFiles) < 1 || cfg.WriteFiles[0].Content != "fun" || cfg.WriteFiles[0].Path != "/var/party" {
+		t.Fatalf("write_files section not correctly set when invalid keys are present")
+	}
+	if len(cfg.Users) < 1 || cfg.Users[0].Name != "fry" || cfg.Users[0].PasswordHash != "somehash" {
+		t.Fatalf("users section not correctly set when invalid keys are present")
 	}
 
 	var warnings string
@@ -47,6 +61,12 @@ hostname:
 	}
 	if !strings.Contains(warnings, "section_unknown") {
 		t.Errorf("warnings did not catch unrecognized key section_unknown")
+	}
+	if !strings.Contains(warnings, "user_unknown") {
+		t.Errorf("warnings did not catch unrecognized user key user_unknown")
+	}
+	if !strings.Contains(warnings, "file_unknown") {
+		t.Errorf("warnings did not catch unrecognized file key file_unknown")
 	}
 }
 
