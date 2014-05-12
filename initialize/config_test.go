@@ -11,10 +11,12 @@ func TestCloudConfigUnknownKeys(t *testing.T) {
 coreos: 
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
-unknown:
+  coreos_unknown:
+    foo: "bar"
+section_unknown:
   dunno:
     something
-foo:
+bare_unknown:
   bar
 hostname:
   foo
@@ -37,11 +39,14 @@ hostname:
 
 	warnOnUnrecognizedKeys(contents, catchWarn)
 
-	if !strings.Contains(warnings, "foo") {
-		t.Errorf("warnings did not catch unrecognized key foo")
+	if !strings.Contains(warnings, "coreos_unknown") {
+		t.Errorf("warnings did not catch unrecognized coreos option coreos_unknown")
 	}
-	if !strings.Contains(warnings, "unknown") {
-		t.Errorf("warnings did not catch unrecognized key unknown")
+	if !strings.Contains(warnings, "bare_unknown") {
+		t.Errorf("warnings did not catch unrecognized key bare_unknown")
+	}
+	if !strings.Contains(warnings, "section_unknown") {
+		t.Errorf("warnings did not catch unrecognized key section_unknown")
 	}
 }
 

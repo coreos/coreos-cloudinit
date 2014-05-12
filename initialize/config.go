@@ -45,18 +45,36 @@ type CloudConfig struct {
 
 type warner func(format string, v ...interface{})
 
+// warnOnUnrecognizedKeys parses the contents of a cloud-config file and calls
+// warn(msg, key) for every unrecognized key (i.e. those not present in CloudConfig)
 func warnOnUnrecognizedKeys(contents string, warn warner) {
 	// Generate a map of all understood cloud config options
 	var cc map[string]interface{}
 	b, _ := goyaml.Marshal(&CloudConfig{})
 	goyaml.Unmarshal(b, &cc)
+
 	// Now unmarshal the entire provided contents
 	var c map[string]interface{}
 	goyaml.Unmarshal([]byte(contents), &c)
+
 	// Check that every key in the contents exists in the cloud config
 	for k, _ := range c {
 		if _, ok := cc[k]; !ok {
 			warn("Warning: unrecognized key %q in provided cloud config - ignoring section", k)
+		}
+	}
+
+	// Finally, check for unrecognized coreos options, if any are set
+	coreos, ok := c["coreos"]
+	if !ok {
+		return
+	}
+	set := coreos.(map[interface{}]interface{})
+	known := cc["coreos"].(map[interface{}]interface{})
+	for k, _ := range set {
+		key := k.(string)
+		if _, ok := known[key]; !ok {
+			warn("Warning: unrecognized key %q in coreos section of provided cloud config - ignoring", key)
 		}
 	}
 }
