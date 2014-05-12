@@ -42,11 +42,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	if file != "" && url != "" && !useProcCmdline {
-		fmt.Println("Provide one of --from-file, --from-url or --from-proc-cmdline")
-		os.Exit(1)
-	}
-
 	var ds datasource.Datasource
 	if file != "" {
 		ds = datasource.NewLocalFile(file)
