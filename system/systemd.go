@@ -27,7 +27,11 @@ type Unit struct {
 	Runtime bool
 	Content string
 	Command string
-	DropIn  bool // drop-in configuration? if so, a cloudinit.conf will be generated
+
+	// For drop-in units, a cloudinit.conf is generated.
+	// This is currently unbound in YAML (and hence unsettable in cloud-config files)
+	// until the correct behaviour for multiple drop-in units is determined.
+	DropIn bool `yaml:"-"`
 }
 
 func (u *Unit) Type() string {
