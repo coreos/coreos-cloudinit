@@ -20,6 +20,9 @@ func addStrategy(strategy string, root string) error {
 	etcUpdate := path.Join(root, "etc", "coreos", "update.conf")
 	usrUpdate := path.Join(root, "usr", "share", "coreos", "update.conf")
 
+	// Ensure /etc/coreos/ exists before attempting to write a file in it
+	os.MkdirAll(path.Join(root, "etc", "coreos"), 0755)
+
 	tmp, err := ioutil.TempFile(path.Join(root, "etc", "coreos"), ".update.conf")
 	if err != nil {
 		return err

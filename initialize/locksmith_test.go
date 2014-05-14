@@ -22,7 +22,6 @@ REBOOT_STRATEGY=etcd-lock
 
 func setupFixtures(dir string) {
 	os.MkdirAll(path.Join(dir, "usr", "share", "coreos"), 0755)
-	os.MkdirAll(path.Join(dir, "etc", "coreos"), 0755)
 	os.MkdirAll(path.Join(dir, "run", "systemd", "system"), 0755)
 
 	ioutil.WriteFile(path.Join(dir, "usr", "share", "coreos", "update.conf"), []byte(base), 0644)
