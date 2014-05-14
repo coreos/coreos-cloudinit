@@ -2,6 +2,8 @@ package initialize
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -9,26 +11,77 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
-const locksmithUnit = "locksmithd.service"
+const (
+	locksmithUnit = "locksmithd.service"
+)
+
+// updateOption represents a configurable update option, which, if set, will be
+// written into update.conf, replacing any existing value for the option
+type updateOption struct {
+	key    string   // key used to configure this option in cloud-config
+	valid  []string // valid values for the option
+	prefix string   // prefix for the option in the update.conf file
+	value  string   // used to store the new value in update.conf (including prefix)
+	seen   bool     // whether the option has been seen in any existing update.conf
+}
+
+// updateOptions defines the update options understood by cloud-config.
+// The keys represent the string used in cloud-config to configure the option.
+var updateOptions = []*updateOption{
+	&updateOption{
+		key:    "reboot-strategy",
+		prefix: "REBOOT_STRATEGY=",
+		valid:  []string{"best-effort", "etcd-lock", "reboot", "off"},
+	},
+	&updateOption{
+		key:    "group",
+		prefix: "GROUP=",
+		valid:  []string{"master", "beta", "alpha", "stable"},
+	},
+	&updateOption{
+		key:    "server",
+		prefix: "SERVER=",
+	},
+}
+
+// isValid checks whether a supplied value is valid for this option
+func (uo updateOption) isValid(val string) bool {
+	if len(uo.valid) == 0 {
+		return true
+	}
+	for _, v := range uo.valid {
+		if val == v {
+			return true
+		}
+	}
+	return false
+}
 
 type UpdateConfig map[string]string
 
-func (uc UpdateConfig) strategy() string {
-	s, _ := uc["reboot-strategy"]
-	return s
-}
-
-// File creates an `/etc/coreos/update.conf` file with the requested
-// strategy, by either rewriting the existing file on disk, or starting
-// from `/usr/share/coreos/update.conf`
+// File generates an `/etc/coreos/update.conf` file (if any update
+// configuration options are set in cloud-config) by either rewriting the
+// existing file on disk, or starting from `/usr/share/coreos/update.conf`
 func (uc UpdateConfig) File(root string) (*system.File, error) {
-
-	// If no reboot-strategy is set, we don't need to generate a new config
-	if _, ok := uc["reboot-strategy"]; !ok {
+	if len(uc) < 1 {
 		return nil, nil
 	}
 
 	var out string
+
+	// Generate the list of possible substitutions to be performed based on the options that are configured
+	subs := make([]*updateOption, 0)
+	for _, uo := range updateOptions {
+		val, ok := uc[uo.key]
+		if !ok {
+			continue
+		}
+		if !uo.isValid(val) {
+			return nil, errors.New(fmt.Sprintf("invalid value %v for option %v (valid options: %v)", val, uo.key, uo.valid))
+		}
+		uo.value = uo.prefix + val
+		subs = append(subs, uo)
+	}
 
 	etcUpdate := path.Join(root, "etc", "coreos", "update.conf")
 	usrUpdate := path.Join(root, "usr", "share", "coreos", "update.conf")
@@ -43,13 +96,14 @@ func (uc UpdateConfig) File(root string) (*system.File, error) {
 
 	scanner := bufio.NewScanner(conf)
 
-	sawStrat := false
-	stratLine := "REBOOT_STRATEGY=" + uc.strategy()
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "REBOOT_STRATEGY=") {
-			line = stratLine
-			sawStrat = true
+		for _, s := range subs {
+			if strings.HasPrefix(line, s.prefix) {
+				line = s.value
+				s.seen = true
+				break
+			}
 		}
 		out += line
 		out += "\n"
@@ -58,10 +112,13 @@ func (uc UpdateConfig) File(root string) (*system.File, error) {
 		}
 	}
 
-	if !sawStrat {
-		out += stratLine
-		out += "\n"
+	for _, s := range subs {
+		if !s.seen {
+			out += s.value
+			out += "\n"
+		}
 	}
+
 	return &system.File{
 		Path:               path.Join("etc", "coreos", "update.conf"),
 		RawFilePermissions: "0644",
@@ -69,9 +126,14 @@ func (uc UpdateConfig) File(root string) (*system.File, error) {
 	}, nil
 }
 
-// Unit generates a locksmith system.Unit for the cloud-init initializer to
-// act on appropriately
+// GetUnit generates a locksmith system.Unit, if reboot-strategy was set in
+// cloud-config, for the cloud-init initializer to act on appropriately
 func (uc UpdateConfig) Unit(root string) (*system.Unit, error) {
+	strategy, ok := uc["reboot-strategy"]
+	if !ok {
+		return nil, nil
+	}
+
 	u := &system.Unit{
 		Name:    locksmithUnit,
 		Enable:  true,
@@ -79,7 +141,7 @@ func (uc UpdateConfig) Unit(root string) (*system.Unit, error) {
 		Mask:    false,
 	}
 
-	if uc.strategy() == "off" {
+	if strategy == "off" {
 		u.Enable = false
 		u.Command = "stop"
 		u.Mask = true
