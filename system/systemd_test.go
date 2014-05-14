@@ -60,6 +60,30 @@ Address=10.209.171.177/19
 	}
 }
 
+func TestUnitDestination(t *testing.T) {
+	dir := "/some/dir"
+	name := "foobar.service"
+
+	u := Unit{
+		Name:   name,
+		DropIn: false,
+	}
+
+	dst := UnitDestination(&u, dir)
+	expectDst := path.Join(dir, "etc", "systemd", "system", "foobar.service")
+	if dst != expectDst {
+		t.Errorf("UnitDestination returned %s, expected %s", dst, expectDst)
+	}
+
+	u.DropIn = true
+
+	dst = UnitDestination(&u, dir)
+	expectDst = path.Join(dir, "etc", "systemd", "system", "foobar.service.d", cloudConfigDropIn)
+	if dst != expectDst {
+		t.Errorf("UnitDestination returned %s, expected %s", dst, expectDst)
+	}
+}
+
 func TestPlaceMountUnit(t *testing.T) {
 	u := Unit{
 		Name:    "media-state.mount",
@@ -123,6 +147,7 @@ func TestMachineID(t *testing.T) {
 		t.Fatalf("File has incorrect contents")
 	}
 }
+
 func TestMaskUnit(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {

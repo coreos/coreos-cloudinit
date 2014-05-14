@@ -144,7 +144,7 @@ ssh_authorized_keys:
 `
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
-		t.Fatalf("Encountered unexpected error :%v", err)
+		t.Fatalf("Encountered unexpected error: %v", err)
 	}
 
 	keys := cfg.SSHAuthorizedKeys
@@ -159,6 +159,26 @@ func TestCloudConfigSerializationHeader(t *testing.T) {
 	header := strings.SplitN(contents, "\n", 2)[0]
 	if header != "#cloud-config" {
 		t.Fatalf("Serialized config did not have expected header")
+	}
+}
+
+// TestDropInIgnored asserts that users are unable to set DropIn=True on units
+func TestDropInIgnored(t *testing.T) {
+	contents := `
+coreos:
+  units:
+    - name: test
+      dropin: true
+`
+	cfg, err := NewCloudConfig(contents)
+	if err != nil || len(cfg.Coreos.Units) != 1 {
+		t.Fatalf("Encountered unexpected error: %v", err)
+	}
+	if len(cfg.Coreos.Units) != 1 || cfg.Coreos.Units[0].Name != "test" {
+		t.Fatalf("Expected 1 unit, but got %d: %v", len(cfg.Coreos.Units), cfg.Coreos.Units)
+	}
+	if cfg.Coreos.Units[0].DropIn {
+		t.Errorf("dropin option on unit in cloud-config was not ignored!")
 	}
 }
 

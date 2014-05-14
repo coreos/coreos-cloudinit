@@ -11,8 +11,10 @@ import (
 
 const DefaultIpv4Address = "127.0.0.1"
 
-func generateEtcHosts(option string) (out string, err error) {
-	if option != "localhost" {
+type EtcHosts string
+
+func (eh EtcHosts) generateEtcHosts() (out string, err error) {
+	if eh != "localhost" {
 		return "", errors.New("Invalid option to manage_etc_hosts")
 	}
 
@@ -26,19 +28,19 @@ func generateEtcHosts(option string) (out string, err error) {
 
 }
 
-// Write an /etc/hosts file
-func WriteEtcHosts(option string, root string) error {
-
-	etcHosts, err := generateEtcHosts(option)
-	if err != nil {
-		return err
+func (eh EtcHosts) File(root string) (*system.File, error) {
+	if eh == "" {
+		return nil, nil
 	}
 
-	file := system.File{
-		Path:               path.Join(root, "etc", "hosts"),
+	etcHosts, err := eh.generateEtcHosts()
+	if err != nil {
+		return nil, err
+	}
+
+	return &system.File{
+		Path:               path.Join("etc", "hosts"),
 		RawFilePermissions: "0644",
 		Content:            etcHosts,
-	}
-
-	return system.WriteFile(&file)
+	}, nil
 }

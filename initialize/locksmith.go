@@ -2,8 +2,6 @@ package initialize
 
 import (
 	"bufio"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -13,73 +11,79 @@ import (
 
 const locksmithUnit = "locksmithd.service"
 
-// addStrategy creates an `/etc/coreos/update.conf` file with the requested
-// strategy via rewriting the file on disk or by starting from
-// `/usr/share/coreos/update.conf`.
-func addStrategy(strategy string, root string) error {
+type UpdateConfig map[string]string
+
+func (uc UpdateConfig) strategy() string {
+	s, _ := uc["reboot-strategy"]
+	return s
+}
+
+// File creates an `/etc/coreos/update.conf` file with the requested
+// strategy, by either rewriting the existing file on disk, or starting
+// from `/usr/share/coreos/update.conf`
+func (uc UpdateConfig) File(root string) (*system.File, error) {
+
+	// If no reboot-strategy is set, we don't need to generate a new config
+	if _, ok := uc["reboot-strategy"]; !ok {
+		return nil, nil
+	}
+
+	var out string
+
 	etcUpdate := path.Join(root, "etc", "coreos", "update.conf")
 	usrUpdate := path.Join(root, "usr", "share", "coreos", "update.conf")
-
-	// Ensure /etc/coreos/ exists before attempting to write a file in it
-	os.MkdirAll(path.Join(root, "etc", "coreos"), 0755)
-
-	tmp, err := ioutil.TempFile(path.Join(root, "etc", "coreos"), ".update.conf")
-	if err != nil {
-		return err
-	}
-	err = tmp.Chmod(0644)
-	if err != nil {
-		return err
-	}
 
 	conf, err := os.Open(etcUpdate)
 	if os.IsNotExist(err) {
 		conf, err = os.Open(usrUpdate)
-		if err != nil {
-			return err
-		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	scanner := bufio.NewScanner(conf)
 
 	sawStrat := false
-	stratLine := "REBOOT_STRATEGY="+strategy
+	stratLine := "REBOOT_STRATEGY=" + uc.strategy()
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "REBOOT_STRATEGY=") {
 			line = stratLine
 			sawStrat = true
 		}
-		fmt.Fprintln(tmp, line)
+		out += line
+		out += "\n"
 		if err := scanner.Err(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if !sawStrat {
-		fmt.Fprintln(tmp, stratLine)
+		out += stratLine
+		out += "\n"
 	}
-
-	return os.Rename(tmp.Name(), etcUpdate)
+	return &system.File{
+		Path:               path.Join("etc", "coreos", "update.conf"),
+		RawFilePermissions: "0644",
+		Content:            out,
+	}, nil
 }
 
-// WriteLocksmithConfig updates the `update.conf` file with a REBOOT_STRATEGY for locksmith.
-func WriteLocksmithConfig(strategy string, root string) error {
-	cmd := "restart"
-	if strategy == "off" {
-		err := system.MaskUnit(locksmithUnit, root)
-		if err != nil {
-			return err
-		}
-		cmd = "stop"
-	} else {
-		return addStrategy(strategy, root)
+// Unit generates a locksmith system.Unit for the cloud-init initializer to
+// act on appropriately
+func (uc UpdateConfig) Unit(root string) (*system.Unit, error) {
+	u := &system.Unit{
+		Name:    locksmithUnit,
+		Enable:  true,
+		Command: "restart",
+		Mask:    false,
 	}
-	if err := system.DaemonReload(); err != nil {
-		return err
+
+	if uc.strategy() == "off" {
+		u.Enable = false
+		u.Command = "stop"
+		u.Mask = true
 	}
-	if _, err := system.RunUnitCommand(cmd, locksmithUnit); err != nil {
-		return err
-	}
-	return nil
+
+	return u, nil
 }

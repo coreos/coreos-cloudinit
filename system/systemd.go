@@ -17,12 +17,21 @@ import (
 // never be used as a true MachineID
 const fakeMachineID = "42000000000000000000000000000042"
 
+// Name for drop-in service configuration files created by cloudconfig
+const cloudConfigDropIn = "20-cloudinit.conf"
+
 type Unit struct {
 	Name    string
+	Mask    bool
 	Enable  bool
 	Runtime bool
 	Content string
 	Command string
+
+	// For drop-in units, a cloudinit.conf is generated.
+	// This is currently unbound in YAML (and hence unsettable in cloud-config files)
+	// until the correct behaviour for multiple drop-in units is determined.
+	DropIn bool `yaml:"-"`
 }
 
 func (u *Unit) Type() string {
@@ -42,8 +51,8 @@ func (u *Unit) Group() (group string) {
 
 type Script []byte
 
-// UnitDestination builds the appropriate absolte file path for
-// the given unit. The root argument indicates the effective base
+// UnitDestination builds the appropriate absolute file path for
+// the given Unit. The root argument indicates the effective base
 // directory of the system (similar to a chroot).
 func UnitDestination(u *Unit, root string) string {
 	dir := "etc"
@@ -51,7 +60,11 @@ func UnitDestination(u *Unit, root string) string {
 		dir = "run"
 	}
 
-	return path.Join(root, dir, "systemd", u.Group(), u.Name)
+	if u.DropIn {
+		return path.Join(root, dir, "systemd", u.Group(), fmt.Sprintf("%s.d", u.Name), cloudConfigDropIn)
+	} else {
+		return path.Join(root, dir, "systemd", u.Group(), u.Name)
+	}
 }
 
 // PlaceUnit writes a unit file at the provided destination, creating

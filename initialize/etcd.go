@@ -3,26 +3,14 @@ package initialize
 import (
 	"errors"
 	"fmt"
-	"path"
-	"strings"
 
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
 type EtcdEnvironment map[string]string
 
-func (ec EtcdEnvironment) normalized() map[string]string {
-	out := make(map[string]string, len(ec))
-	for key, val := range ec {
-		key = strings.ToUpper(key)
-		key = strings.Replace(key, "-", "_", -1)
-		out[key] = val
-	}
-	return out
-}
-
-func (ec EtcdEnvironment) String() (out string) {
-	norm := ec.normalized()
+func (ee EtcdEnvironment) String() (out string) {
+	norm := normalizeSvcEnv(ee)
 
 	if val, ok := norm["DISCOVERY_URL"]; ok {
 		delete(norm, "DISCOVERY_URL")
@@ -40,23 +28,23 @@ func (ec EtcdEnvironment) String() (out string) {
 	return
 }
 
-// Write an EtcdEnvironment to the appropriate path on disk for etcd.service
-func WriteEtcdEnvironment(env EtcdEnvironment, root string) error {
-	if _, ok := env["name"]; !ok {
+// Unit creates a Unit file drop-in for etcd, using any configured
+// options and adding a default MachineID if unset.
+func (ee EtcdEnvironment) Unit(root string) (*system.Unit, error) {
+	if _, ok := ee["name"]; !ok {
 		if machineID := system.MachineID(root); machineID != "" {
-			env["name"] = machineID
+			ee["name"] = machineID
 		} else if hostname, err := system.Hostname(); err == nil {
-			env["name"] = hostname
+			ee["name"] = hostname
 		} else {
-			return errors.New("Unable to determine default etcd name")
+			return nil, errors.New("Unable to determine default etcd name")
 		}
 	}
 
-	file := system.File{
-		Path: path.Join(root, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf"),
-		RawFilePermissions: "0644",
-		Content: env.String(),
-	}
-
-	return system.WriteFile(&file)
+	return &system.Unit{
+		Name:    "etcd.service",
+		Runtime: true,
+		DropIn:  true,
+		Content: ee.String(),
+	}, nil
 }

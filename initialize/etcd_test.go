@@ -3,9 +3,10 @@ package initialize
 import (
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 func TestEtcdEnvironment(t *testing.T) {
@@ -69,8 +70,18 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	if err := WriteEtcdEnvironment(ec, dir); err != nil {
-		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
+	u, err := ec.Unit(dir)
+	if err != nil {
+		t.Fatalf("Generating etcd unit failed: %v", err)
+	}
+	if u == nil {
+		t.Fatalf("Returned nil etcd unit unexpectedly")
+	}
+
+	dst := system.UnitDestination(u, dir)
+	os.Stderr.WriteString("writing to " + dir + "\n")
+	if err := system.PlaceUnit(u, dst); err != nil {
+		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
 	}
 
 	fullPath := path.Join(dir, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
@@ -100,7 +111,7 @@ Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 }
 
 func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
-	ec := EtcdEnvironment{}
+	ee := EtcdEnvironment{}
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
@@ -113,8 +124,18 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 		t.Fatalf("Failed writing out /etc/machine-id: %v", err)
 	}
 
-	if err := WriteEtcdEnvironment(ec, dir); err != nil {
-		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
+	u, err := ee.Unit(dir)
+	if err != nil {
+		t.Fatalf("Generating etcd unit failed: %v", err)
+	}
+	if u == nil {
+		t.Fatalf("Returned nil etcd unit unexpectedly")
+	}
+
+	dst := system.UnitDestination(u, dir)
+	os.Stderr.WriteString("writing to " + dir + "\n")
+	if err := system.PlaceUnit(u, dst); err != nil {
+		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
 	}
 
 	fullPath := path.Join(dir, "run", "systemd", "system", "etcd.service.d", "20-cloudinit.conf")
@@ -130,9 +151,4 @@ Environment="ETCD_NAME=node007"
 	if string(contents) != expect {
 		t.Fatalf("File has incorrect contents")
 	}
-}
-
-func rmdir(path string) error {
-	cmd := exec.Command("rm", "-rf", path)
-	return cmd.Run()
 }

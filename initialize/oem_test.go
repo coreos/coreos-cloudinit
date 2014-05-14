@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 func TestOEMReleaseWrittenToDisk(t *testing.T) {
@@ -21,8 +23,17 @@ func TestOEMReleaseWrittenToDisk(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	if err := WriteOEMRelease(&oem, dir); err != nil {
-		t.Fatalf("Processing of EtcdEnvironment failed: %v", err)
+	f, err := oem.File(dir)
+	if err != nil {
+		t.Fatalf("Processing of OEMRelease failed: %v", err)
+	}
+	if f == nil {
+		t.Fatalf("OEMRelease returned nil file unexpectedly")
+	}
+
+	f.Path = path.Join(dir, f.Path)
+	if err := system.WriteFile(f); err != nil {
+		t.Fatalf("Writing of OEMRelease failed: %v", err)
 	}
 
 	fullPath := path.Join(dir, "etc", "oem-release")
