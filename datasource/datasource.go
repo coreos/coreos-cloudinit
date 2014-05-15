@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const maxTimeout = time.Second * 5
+
 type Datasource interface {
 	Fetch() ([]byte, error)
 	Type() string
@@ -40,6 +42,10 @@ func getWithExponentialBackoff(url string) (*http.Response, error) {
 			return resp, nil
 		}
 		duration := time.Millisecond * time.Duration((math.Pow(float64(2), float64(i)) * 100))
+		if duration > maxTimeout {
+			duration = maxTimeout
+		}
+
 		log.Printf("unable to fetch user-data from %s, try again in %s", url, duration)
 		time.Sleep(duration)
 	}
