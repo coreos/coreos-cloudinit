@@ -70,6 +70,29 @@ Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 [etcd-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
 
+#### fleet
+
+The `coreos.fleet.*` parameters work very similarly to `coreos.etcd.*`, and allow for the configuration of fleet through environment variables. For example, the following cloud-config document...
+```
+#cloud-config
+
+coreos:
+    fleet:
+    	public-ip: $public_ipv4
+	metadata: region=us-west
+```
+
+...will generate a systemd unit drop-in like this:
+```
+[Service]
+Environment="FLEET_PUBLIC_IP=203.0.113.29"
+Environment="FLEET_METADATA=region=us-west"
+```
+
+For more information on fleet configuration, see the [fleet documentation][fleet-config].
+
+[fleet-config]: https://github.com/coreos/fleet/blob/master/Documentation/configuration.md
+
 #### update
 
 The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
@@ -92,7 +115,7 @@ coreos:
 The `coreos.units.*` parameters define a list of arbitrary systemd units to start. Each item is an object with the following fields:
 
 - **name**: String representing unit's name. Required.
-- **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analagous to the `--runtime` argument to `systemd enable`. Default value is false.
+- **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analogous to the `--runtime` argument to `systemd enable`. Default value is false.
 - **enable**: Boolean indicating whether or not to handle the [Install] section of the unit file. This is similar to running `systemctl enable <name>`. Default value is false.
 - **content**: Plaintext string representing entire unit file. If no value is provided, the unit is assumed to exist already.
 - **command**: Command to execute on unit: start, stop, reload, restart, try-restart, reload-or-restart, reload-or-try-restart. Default value is restart.
@@ -125,7 +148,7 @@ coreos:
           WantedBy=local.target
 ```
 
-Start the builtin `etcd` and `fleet` services:
+Start the built-in `etcd` and `fleet` services:
 
 ```
 # cloud-config
