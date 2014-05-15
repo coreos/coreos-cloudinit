@@ -19,12 +19,13 @@ func NewProcCmdline() *procCmdline {
 }
 
 func (self *procCmdline) Fetch() ([]byte, error) {
-	cmdline, err := ioutil.ReadFile(ProcCmdlineLocation)
+	contents, err := ioutil.ReadFile(ProcCmdlineLocation)
 	if err != nil {
 		return nil, err
 	}
-
-	url, err := findCloudConfigURL(string(cmdline))
+	
+	cmdline := strings.TrimSpace(string(contents))
+	url, err := findCloudConfigURL(cmdline)
 	if err != nil {
 		return nil, err
 	}
