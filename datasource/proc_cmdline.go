@@ -12,19 +12,22 @@ const (
 	ProcCmdlineCloudConfigFlag = "cloud-config-url"
 )
 
-type procCmdline struct{}
+type procCmdline struct{
+	Location string
+}
 
 func NewProcCmdline() *procCmdline {
-	return &procCmdline{}
+	return &procCmdline{Location: ProcCmdlineLocation}
 }
 
 func (self *procCmdline) Fetch() ([]byte, error) {
-	cmdline, err := ioutil.ReadFile(ProcCmdlineLocation)
+	contents, err := ioutil.ReadFile(self.Location)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := findCloudConfigURL(string(cmdline))
+	cmdline := strings.TrimSpace(string(contents))
+	url, err := findCloudConfigURL(cmdline)
 	if err != nil {
 		return nil, err
 	}
