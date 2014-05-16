@@ -112,7 +112,7 @@ func TestFetchURLMalformed(t *testing.T) {
 
 	for _, test := range tests {
 		_, err := fetchURL(test.url)
-		if err != nil && err.Error() != test.want {
+		if err == nil || err.Error() != test.want {
 			t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, test.want)
 		}
 	}
