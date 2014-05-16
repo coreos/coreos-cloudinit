@@ -17,9 +17,8 @@ var expBackoffTests = []struct {
 	{2, "number of attempts: 2"},
 }
 
-// Test exponential backoff
-// and that it continues retrying if a 5xx
-// response is received
+// Test exponential backoff and that it continues retrying if a 5xx response is
+// received
 func TestFetchURLExpBackOff(t *testing.T) {
 	for i, tt := range expBackoffTests {
 		mux := http.NewServeMux()
@@ -105,9 +104,9 @@ func TestFetchURLMalformed(t *testing.T) {
 		url  string
 		want string
 	}{
-		{"boo", "user-data URL boo, does not have a valid HTTP scheme. Skipping."},
-		{"mailto://boo", "user-data URL mailto://boo, does not have a valid HTTP scheme. Skipping."},
-		{"ftp://boo", "user-data URL ftp://boo, does not have a valid HTTP scheme. Skipping."},
+		{"boo", "user-data URL boo does not have a valid HTTP scheme. Skipping."},
+		{"mailto://boo", "user-data URL mailto://boo does not have a valid HTTP scheme. Skipping."},
+		{"ftp://boo", "user-data URL ftp://boo does not have a valid HTTP scheme. Skipping."},
 		{"", "user-data URL is empty. Skipping."},
 	}
 

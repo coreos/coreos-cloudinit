@@ -40,8 +40,7 @@ func dialTimeout(network, addr string) (net.Conn, error) {
 	return c, nil
 }
 
-// Fetches user-data url with support for
-// exponential backoff and maximum retries
+// Fetches user-data url with support for exponential backoff and maximum retries
 func fetchURL(rawurl string) ([]byte, error) {
 	if rawurl == "" {
 		return nil, errors.New("user-data URL is empty. Skipping.")
@@ -52,20 +51,17 @@ func fetchURL(rawurl string) ([]byte, error) {
 		return nil, err
 	}
 
-	// Unfortunately, url.Parse
-	// is too generic to throw errors
-	// if a URL does not have a valid HTTP scheme.
-	// So we have to do this extra validation
+	// Unfortunately, url.Parse is too generic to throw errors if a URL does not
+	// have a valid HTTP scheme. So, we have to do this extra validation
 	if !strings.HasPrefix(url.Scheme, "http") {
-		return nil, fmt.Errorf("user-data URL %s, does not have a valid HTTP scheme. Skipping.", rawurl)
+		return nil, fmt.Errorf("user-data URL %s does not have a valid HTTP scheme. Skipping.", rawurl)
 	}
 
 	userdataURL := url.String()
 
-	// We need to create our own client in order to
-	// add timeout support.
+	// We need to create our own client in order to add timeout support.
 	// TODO(c4milo) Replace it once Go 1.3 is officially used by CoreOS
-	//              More info: https://code.google.com/p/go/source/detail?r=ada6f2d5f99f
+	// More info: https://code.google.com/p/go/source/detail?r=ada6f2d5f99f
 	transport := &http.Transport{
 		Dial: dialTimeout,
 	}
