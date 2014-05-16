@@ -70,7 +70,7 @@ func fetchURL(rawurl string) ([]byte, error) {
 		Transport: transport,
 	}
 
-	for retry := 0; retry <= maxRetries; retry++ {
+	for retry := 1; retry <= maxRetries; retry++ {
 		log.Printf("Fetching user-data from %s. Attempt #%d", userdataURL, retry)
 
 		resp, err := client.Get(userdataURL)
