@@ -43,10 +43,90 @@ type CloudConfig struct {
 	ManageEtcHosts EtcHosts `yaml:"manage_etc_hosts"`
 }
 
+type warner func(format string, v ...interface{})
+
+// warnOnUnrecognizedKeys parses the contents of a cloud-config file and calls
+// warn(msg, key) for every unrecognized key (i.e. those not present in CloudConfig)
+func warnOnUnrecognizedKeys(contents string, warn warner) {
+	// Generate a map of all understood cloud config options
+	var cc map[string]interface{}
+	b, _ := goyaml.Marshal(&CloudConfig{})
+	goyaml.Unmarshal(b, &cc)
+
+	// Now unmarshal the entire provided contents
+	var c map[string]interface{}
+	goyaml.Unmarshal([]byte(contents), &c)
+
+	// Check that every key in the contents exists in the cloud config
+	for k, _ := range c {
+		if _, ok := cc[k]; !ok {
+			warn("Warning: unrecognized key %q in provided cloud config - ignoring section", k)
+		}
+	}
+
+	// Check for unrecognized coreos options, if any are set
+	coreos, ok := c["coreos"]
+	if ok {
+		set := coreos.(map[interface{}]interface{})
+		known := cc["coreos"].(map[interface{}]interface{})
+		for k, _ := range set {
+			key := k.(string)
+			if _, ok := known[key]; !ok {
+				warn("Warning: unrecognized key %q in coreos section of provided cloud config - ignoring", key)
+			}
+		}
+	}
+
+	// Check for any badly-specified users, if any are set
+	users, ok := c["users"]
+	if ok {
+		var known map[string]interface{}
+		b, _ := goyaml.Marshal(&system.User{})
+		goyaml.Unmarshal(b, &known)
+
+		set := users.([]interface{})
+		for _, u := range set {
+			user := u.(map[interface{}]interface{})
+			for k, _ := range user {
+				key := k.(string)
+				if _, ok := known[key]; !ok {
+					warn("Warning: unrecognized key %q in user section of cloud config - ignoring", key)
+				}
+			}
+		}
+	}
+
+	// Check for any badly-specified files, if any are set
+	files, ok := c["write_files"]
+	if ok {
+		var known map[string]interface{}
+		b, _ := goyaml.Marshal(&system.File{})
+		goyaml.Unmarshal(b, &known)
+
+		set := files.([]interface{})
+		for _, f := range set {
+			file := f.(map[interface{}]interface{})
+			for k, _ := range file {
+				key := k.(string)
+				if _, ok := known[key]; !ok {
+					warn("Warning: unrecognized key %q in file section of cloud config - ignoring", key)
+				}
+			}
+		}
+	}
+}
+
+// NewCloudConfig instantiates a new CloudConfig from the given contents (a
+// string of YAML), returning any error encountered. It will ignore unknown
+// fields but log encountering them.
 func NewCloudConfig(contents string) (*CloudConfig, error) {
 	var cfg CloudConfig
 	err := goyaml.Unmarshal([]byte(contents), &cfg)
-	return &cfg, err
+	if err != nil {
+		return &cfg, err
+	}
+	warnOnUnrecognizedKeys(contents, log.Printf)
+	return &cfg, nil
 }
 
 func (cc CloudConfig) String() string {
