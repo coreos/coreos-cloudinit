@@ -17,7 +17,9 @@ var expBackoffTests = []struct {
 	{2, "number of attempts: 2"},
 }
 
-func TestGetWithExponentialBackoff(t *testing.T) {
+// Test exponential backoff and that it continues retrying if a 5xx response is
+// received
+func TestFetchURLExpBackOff(t *testing.T) {
 	for i, tt := range expBackoffTests {
 		mux := http.NewServeMux()
 		count := 0
@@ -31,15 +33,87 @@ func TestGetWithExponentialBackoff(t *testing.T) {
 		})
 		ts := httptest.NewServer(mux)
 		defer ts.Close()
+
 		data, err := fetchURL(ts.URL)
 		if err != nil {
 			t.Errorf("Test case %d produced error: %v", i, err)
 		}
+
 		if count != tt.count {
 			t.Errorf("Test case %d failed: %d != %d", i, count, tt.count)
 		}
+
 		if string(data) != tt.body {
 			t.Errorf("Test case %d failed: %s != %s", i, tt.body, data)
+		}
+	}
+}
+
+// Test that it stops retrying if a 4xx response comes back
+func TestFetchURL4xx(t *testing.T) {
+	retries := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		retries++
+		http.Error(w, "", 404)
+	}))
+	defer ts.Close()
+
+	_, err := fetchURL(ts.URL)
+	if err == nil {
+		t.Errorf("Incorrect result\ngot:  %s\nwant: %s", err.Error(), "user-data not found. HTTP status code: 404")
+	}
+
+	if retries > 1 {
+		t.Errorf("Number of retries:\n%d\nExpected number of retries:\n%s", retries, 1)
+	}
+}
+
+// Test that it fetches and returns user-data just fine
+func TestFetchURL2xx(t *testing.T) {
+	var cloudcfg = `
+#cloud-config
+coreos: 
+	oem:
+	    id: test
+	    name: CoreOS.box for Test
+	    version-id: %VERSION_ID%+%BUILD_ID%
+	    home-url: https://github.com/coreos/coreos-cloudinit
+	    bug-report-url: https://github.com/coreos/coreos-cloudinit
+	update:
+		reboot-strategy: best-effort
+`
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, cloudcfg)
+	}))
+	defer ts.Close()
+
+	data, err := fetchURL(ts.URL)
+	if err != nil {
+		t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, nil)
+	}
+
+	if string(data) != cloudcfg {
+		t.Errorf("Incorrect result\ngot:  %s\nwant: %s", string(data), cloudcfg)
+	}
+}
+
+// Test attempt to fetching using malformed URL
+func TestFetchURLMalformed(t *testing.T) {
+	var tests = []struct {
+		url  string
+		want string
+	}{
+		{"boo", "user-data URL boo does not have a valid HTTP scheme. Skipping."},
+		{"mailto://boo", "user-data URL mailto://boo does not have a valid HTTP scheme. Skipping."},
+		{"ftp://boo", "user-data URL ftp://boo does not have a valid HTTP scheme. Skipping."},
+		{"", "user-data URL is empty. Skipping."},
+	}
+
+	for _, test := range tests {
+		_, err := fetchURL(test.url)
+		if err == nil || err.Error() != test.want {
+			t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, test.want)
 		}
 	}
 }
