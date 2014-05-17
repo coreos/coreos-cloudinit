@@ -31,6 +31,10 @@ func (ee EtcdEnvironment) String() (out string) {
 // Unit creates a Unit file drop-in for etcd, using any configured
 // options and adding a default MachineID if unset.
 func (ee EtcdEnvironment) Unit(root string) (*system.Unit, error) {
+	if ee == nil {
+		return nil, nil
+	}
+
 	if _, ok := ee["name"]; !ok {
 		if machineID := system.MachineID(root); machineID != "" {
 			ee["name"] = machineID

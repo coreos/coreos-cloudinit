@@ -152,3 +152,15 @@ Environment="ETCD_NAME=node007"
 		t.Fatalf("File has incorrect contents")
 	}
 }
+
+func TestEtcdEnvironmentWhenNil(t *testing.T) {
+	// EtcdEnvironment will be a nil map if it wasn't in the yaml
+	var ee EtcdEnvironment
+	if ee != nil {
+		t.Fatalf("EtcdEnvironment is not nil")
+	}
+	u, err := ee.Unit("")
+	if u != nil || err != nil {
+		t.Fatalf("Unit returned a non-nil value for nil input")
+	}
+}
