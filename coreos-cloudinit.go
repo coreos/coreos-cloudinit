@@ -13,6 +13,11 @@ import (
 
 const version = "0.7.1+git"
 
+func init() {
+	//Removes timestamp since it is displayed already during booting
+	log.SetFlags(0)
+}
+
 func main() {
 	var printVersion bool
 	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
