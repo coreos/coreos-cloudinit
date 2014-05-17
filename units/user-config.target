@@ -3,9 +3,11 @@ Description=Load user-provided cloud configs
 Requires=system-config.target
 After=system-config.target
 
-# Load user_data placed by coreos-install
-Requires=user-cloudinit@var-lib-coreos\x2dinstall-user_data.service
-After=user-cloudinit@var-lib-coreos\x2dinstall-user_data.service
+# Watch for configs at a couple common paths
+Requires=user-cloudinit@media-configdrive-openstack-latest-user_data.path
+After=user-cloudinit@media-configdrive-openstack-latest-user_data.path
+Requires=user-cloudinit@var-lib-coreos\x2dinstall-user_data.path
+After=user-cloudinit@var-lib-coreos\x2dinstall-user_data.path
 
 Requires=user-cloudinit-proc-cmdline.service
 After=user-cloudinit-proc-cmdline.service
