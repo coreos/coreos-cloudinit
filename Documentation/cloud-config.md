@@ -95,9 +95,9 @@ For more information on fleet configuration, see the [fleet documentation][fleet
 
 #### update
 
-These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
-
 The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
+
+These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
 
 - **reboot-strategy**: One of "reboot", "etcd-lock", "best-effort" or "off" for controlling when reboots are issued after an update is performed.
   - _reboot_: Reboot immediately after an update is applied.
