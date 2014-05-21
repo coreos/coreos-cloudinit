@@ -151,7 +151,7 @@ coreos:
 Start the built-in `etcd` and `fleet` services:
 
 ```
-# cloud-config
+#cloud-config
 
 coreos:
     units:
