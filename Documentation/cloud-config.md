@@ -97,11 +97,15 @@ For more information on fleet configuration, see the [fleet documentation][fleet
 
 The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
 
+These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
+
 - **reboot-strategy**: One of "reboot", "etcd-lock", "best-effort" or "off" for controlling when reboots are issued after an update is performed.
   - _reboot_: Reboot immediately after an update is applied.
   - _etcd-lock_: Reboot after first taking a distributed lock in etcd, this guarantees that only one host will reboot concurrently and that the cluster will remain available during the update.
   - _best-effort_ - If etcd is running, "etcd-lock", otherwise simply "reboot".
   - _off_ - Disable rebooting after updates are applied (not recommended).
+- **server**: is the omaha endpoint URL which will be queried for updates.
+- **group**:  signifies the channel which should be used for automatic updates.  This value defaults to the version of the image initially downloaded. (one of "master", "alpha", "beta", "stable")
 
 ```
 #cloud-config
