@@ -1,6 +1,11 @@
 package datasource
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -43,5 +48,41 @@ func TestParseCmdlineCloudConfigFound(t *testing.T) {
 		if err != nil {
 			t.Errorf("Test case %d produced error: %v", i, err)
 		}
+	}
+}
+
+func TestProcCmdlineAndFetchConfig(t *testing.T) {
+
+	var (
+		ProcCmdlineTmpl    = "foo=bar cloud-config-url=%s/config\n"
+		CloudConfigContent = "#cloud-config\n"
+	)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" && r.RequestURI == "/config" {
+			fmt.Fprint(w, CloudConfigContent)
+		}
+	}))
+	defer ts.Close()
+
+	file, err := ioutil.TempFile(os.TempDir(), "test_proc_cmdline")
+	defer os.Remove(file.Name())
+	if err != nil {
+		t.Errorf("Test produced error: %v", err)
+	}
+	_, err = file.Write([]byte(fmt.Sprintf(ProcCmdlineTmpl, ts.URL)))
+	if err != nil {
+		t.Errorf("Test produced error: %v", err)
+	}
+
+	p := NewProcCmdline()
+	p.Location = file.Name()
+	cfg, err := p.Fetch()
+	if err != nil {
+		t.Errorf("Test produced error: %v", err)
+	}
+
+	if string(cfg) != CloudConfigContent {
+		t.Errorf("Test failed, response body: %s != %s", cfg, CloudConfigContent)
 	}
 }
