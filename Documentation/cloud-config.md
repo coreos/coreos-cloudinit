@@ -1,4 +1,4 @@
-# Using Cloud-Config
+# Customize CoreOS with Cloud-Config
 
 CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. 
 
@@ -163,10 +163,7 @@ coreos:
 
 ### ssh_authorized_keys
 
-The `ssh_authorized_keys` parameter adds public SSH keys which will be authorized for the `core` user.
-
-The keys will be named "coreos-cloudinit" by default.
-Override this by using the `--ssh-key-name` flag when calling `coreos-cloudinit`.
+Provided public SSH keys will be authorized for the `core` user.
 
 ```
 #cloud-config
@@ -175,33 +172,24 @@ ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
 ```
 
-### hostname
-
-The `hostname` parameter defines the system's hostname.
-This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.example.com`).
-
-```
-#cloud-config
-
-hostname: coreos1
-```
+The keys will be named "coreos-cloudinit" by default.
+Override this by using the `--ssh-key-name` flag when calling `coreos-cloudinit`.
 
 ### users
 
-The `users` parameter adds or modifies the specified list of users. Each user is an object which consists of the following fields. Each field is optional and of type string unless otherwise noted.
+Add or modify users with the `users` directive by providing a list of user objects, each consisting of the following fields.
+Each field is optional and of type string unless otherwise noted.
 All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the user already exists.
 
 - **name**: Required. Login name of user
 - **gecos**: GECOS comment of user
 - **passwd**: Hash of the password to use for this user
 - **homedir**: User's home directory. Defaults to /home/<name>
-- **no-create-home**: Boolean. Skip home directory creation.
+- **no-create-home**: Boolean. Skip home directory createion.
 - **primary-group**: Default group for the user. Defaults to a new group created named after the user.
 - **groups**: Add user to these additional groups
 - **no-user-group**: Boolean. Skip default group creation.
 - **ssh-authorized-keys**: List of public SSH keys to authorize for this user
-- **coreos-ssh-import-github**: Authorize SSH keys from Github user
-- **coreos-ssh-import-url**: Authorize SSH keys imported from a url endpoint.
 - **system**: Create the user as a system user. No home directory will be created.
 - **no-log-init**: Boolean. Skip initialization of lastlog and faillog databases.
 
@@ -212,19 +200,6 @@ The following fields are not yet implemented:
 - **sudo**: Entry to add to /etc/sudoers for user. By default, no sudo access is authorized.
 - **selinux-user**: Corresponding SELinux user
 - **ssh-import-id**: Import SSH keys by ID from Launchpad.
-
-```
-#cloud-config
-
-users:
-  - name: elroy
-    passwd: $6$5s2u6/jR$un0AvWnqilcgaNB3Mkxd5yYv6mTlWfOoCYHZmfi3LDKVltj.E8XNKEcwWm...
-    groups:
-      - sudo
-      - docker
-    ssh-authorized-keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
-```
 
 #### Generating a password hash
 
@@ -317,3 +292,5 @@ infrastructure in place to resolve its own hostname, for example, when using Vag
 
 manage_etc_hosts: localhost
 ```
+
+
