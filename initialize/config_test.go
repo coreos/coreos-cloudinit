@@ -1,13 +1,78 @@
-package cloudinit
+package initialize
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
 
+func TestCloudConfigUnknownKeys(t *testing.T) {
+	contents := `
+coreos: 
+  etcd:
+    discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
+  coreos_unknown:
+    foo: "bar"
+section_unknown:
+  dunno:
+    something
+bare_unknown:
+  bar
+write_files:
+  - content: fun
+    path: /var/party
+    file_unknown: nofun
+users:
+  - name: fry
+    passwd: somehash
+    user_unknown: philip
+hostname:
+  foo
+`
+	cfg, err := NewCloudConfig(contents)
+	if err != nil {
+		t.Fatalf("error instantiating CloudConfig with unknown keys: %v", err)
+	}
+	if cfg.Hostname != "foo" {
+		t.Fatalf("hostname not correctly set when invalid keys are present")
+	}
+	if len(cfg.Coreos.Etcd) < 1 {
+		t.Fatalf("etcd section not correctly set when invalid keys are present")
+	}
+	if len(cfg.WriteFiles) < 1 || cfg.WriteFiles[0].Content != "fun" || cfg.WriteFiles[0].Path != "/var/party" {
+		t.Fatalf("write_files section not correctly set when invalid keys are present")
+	}
+	if len(cfg.Users) < 1 || cfg.Users[0].Name != "fry" || cfg.Users[0].PasswordHash != "somehash" {
+		t.Fatalf("users section not correctly set when invalid keys are present")
+	}
+
+	var warnings string
+	catchWarn := func(f string, v ...interface{}) {
+		warnings += fmt.Sprintf(f, v...)
+	}
+
+	warnOnUnrecognizedKeys(contents, catchWarn)
+
+	if !strings.Contains(warnings, "coreos_unknown") {
+		t.Errorf("warnings did not catch unrecognized coreos option coreos_unknown")
+	}
+	if !strings.Contains(warnings, "bare_unknown") {
+		t.Errorf("warnings did not catch unrecognized key bare_unknown")
+	}
+	if !strings.Contains(warnings, "section_unknown") {
+		t.Errorf("warnings did not catch unrecognized key section_unknown")
+	}
+	if !strings.Contains(warnings, "user_unknown") {
+		t.Errorf("warnings did not catch unrecognized user key user_unknown")
+	}
+	if !strings.Contains(warnings, "file_unknown") {
+		t.Errorf("warnings did not catch unrecognized file key file_unknown")
+	}
+}
+
 // Assert that the parsing of a cloud config file "generally works"
 func TestCloudConfigEmpty(t *testing.T) {
-	cfg, err := NewCloudConfig([]byte{})
+	cfg, err := NewCloudConfig("")
 	if err != nil {
 		t.Fatalf("Encountered unexpected error :%v", err)
 	}
@@ -15,14 +80,6 @@ func TestCloudConfigEmpty(t *testing.T) {
 	keys := cfg.SSHAuthorizedKeys
 	if len(keys) != 0 {
 		t.Error("Parsed incorrect number of SSH keys")
-	}
-
-	if cfg.Coreos.Etcd.Discovery_URL != "" {
-		t.Error("Parsed incorrect value of discovery url")
-	}
-
-	if cfg.Coreos.Fleet.Autostart {
-		t.Error("Expected AutostartFleet not to be defined")
 	}
 
 	if len(cfg.WriteFiles) != 0 {
@@ -36,12 +93,12 @@ func TestCloudConfigEmpty(t *testing.T) {
 
 // Assert that the parsing of a cloud config file "generally works"
 func TestCloudConfig(t *testing.T) {
-	contents := []byte(`
+	contents := `
 coreos: 
   etcd:
-    discovery_url: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
-  fleet:
-    autostart: Yes
+    discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
+  update:
+    reboot-strategy: reboot
   units:
     - name: 50-eth0.network
       runtime: yes
@@ -55,6 +112,12 @@ coreos:
     Address=10.209.171.177/19
  
 '
+  oem:
+    id: rackspace
+    name: Rackspace Cloud Servers
+    version-id: 168.0.0
+    home-url: https://www.rackspace.com/cloud/servers/
+    bug-report-url: https://github.com/coreos/coreos-overlay
 ssh_authorized_keys:
   - foobar
   - foobaz
@@ -66,7 +129,7 @@ write_files:
     permissions: '0644'
     owner: root:dogepack
 hostname: trontastic
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
 		t.Fatalf("Encountered unexpected error :%v", err)
@@ -81,14 +144,6 @@ hostname: trontastic
 		t.Error("Expected first SSH key to be 'foobaz'")
 	}
 
-	if cfg.Coreos.Etcd.Discovery_URL != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
-		t.Error("Failed to parse etcd discovery url")
-	}
-
-	if !cfg.Coreos.Fleet.Autostart {
-		t.Error("Expected AutostartFleet to be true")
-	}
-
 	if len(cfg.WriteFiles) != 1 {
 		t.Error("Failed to parse correct number of write_files")
 	} else {
@@ -99,8 +154,8 @@ hostname: trontastic
 		if wf.Encoding != "" {
 			t.Errorf("WriteFile has incorrect encoding %s", wf.Encoding)
 		}
-		if wf.Permissions != "0644" {
-			t.Errorf("WriteFile has incorrect permissions %s", wf.Permissions)
+		if perm, _ := wf.Permissions(); perm != 0644 {
+			t.Errorf("WriteFile has incorrect permissions %s", perm)
 		}
 		if wf.Path != "/etc/dogepack.conf" {
 			t.Errorf("WriteFile has incorrect path %s", wf.Path)
@@ -134,20 +189,27 @@ Address=10.209.171.177/19
 		}
 	}
 
+	if cfg.Coreos.OEM.ID != "rackspace" {
+		t.Errorf("Failed parsing coreos.oem. Expected ID 'rackspace', got %q.", cfg.Coreos.OEM.ID)
+	}
+
 	if cfg.Hostname != "trontastic" {
 		t.Errorf("Failed to parse hostname")
+	}
+	if cfg.Coreos.Update["reboot-strategy"] != "reboot" {
+		t.Errorf("Failed to parse locksmith strategy")
 	}
 }
 
 // Assert that our interface conversion doesn't panic
 func TestCloudConfigKeysNotList(t *testing.T) {
-	contents := []byte(`
+	contents := `
 ssh_authorized_keys:
   - foo: bar
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
-		t.Fatalf("Encountered unexpected error :%v", err)
+		t.Fatalf("Encountered unexpected error: %v", err)
 	}
 
 	keys := cfg.SSHAuthorizedKeys
@@ -157,7 +219,7 @@ ssh_authorized_keys:
 }
 
 func TestCloudConfigSerializationHeader(t *testing.T) {
-	cfg, _ := NewCloudConfig([]byte{})
+	cfg, _ := NewCloudConfig("")
 	contents := cfg.String()
 	header := strings.SplitN(contents, "\n", 2)[0]
 	if header != "#cloud-config" {
@@ -165,8 +227,28 @@ func TestCloudConfigSerializationHeader(t *testing.T) {
 	}
 }
 
+// TestDropInIgnored asserts that users are unable to set DropIn=True on units
+func TestDropInIgnored(t *testing.T) {
+	contents := `
+coreos:
+  units:
+    - name: test
+      dropin: true
+`
+	cfg, err := NewCloudConfig(contents)
+	if err != nil || len(cfg.Coreos.Units) != 1 {
+		t.Fatalf("Encountered unexpected error: %v", err)
+	}
+	if len(cfg.Coreos.Units) != 1 || cfg.Coreos.Units[0].Name != "test" {
+		t.Fatalf("Expected 1 unit, but got %d: %v", len(cfg.Coreos.Units), cfg.Coreos.Units)
+	}
+	if cfg.Coreos.Units[0].DropIn {
+		t.Errorf("dropin option on unit in cloud-config was not ignored!")
+	}
+}
+
 func TestCloudConfigUsers(t *testing.T) {
-	contents := []byte(`
+	contents := `
 users:
   - name: elroy
     passwd: somehash
@@ -182,7 +264,7 @@ users:
     no-user-group: true
     system: y
     no-log-init: True
-`)
+`
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
 		t.Fatalf("Encountered unexpected error: %v", err)
@@ -223,7 +305,7 @@ users:
 		t.Errorf("Failed to parse no-create-home field")
 	}
 
-	if user.PrimaryGroup != "things"{
+	if user.PrimaryGroup != "things" {
 		t.Errorf("Failed to parse primary-group field, got %q", user.PrimaryGroup)
 	}
 

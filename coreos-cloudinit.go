@@ -1,23 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"io/ioutil"
-	"os"
+	"fmt"
 	"log"
+	"os"
 
-	"github.com/coreos/coreos-cloudinit/cloudinit"
+	"github.com/coreos/coreos-cloudinit/datasource"
+	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
-const version = "0.1.2+git"
+const version = "0.7.1+git"
+
+func init() {
+	//Removes timestamp since it is displayed already during booting
+	log.SetFlags(0)
+}
 
 func main() {
-	var userdata []byte
-	var err error
-
 	var printVersion bool
 	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
+
+	var ignoreFailure bool
+	flag.BoolVar(&ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
 
 	var file string
 	flag.StringVar(&file, "from-file", "", "Read user-data from provided file")
@@ -25,11 +31,14 @@ func main() {
 	var url string
 	flag.StringVar(&url, "from-url", "", "Download user-data from provided url")
 
+	var useProcCmdline bool
+	flag.BoolVar(&useProcCmdline, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
+
 	var workspace string
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 
 	var sshKeyName string
-	flag.StringVar(&sshKeyName, "ssh-key-name", cloudinit.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
+	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
 
 	flag.Parse()
 
@@ -38,54 +47,64 @@ func main() {
 		os.Exit(0)
 	}
 
-	if file != "" && url != "" {
-		fmt.Println("Provide one of --from-file or --from-url")
-		os.Exit(1)
-	}
-
+	var ds datasource.Datasource
 	if file != "" {
-		log.Printf("Reading user-data from file: %s", file)
-		userdata, err = ioutil.ReadFile(file)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		ds = datasource.NewLocalFile(file)
 	} else if url != "" {
-		log.Printf("Reading user-data from metadata service")
-		svc := cloudinit.NewMetadataService(url)
-		userdata, err = svc.UserData()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		ds = datasource.NewMetadataService(url)
+	} else if useProcCmdline {
+		ds = datasource.NewProcCmdline()
 	} else {
-		fmt.Println("Provide one of --from-file or --from-url")
+		fmt.Println("Provide one of --from-file, --from-url or --from-proc-cmdline")
 		os.Exit(1)
 	}
 
-	if len(userdata) == 0 {
+	log.Printf("Fetching user-data from datasource of type %q", ds.Type())
+	userdataBytes, err := ds.Fetch()
+	if err != nil {
+		log.Printf("Failed fetching user-data from datasource: %v", err)
+		if ignoreFailure {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
+	}
+
+	if len(userdataBytes) == 0 {
 		log.Printf("No user data to handle, exiting.")
 		os.Exit(0)
 	}
 
-	parsed, err := cloudinit.ParseUserData(userdata)
+	env := initialize.NewEnvironment("/", workspace)
+
+	userdata := string(userdataBytes)
+	userdata = env.Apply(userdata)
+
+	parsed, err := initialize.ParseUserData(userdata)
 	if err != nil {
-		log.Fatalf("Failed parsing user-data: %v", err)
+		log.Printf("Failed parsing user-data: %v", err)
+		if ignoreFailure {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
-	err = cloudinit.PrepWorkspace(workspace)
+	err = initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
 		log.Fatalf("Failed preparing workspace: %v", err)
 	}
 
 	switch t := parsed.(type) {
-	case cloudinit.CloudConfig:
-		err = cloudinit.ApplyCloudConfig(t, sshKeyName)
-	case cloudinit.Script:
+	case initialize.CloudConfig:
+		err = initialize.Apply(t, env)
+	case system.Script:
 		var path string
-		path, err = cloudinit.PersistScriptInWorkspace(t, workspace)
+		path, err = initialize.PersistScriptInWorkspace(t, env.Workspace())
 		if err == nil {
 			var name string
-			name, err = cloudinit.ExecuteScript(path)
-			cloudinit.PersistScriptUnitNameInWorkspace(name, workspace)
+			name, err = system.ExecuteScript(path)
+			initialize.PersistUnitNameInWorkspace(name, workspace)
 		}
 	}
 
