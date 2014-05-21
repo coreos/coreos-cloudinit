@@ -1,4 +1,4 @@
-package datasource
+package util
 
 import (
 	"fmt"
@@ -20,6 +20,8 @@ var expBackoffTests = []struct {
 // Test exponential backoff and that it continues retrying if a 5xx response is
 // received
 func TestFetchURLExpBackOff(t *testing.T) {
+	client := NewHttpClient()
+
 	for i, tt := range expBackoffTests {
 		mux := http.NewServeMux()
 		count := 0
@@ -34,7 +36,7 @@ func TestFetchURLExpBackOff(t *testing.T) {
 		ts := httptest.NewServer(mux)
 		defer ts.Close()
 
-		data, err := fetchURL(ts.URL)
+		data, err := client.Get(ts.URL)
 		if err != nil {
 			t.Errorf("Test case %d produced error: %v", i, err)
 		}
@@ -51,6 +53,7 @@ func TestFetchURLExpBackOff(t *testing.T) {
 
 // Test that it stops retrying if a 4xx response comes back
 func TestFetchURL4xx(t *testing.T) {
+	client := NewHttpClient()
 	retries := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		retries++
@@ -58,9 +61,9 @@ func TestFetchURL4xx(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := fetchURL(ts.URL)
+	_, err := client.Get(ts.URL)
 	if err == nil {
-		t.Errorf("Incorrect result\ngot:  %s\nwant: %s", err.Error(), "user-data not found. HTTP status code: 404")
+		t.Errorf("Incorrect result\ngot:  %s\nwant: %s", err.Error(), "Not found. HTTP status code: 404")
 	}
 
 	if retries > 1 {
@@ -83,12 +86,13 @@ coreos:
 		reboot-strategy: best-effort
 `
 
+	client := NewHttpClient()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, cloudcfg)
 	}))
 	defer ts.Close()
 
-	data, err := fetchURL(ts.URL)
+	data, err := client.Get(ts.URL)
 	if err != nil {
 		t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, nil)
 	}
@@ -100,18 +104,20 @@ coreos:
 
 // Test attempt to fetching using malformed URL
 func TestFetchURLMalformed(t *testing.T) {
+	client := NewHttpClient()
+
 	var tests = []struct {
 		url  string
 		want string
 	}{
-		{"boo", "user-data URL boo does not have a valid HTTP scheme. Skipping."},
-		{"mailto://boo", "user-data URL mailto://boo does not have a valid HTTP scheme. Skipping."},
-		{"ftp://boo", "user-data URL ftp://boo does not have a valid HTTP scheme. Skipping."},
-		{"", "user-data URL is empty. Skipping."},
+		{"boo", "URL boo does not have a valid HTTP scheme. Skipping."},
+		{"mailto://boo", "URL mailto://boo does not have a valid HTTP scheme. Skipping."},
+		{"ftp://boo", "URL ftp://boo does not have a valid HTTP scheme. Skipping."},
+		{"", "URL is empty. Skipping."},
 	}
 
 	for _, test := range tests {
-		_, err := fetchURL(test.url)
+		_, err := client.Get(test.url)
 		if err == nil || err.Error() != test.want {
 			t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, test.want)
 		}

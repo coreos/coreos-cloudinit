@@ -1,5 +1,7 @@
 package datasource
 
+import "github.com/coreos/coreos-cloudinit/util"
+
 type metadataService struct {
 	url string
 }
@@ -9,7 +11,8 @@ func NewMetadataService(url string) *metadataService {
 }
 
 func (ms *metadataService) Fetch() ([]byte, error) {
-	return fetchURL(ms.url)
+	client := util.NewHttpClient()
+	return client.Get(ms.url)
 }
 
 func (ms *metadataService) Type() string {

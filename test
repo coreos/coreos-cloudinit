@@ -13,7 +13,7 @@ COVER=${COVER:-"-cover"}
 
 source ./build
 
-declare -a TESTPKGS=(initialize system datasource)
+declare -a TESTPKGS=(initialize system datasource util)
 
 if [ -z "$PKG" ]; then
 	GOFMTPATH="$TESTPKGS coreos-cloudinit.go"

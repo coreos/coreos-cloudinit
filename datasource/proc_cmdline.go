@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+
+	"github.com/coreos/coreos-cloudinit/util"
 )
 
 const (
@@ -29,7 +31,8 @@ func (self *procCmdline) Fetch() ([]byte, error) {
 		return nil, err
 	}
 
-	cfg, err := fetchURL(url)
+	client := util.NewHttpClient()
+	cfg, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}

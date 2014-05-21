@@ -3,10 +3,9 @@ package initialize
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/coreos/coreos-cloudinit/system"
+	"github.com/coreos/coreos-cloudinit/util"
 )
 
 type UserKey struct {
@@ -25,22 +24,19 @@ func SSHImportKeysFromURL(system_user string, url string) error {
 }
 
 func fetchUserKeys(url string) ([]string, error) {
-	res, err := http.Get(url)
+	client := util.NewHttpClient()
+	data, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	var data []UserKey
-	err = json.Unmarshal(body, &data)
+
+	var userKeys []UserKey
+	err = json.Unmarshal(data, &userKeys)
 	if err != nil {
 		return nil, err
 	}
 	keys := make([]string, 0)
-	for _, key := range data {
+	for _, key := range userKeys {
 		keys = append(keys, key.Key)
 	}
 	return keys, err
