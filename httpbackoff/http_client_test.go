@@ -1,4 +1,4 @@
-package util
+package httpbackoff
 
 import (
 	"fmt"

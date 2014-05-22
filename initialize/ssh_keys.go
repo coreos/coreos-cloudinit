@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/coreos/coreos-cloudinit/httpbackoff"
 	"github.com/coreos/coreos-cloudinit/system"
-	"github.com/coreos/coreos-cloudinit/util"
 )
 
 type UserKey struct {
@@ -24,7 +24,7 @@ func SSHImportKeysFromURL(system_user string, url string) error {
 }
 
 func fetchUserKeys(url string) ([]string, error) {
-	client := util.NewHttpClient()
+	client := httpbackoff.NewHttpClient()
 	data, err := client.Get(url)
 	if err != nil {
 		return nil, err
