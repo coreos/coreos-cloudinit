@@ -111,7 +111,7 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 			duration = h.MaxBackoff
 		}
 
-		log.Printf("Sleeping for %d seconds", duration)
+		log.Printf("Sleeping for %v...", duration)
 
 		time.Sleep(duration)
 	}
