@@ -1,4 +1,4 @@
 *.swp
 bin/
 coverage/
-pkg/
+gopath/
