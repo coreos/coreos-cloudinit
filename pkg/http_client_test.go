@@ -1,4 +1,4 @@
-package httpbackoff
+package pkg
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ var expBackoffTests = []struct {
 
 // Test exponential backoff and that it continues retrying if a 5xx response is
 // received
-func TestFetchURLExpBackOff(t *testing.T) {
+func TestGetURLExpBackOff(t *testing.T) {
 	client := NewHttpClient()
 
 	for i, tt := range expBackoffTests {
@@ -52,7 +52,7 @@ func TestFetchURLExpBackOff(t *testing.T) {
 }
 
 // Test that it stops retrying if a 4xx response comes back
-func TestFetchURL4xx(t *testing.T) {
+func TestGetURL4xx(t *testing.T) {
 	client := NewHttpClient()
 	retries := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func TestFetchURL4xx(t *testing.T) {
 }
 
 // Test that it fetches and returns user-data just fine
-func TestFetchURL2xx(t *testing.T) {
+func TestGetURL2xx(t *testing.T) {
 	var cloudcfg = `
 #cloud-config
 coreos: 
@@ -103,7 +103,7 @@ coreos:
 }
 
 // Test attempt to fetching using malformed URL
-func TestFetchURLMalformed(t *testing.T) {
+func TestGetMalformedURL(t *testing.T) {
 	client := NewHttpClient()
 
 	var tests = []struct {

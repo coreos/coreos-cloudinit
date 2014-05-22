@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/coreos/coreos-cloudinit/httpbackoff"
+	"github.com/coreos/coreos-cloudinit/pkg"
 )
 
 const (
@@ -31,7 +31,7 @@ func (self *procCmdline) Fetch() ([]byte, error) {
 		return nil, err
 	}
 
-	client := httpbackoff.NewHttpClient()
+	client := pkg.NewHttpClient()
 	cfg, err := client.Get(url)
 	if err != nil {
 		return nil, err

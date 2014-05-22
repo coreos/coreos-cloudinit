@@ -1,4 +1,4 @@
-package httpbackoff
+package pkg
 
 import (
 	"crypto/tls"
@@ -23,14 +23,14 @@ type HttpClient struct {
 	// Maximum exp backoff duration. Defaults to 5 seconds
 	MaxBackoff time.Duration
 
-	// Maximum amount of connection retries. Defaults to 15
+	// Maximum number of connection retries. Defaults to 15
 	MaxRetries int
 
 	// HTTP client timeout, this is suggested to be low since exponential
 	// backoff will kick off too. Defaults to 2 seconds
 	Timeout time.Duration
 
-	//Whether or not to skip TLS verification. Defaults to false
+	// Whether or not to skip TLS verification. Defaults to false
 	SkipTLS bool
 }
 
@@ -45,10 +45,6 @@ func NewHttpClient() *HttpClient {
 
 // Fetches a given URL with support for exponential backoff and maximum retries
 func (h *HttpClient) Get(rawurl string) ([]byte, error) {
-	if h == nil {
-		return nil, nil
-	}
-
 	if rawurl == "" {
 		return nil, errors.New("URL is empty. Skipping.")
 	}
@@ -114,6 +110,8 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 		if duration > h.MaxBackoff {
 			duration = h.MaxBackoff
 		}
+
+		log.Printf("Sleeping for %d seconds", duration)
 
 		time.Sleep(duration)
 	}

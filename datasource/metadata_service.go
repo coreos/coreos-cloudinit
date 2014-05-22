@@ -1,6 +1,6 @@
 package datasource
 
-import "github.com/coreos/coreos-cloudinit/httpbackoff"
+import "github.com/coreos/coreos-cloudinit/pkg"
 
 type metadataService struct {
 	url string
@@ -11,7 +11,7 @@ func NewMetadataService(url string) *metadataService {
 }
 
 func (ms *metadataService) Fetch() ([]byte, error) {
-	client := httpbackoff.NewHttpClient()
+	client := pkg.NewHttpClient()
 	return client.Get(ms.url)
 }
 
