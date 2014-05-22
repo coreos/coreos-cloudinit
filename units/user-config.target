@@ -4,8 +4,8 @@ Requires=system-config.target
 After=system-config.target
 
 # Watch for configs at a couple common paths
-Requires=user-cloudinit@media-configdrive-openstack-latest-user_data.path
-After=user-cloudinit@media-configdrive-openstack-latest-user_data.path
+Requires=user-configdrive.path
+After=user-configdrive.path
 Requires=user-cloudinit@var-lib-coreos\x2dinstall-user_data.path
 After=user-cloudinit@var-lib-coreos\x2dinstall-user_data.path
 
