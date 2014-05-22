@@ -2,6 +2,7 @@
 Description=Load cloud-config from %f
 Requires=coreos-setup-environment.service
 After=coreos-setup-environment.service
+After=network.target
 Before=user-config.target
 ConditionFileNotEmpty=%f
 
