@@ -28,6 +28,9 @@ func main() {
 	var file string
 	flag.StringVar(&file, "from-file", "", "Read user-data from provided file")
 
+	var configdrive string
+	flag.StringVar(&configdrive, "from-configdrive", "", "Read user-data from provided cloud-drive directory")
+
 	var url string
 	flag.StringVar(&url, "from-url", "", "Download user-data from provided url")
 
@@ -52,10 +55,12 @@ func main() {
 		ds = datasource.NewLocalFile(file)
 	} else if url != "" {
 		ds = datasource.NewMetadataService(url)
+	} else if configdrive != "" {
+		ds = datasource.NewConfigDrive(configdrive)
 	} else if useProcCmdline {
 		ds = datasource.NewProcCmdline()
 	} else {
-		fmt.Println("Provide one of --from-file, --from-url or --from-proc-cmdline")
+		fmt.Println("Provide one of --from-file, --from-configdrive, --from-url or --from-proc-cmdline")
 		os.Exit(1)
 	}
 
