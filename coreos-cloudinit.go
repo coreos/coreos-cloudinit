@@ -75,24 +75,26 @@ func main() {
 		}
 	}
 
-	if len(userdataBytes) == 0 {
-		log.Printf("No user data to handle, exiting.")
-		os.Exit(0)
-	}
-
 	env := initialize.NewEnvironment("/", workspace)
+	if len(userdataBytes) > 0 {
+		if err := processUserdata(string(userdataBytes), env); err != nil {
+			log.Fatalf("Failed resolving user-data: %v", err)
+			if !ignoreFailure {
+				os.Exit(1)
+			}
+		}
+	} else {
+		log.Printf("No user data to handle.")
+	}
+}
 
-	userdata := string(userdataBytes)
+func processUserdata(userdata string, env *initialize.Environment) error {
 	userdata = env.Apply(userdata)
 
 	parsed, err := initialize.ParseUserData(userdata)
 	if err != nil {
 		log.Printf("Failed parsing user-data: %v", err)
-		if ignoreFailure {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		return err
 	}
 
 	err = initialize.PrepWorkspace(env.Workspace())
@@ -109,11 +111,9 @@ func main() {
 		if err == nil {
 			var name string
 			name, err = system.ExecuteScript(path)
-			initialize.PersistUnitNameInWorkspace(name, workspace)
+			initialize.PersistUnitNameInWorkspace(name, env.Workspace())
 		}
 	}
 
-	if err != nil {
-		log.Fatalf("Failed resolving user-data: %v", err)
-	}
+	return err
 }
