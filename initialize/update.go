@@ -136,13 +136,11 @@ func (uc UpdateConfig) Unit(root string) (*system.Unit, error) {
 
 	u := &system.Unit{
 		Name:    locksmithUnit,
-		Enable:  true,
 		Command: "restart",
 		Mask:    false,
 	}
 
 	if strategy == "off" {
-		u.Enable = false
 		u.Command = "stop"
 		u.Mask = true
 	}
