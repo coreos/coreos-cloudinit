@@ -91,14 +91,14 @@ func PlaceUnit(u *Unit, dst string) error {
 	return nil
 }
 
-func EnableUnitFile(file string, runtime bool) error {
+func EnableUnitFile(unit string, runtime bool) error {
 	conn, err := dbus.New()
 	if err != nil {
 		return err
 	}
 
-	files := []string{file}
-	_, _, err = conn.EnableUnitFiles(files, runtime, true)
+	units := []string{unit}
+	_, _, err = conn.EnableUnitFiles(units, runtime, true)
 	return err
 }
 
