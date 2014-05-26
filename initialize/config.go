@@ -254,8 +254,8 @@ func Apply(cfg CloudConfig, env *Environment) error {
 
 		if unit.Enable {
 			if unit.Group() != "network" {
-				log.Printf("Enabling unit file %s", dst)
-				if err := system.EnableUnitFile(dst, unit.Runtime); err != nil {
+				log.Printf("Enabling unit file %s", unit.Name)
+				if err := system.EnableUnitFile(unit.Name, unit.Runtime); err != nil {
 					return err
 				}
 				log.Printf("Enabled unit %s", unit.Name)
