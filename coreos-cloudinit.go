@@ -11,7 +11,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
-const version = "0.7.2"
+const version = "0.7.2+git"
 
 func init() {
 	//Removes timestamp since it is displayed already during booting
