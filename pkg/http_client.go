@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"net"
 	"net/http"
 	neturl "net/url"
@@ -41,6 +40,14 @@ func NewHttpClient() *HttpClient {
 		Timeout:    time.Duration(2) * time.Second,
 		SkipTLS:    false,
 	}
+}
+
+func expBackoff(interval, max time.Duration) time.Duration {
+	interval = interval * 2
+	if interval > max {
+		interval = max
+	}
+	return interval
 }
 
 // Fetches a given URL with support for exponential backoff and maximum retries
@@ -84,6 +91,7 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 		Transport: transport,
 	}
 
+	duration := 50 * time.Millisecond
 	for retry := 1; retry <= h.MaxRetries; retry++ {
 		log.Printf("Fetching data from %s. Attempt #%d", dataURL, retry)
 
@@ -106,13 +114,8 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 			log.Printf("Unable to fetch data: %s", err.Error())
 		}
 
-		duration := time.Millisecond * time.Duration((math.Pow(float64(2), float64(retry)) * 100))
-		if duration > h.MaxBackoff {
-			duration = h.MaxBackoff
-		}
-
+		duration = expBackoff(duration, h.MaxBackoff)
 		log.Printf("Sleeping for %v...", duration)
-
 		time.Sleep(duration)
 	}
 

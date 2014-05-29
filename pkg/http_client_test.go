@@ -3,23 +3,38 @@ package pkg
 import (
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
-var expBackoffTests = []struct {
-	count int
-	body  string
-}{
-	{0, "number of attempts: 0"},
-	{1, "number of attempts: 1"},
-	{2, "number of attempts: 2"},
+func TestExpBackoff(t *testing.T) {
+	duration := time.Millisecond
+	max := time.Hour
+	for i := 0; i < math.MaxUint16; i++ {
+		duration = expBackoff(duration, max)
+		if duration < 0 {
+			t.Fatalf("duration too small: %v %v", duration, i)
+		}
+		if duration > max {
+			t.Fatalf("duration too large: %v %v", duration, i)
+		}
+	}
 }
 
 // Test exponential backoff and that it continues retrying if a 5xx response is
 // received
 func TestGetURLExpBackOff(t *testing.T) {
+	var expBackoffTests = []struct {
+		count int
+		body  string
+	}{
+		{0, "number of attempts: 0"},
+		{1, "number of attempts: 1"},
+		{2, "number of attempts: 2"},
+	}
 	client := NewHttpClient()
 
 	for i, tt := range expBackoffTests {
