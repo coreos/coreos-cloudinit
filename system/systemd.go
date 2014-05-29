@@ -179,9 +179,17 @@ func MachineID(root string) string {
 	return id
 }
 
+// MaskUnit masks a Unit by the given name by symlinking its unit file (in
+// /etc/systemd/system) to /dev/null, analogous to `systemctl mask`
+// N.B.: Unlike `systemctl mask`, this function will *remove any existing unit
+// file* in /etc/systemd/system, to ensure that the mask will succeed.
 func MaskUnit(unit string, root string) error {
 	masked := path.Join(root, "etc", "systemd", "system", unit)
-	if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
+	if _, err := os.Stat(masked); os.IsNotExist(err) {
+		if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
+			return err
+		}
+	} else if err := os.Remove(masked); err != nil {
 		return err
 	}
 	return os.Symlink("/dev/null", masked)

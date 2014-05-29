@@ -154,16 +154,33 @@ func TestMaskUnit(t *testing.T) {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
 	defer os.RemoveAll(dir)
-	if err := MaskUnit("foo.service", dir); err != nil {
-		t.Fatalf("Unable to mask unit: %v", err)
-	}
 
-	fullPath := path.Join(dir, "etc", "systemd", "system", "foo.service")
-	target, err := os.Readlink(fullPath)
+	// Ensure mask works with units that do not currently exist
+	if err := MaskUnit("foo.service", dir); err != nil {
+		t.Fatalf("Unable to mask new unit: %v", err)
+	}
+	fooPath := path.Join(dir, "etc", "systemd", "system", "foo.service")
+	fooTgt, err := os.Readlink(fooPath)
 	if err != nil {
 		t.Fatalf("Unable to read link", err)
 	}
-	if target != "/dev/null" {
-		t.Fatalf("unit not masked, got unit target", target)
+	if fooTgt != "/dev/null" {
+		t.Fatalf("unit not masked, got unit target", fooTgt)
+	}
+
+	// Ensure mask works with unit files that already exist
+	barPath := path.Join(dir, "etc", "systemd", "system", "bar.service")
+	if _, err := os.Create(barPath); err != nil {
+		t.Fatalf("Error creating new unit file: %v", err)
+	}
+	if err := MaskUnit("bar.service", dir); err != nil {
+		t.Fatalf("Unable to mask existing unit: %v", err)
+	}
+	barTgt, err := os.Readlink(barPath)
+	if err != nil {
+		t.Fatalf("Unable to read link", err)
+	}
+	if barTgt != "/dev/null" {
+		t.Fatalf("unit not masked, got unit target", barTgt)
 	}
 }
