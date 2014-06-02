@@ -73,6 +73,7 @@ Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 #### fleet
 
 The `coreos.fleet.*` parameters work very similarly to `coreos.etcd.*`, and allow for the configuration of fleet through environment variables. For example, the following cloud-config document...
+
 ```
 #cloud-config
 
@@ -83,6 +84,7 @@ coreos:
 ```
 
 ...will generate a systemd unit drop-in like this:
+
 ```
 [Service]
 Environment="FLEET_PUBLIC_IP=203.0.113.29"
