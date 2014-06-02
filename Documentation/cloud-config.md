@@ -79,8 +79,8 @@ The `coreos.fleet.*` parameters work very similarly to `coreos.etcd.*`, and allo
 
 coreos:
     fleet:
-    	public-ip: $public_ipv4
-	metadata: region=us-west
+        public-ip: $public_ipv4
+        metadata: region=us-west
 ```
 
 ...will generate a systemd unit drop-in like this:
