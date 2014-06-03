@@ -1,0 +1,5 @@
+[Unit]
+Description=Watch for a cloud-config at /media/configdrive
+
+[Path]
+DirectoryNotEmpty=/media/configdrive

@@ -1,22 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
 const version = "0.7.3+git"
-
-func init() {
-	//Removes timestamp since it is displayed already during booting
-	log.SetFlags(0)
-}
 
 func main() {
 	var printVersion bool
@@ -28,11 +26,17 @@ func main() {
 	var file string
 	flag.StringVar(&file, "from-file", "", "Read user-data from provided file")
 
+	var configdrive string
+	flag.StringVar(&configdrive, "from-configdrive", "", "Read user-data from provided cloud-drive directory")
+
 	var url string
 	flag.StringVar(&url, "from-url", "", "Download user-data from provided url")
 
 	var useProcCmdline bool
 	flag.BoolVar(&useProcCmdline, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
+
+	var convertNetconf string
+	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files (requires the -from-configdrive flag)")
 
 	var workspace string
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
@@ -52,17 +56,32 @@ func main() {
 		ds = datasource.NewLocalFile(file)
 	} else if url != "" {
 		ds = datasource.NewMetadataService(url)
+	} else if configdrive != "" {
+		ds = datasource.NewConfigDrive(configdrive)
 	} else if useProcCmdline {
 		ds = datasource.NewProcCmdline()
 	} else {
-		fmt.Println("Provide one of --from-file, --from-url or --from-proc-cmdline")
+		fmt.Println("Provide one of --from-file, --from-configdrive, --from-url or --from-proc-cmdline")
 		os.Exit(1)
 	}
 
-	log.Printf("Fetching user-data from datasource of type %q", ds.Type())
+	if convertNetconf != "" && configdrive == "" {
+		fmt.Println("-convert-netconf flag requires -from-configdrive")
+		os.Exit(1)
+	}
+
+	switch convertNetconf {
+	case "":
+	case "debian":
+	default:
+		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian'\n", convertNetconf)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
 	userdataBytes, err := ds.Fetch()
 	if err != nil {
-		log.Printf("Failed fetching user-data from datasource: %v", err)
+		fmt.Printf("Failed fetching user-data from datasource: %v\n", err)
 		if ignoreFailure {
 			os.Exit(0)
 		} else {
@@ -70,29 +89,41 @@ func main() {
 		}
 	}
 
-	if len(userdataBytes) == 0 {
-		log.Printf("No user data to handle, exiting.")
-		os.Exit(0)
+	env := initialize.NewEnvironment("/", workspace)
+	if len(userdataBytes) > 0 {
+		if err := processUserdata(string(userdataBytes), env); err != nil {
+			fmt.Printf("Failed resolving user-data: %v\n", err)
+			if !ignoreFailure {
+				os.Exit(1)
+			}
+		}
+	} else {
+		fmt.Println("No user data to handle.")
 	}
 
-	env := initialize.NewEnvironment("/", workspace)
+	if convertNetconf != "" {
+		if err := processNetconf(convertNetconf, configdrive); err != nil {
+			fmt.Printf("Failed to process network config: %v\n", err)
+			if !ignoreFailure {
+				os.Exit(1)
+			}
+		}
+	}
+}
 
-	userdata := string(userdataBytes)
+func processUserdata(userdata string, env *initialize.Environment) error {
 	userdata = env.Apply(userdata)
 
 	parsed, err := initialize.ParseUserData(userdata)
 	if err != nil {
-		log.Printf("Failed parsing user-data: %v", err)
-		if ignoreFailure {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		fmt.Printf("Failed parsing user-data: %v\n", err)
+		return err
 	}
 
 	err = initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
-		log.Fatalf("Failed preparing workspace: %v", err)
+		fmt.Printf("Failed preparing workspace: %v\n", err)
+		return err
 	}
 
 	switch t := parsed.(type) {
@@ -104,11 +135,54 @@ func main() {
 		if err == nil {
 			var name string
 			name, err = system.ExecuteScript(path)
-			initialize.PersistUnitNameInWorkspace(name, workspace)
+			initialize.PersistUnitNameInWorkspace(name, env.Workspace())
 		}
 	}
 
+	return err
+}
+
+func processNetconf(convertNetconf, configdrive string) error {
+	openstackRoot := path.Join(configdrive, "openstack")
+	metadataFilename := path.Join(openstackRoot, "latest", "meta_data.json")
+	metadataBytes, err := ioutil.ReadFile(metadataFilename)
 	if err != nil {
-		log.Fatalf("Failed resolving user-data: %v", err)
+		return err
 	}
+
+	var metadata struct {
+		NetworkConfig struct {
+			ContentPath string `json:"content_path"`
+		} `json:"network_config"`
+	}
+	if err := json.Unmarshal(metadataBytes, &metadata); err != nil {
+		return err
+	}
+	configPath := metadata.NetworkConfig.ContentPath
+	if configPath == "" {
+		fmt.Printf("No network config specified in %q.\n", metadataFilename)
+		return nil
+	}
+
+	netconfBytes, err := ioutil.ReadFile(path.Join(openstackRoot, configPath))
+	if err != nil {
+		return err
+	}
+
+	var interfaces []network.InterfaceGenerator
+	switch convertNetconf {
+	case "debian":
+		interfaces, err = network.ProcessDebianNetconf(string(netconfBytes))
+	default:
+		return fmt.Errorf("Unsupported network config format %q", convertNetconf)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if err := system.WriteNetworkdConfigs(interfaces); err != nil {
+		return err
+	}
+	return system.RestartNetwork(interfaces)
 }
