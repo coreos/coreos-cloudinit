@@ -230,7 +230,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	commands := make(map[string]string, 0)
 	reload := false
 	for _, unit := range cfg.Coreos.Units {
-		dst := system.UnitDestination(&unit, env.Root())
+		dst := unit.Destination(env.Root())
 		if unit.Content != "" {
 			log.Printf("Writing unit %s to filesystem at path %s", unit.Name, dst)
 			if err := system.PlaceUnit(&unit, dst); err != nil {
@@ -242,7 +242,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 
 		if unit.Mask {
 			log.Printf("Masking unit file %s", unit.Name)
-			if err := system.MaskUnit(unit.Name, env.Root()); err != nil {
+			if err := system.MaskUnit(&unit, env.Root()); err != nil {
+				return err
+			}
+		} else if unit.Runtime {
+			log.Printf("Ensuring runtime unit file %s is unmasked", unit.Name)
+			if err := system.UnmaskUnit(&unit, env.Root()); err != nil {
 				return err
 			}
 		}

@@ -51,10 +51,10 @@ func (u *Unit) Group() (group string) {
 
 type Script []byte
 
-// UnitDestination builds the appropriate absolute file path for
-// the given Unit. The root argument indicates the effective base
+// Destination builds the appropriate absolute file path for
+// the Unit. The root argument indicates the effective base
 // directory of the system (similar to a chroot).
-func UnitDestination(u *Unit, root string) string {
+func (u *Unit) Destination(root string) string {
 	dir := "etc"
 	if u.Runtime {
 		dir = "run"
@@ -179,12 +179,12 @@ func MachineID(root string) string {
 	return id
 }
 
-// MaskUnit masks a Unit by the given name by symlinking its unit file (in
-// /etc/systemd/system) to /dev/null, analogous to `systemctl mask`
+// MaskUnit masks the given Unit by symlinking its unit file to
+// /dev/null, analogous to `systemctl mask`.
 // N.B.: Unlike `systemctl mask`, this function will *remove any existing unit
-// file* in /etc/systemd/system, to ensure that the mask will succeed.
-func MaskUnit(unit string, root string) error {
-	masked := path.Join(root, "etc", "systemd", "system", unit)
+// file at the location*, to ensure that the mask will succeed.
+func MaskUnit(unit *Unit, root string) error {
+	masked := unit.Destination(root)
 	if _, err := os.Stat(masked); os.IsNotExist(err) {
 		if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
 			return err
@@ -193,4 +193,39 @@ func MaskUnit(unit string, root string) error {
 		return err
 	}
 	return os.Symlink("/dev/null", masked)
+}
+
+// UnmaskUnit is analogous to systemd's unit_file_unmask. If the file
+// associated with the given Unit is empty or appears to be a symlink to
+// /dev/null, it is removed.
+func UnmaskUnit(unit *Unit, root string) error {
+	masked := unit.Destination(root)
+	ne, err := nullOrEmpty(masked)
+	if os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if !ne {
+		log.Printf("%s is not null or empty, refusing to unmask", masked)
+		return nil
+	}
+	return os.Remove(masked)
+}
+
+// nullOrEmpty checks whether a given path appears to be an empty regular file
+// or a symlink to /dev/null
+func nullOrEmpty(path string) (bool, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	m := fi.Mode()
+	if m.IsRegular() && fi.Size() <= 0 {
+		return true, nil
+	}
+	if m&os.ModeCharDevice > 0 {
+		return true, nil
+	}
+	return false, nil
 }
