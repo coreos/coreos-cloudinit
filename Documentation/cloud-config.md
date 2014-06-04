@@ -150,9 +150,6 @@ coreos:
           Restart=always
           ExecStart=/usr/bin/docker start -a redis_server
           ExecStop=/usr/bin/docker stop -t 2 redis_server
-          
-          [Install]
-          WantedBy=local.target
 ```
 
 Start the built-in `etcd` and `fleet` services:
