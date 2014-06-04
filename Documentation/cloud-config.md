@@ -274,7 +274,7 @@ For example, if you have an installation of GitHub Enterprise, you can provide a
 
 users:
   - name: elroy
-    coreos-ssh-import-url: https://token:<OAUTH-TOKEN>@github-enterprise.example.com/users/elroy/keys
+    coreos-ssh-import-url: https://github-enterprise.example.com/api/v3/users/elroy/keys?access_token=<TOKEN>
 ```
 
 You can also specify any URL whose response matches the JSON format for public keys:
