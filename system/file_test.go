@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"syscall"
 	"testing"
 )
 
@@ -13,18 +12,22 @@ func TestWriteFileUnencodedContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
-	fullPath := path.Join(dir, "tmp", "foo")
+	fn := "foo"
+	fullPath := path.Join(dir, fn)
 
 	wf := File{
-		Path:        fullPath,
-		Content:     "bar",
+		Path:               fn,
+		Content:            "bar",
 		RawFilePermissions: "0644",
 	}
 
-	if err := WriteFile(&wf); err != nil {
+	path, err := WriteFile(&wf, dir)
+	if err != nil {
 		t.Fatalf("Processing of WriteFile failed: %v", err)
+	} else if path != fullPath {
+		t.Fatalf("WriteFile returned bad path: want %s, got %s", fullPath, path)
 	}
 
 	fi, err := os.Stat(fullPath)
@@ -51,15 +54,15 @@ func TestWriteFileInvalidPermission(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	wf := File{
-		Path:        path.Join(dir, "tmp", "foo"),
-		Content:     "bar",
+		Path:               path.Join(dir, "tmp", "foo"),
+		Content:            "bar",
 		RawFilePermissions: "pants",
 	}
 
-	if err := WriteFile(&wf); err == nil {
+	if _, err := WriteFile(&wf, dir); err == nil {
 		t.Fatalf("Expected error to be raised when writing file with invalid permission")
 	}
 }
@@ -69,17 +72,21 @@ func TestWriteFilePermissions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
-	fullPath := path.Join(dir, "tmp", "foo")
+	fn := "foo"
+	fullPath := path.Join(dir, fn)
 
 	wf := File{
-		Path:               fullPath,
+		Path:               fn,
 		RawFilePermissions: "0755",
 	}
 
-	if err := WriteFile(&wf); err != nil {
+	path, err := WriteFile(&wf, dir)
+	if err != nil {
 		t.Fatalf("Processing of WriteFile failed: %v", err)
+	} else if path != fullPath {
+		t.Fatalf("WriteFile returned bad path: want %s, got %s", fullPath, path)
 	}
 
 	fi, err := os.Stat(fullPath)
@@ -97,15 +104,15 @@ func TestWriteFileEncodedContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
 	}
-	defer syscall.Rmdir(dir)
+	defer os.RemoveAll(dir)
 
 	wf := File{
-		Path: path.Join(dir, "tmp", "foo"),
-		Content: "",
+		Path:     path.Join(dir, "tmp", "foo"),
+		Content:  "",
 		Encoding: "base64",
 	}
 
-	if err := WriteFile(&wf); err == nil {
+	if _, err := WriteFile(&wf, dir); err == nil {
 		t.Fatalf("Expected error to be raised when writing file with encoding")
 	}
 }

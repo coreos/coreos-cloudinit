@@ -31,8 +31,7 @@ func TestOEMReleaseWrittenToDisk(t *testing.T) {
 		t.Fatalf("OEMRelease returned nil file unexpectedly")
 	}
 
-	f.Path = path.Join(dir, f.Path)
-	if err := system.WriteFile(f); err != nil {
+	if _, err := system.WriteFile(f, dir); err != nil {
 		t.Fatalf("Writing of OEMRelease failed: %v", err)
 	}
 

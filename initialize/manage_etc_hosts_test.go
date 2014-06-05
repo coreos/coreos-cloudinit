@@ -50,9 +50,7 @@ func TestEtcHostsWrittenToDisk(t *testing.T) {
 		t.Fatalf("manageEtcHosts returned nil file unexpectedly")
 	}
 
-	f.Path = path.Join(dir, f.Path)
-
-	if err := system.WriteFile(f); err != nil {
+	if _, err := system.WriteFile(f, dir); err != nil {
 		t.Fatalf("Error writing EtcHosts: %v", err)
 	}
 
