@@ -38,12 +38,12 @@ func TestEmptyUpdateConfig(t *testing.T) {
 	if f != nil {
 		t.Errorf("getting file from empty UpdateConfig should have returned nil, got %v", f)
 	}
-	u, err := uc.Unit("")
+	uu, err := uc.Units("")
 	if err != nil {
 		t.Error("unexpected error getting unit from empty UpdateConfig")
 	}
-	if u != nil {
-		t.Errorf("getting unit from empty UpdateConfig should have returned nil, got %v", u)
+	if len(uu) != 0 {
+		t.Errorf("getting unit from empty UpdateConfig should have returned zero units, got %d", len(uu))
 	}
 }
 
@@ -106,6 +106,21 @@ SERVER=http://foo.com`
 			t.Errorf("File has incorrect contents, got %v, want %v", got, want)
 		}
 	}
+
+	uu, err := u.Units(dir)
+	if err != nil {
+		t.Errorf("unexpected error getting units from UpdateConfig: %v", err)
+	} else if len(uu) != 1 {
+		t.Errorf("unexpected number of files returned from UpdateConfig: want 1, got %d", len(uu))
+	} else {
+		unit := uu[0]
+		if unit.Name != "update-engine" {
+			t.Errorf("bad name for generated unit: want update-engine, got %s", unit.Name)
+		}
+		if unit.Command != "restart" {
+			t.Errorf("bad command for generated unit: want restart, got %s", unit.Command)
+		}
+	}
 }
 
 func TestRebootStrategies(t *testing.T) {
@@ -145,12 +160,13 @@ func TestRebootStrategies(t *testing.T) {
 				t.Errorf("couldn't find expected line %v for reboot-strategy=%v", s.line)
 			}
 		}
-		u, err := uc.Unit(dir)
+		uu, err := uc.Units(dir)
 		if err != nil {
 			t.Errorf("failed to generate unit for reboot-strategy=%v!", s.name)
-		} else if u == nil {
-			t.Errorf("generated empty unit for reboot-strategy=%v", s.name)
+		} else if len(uu) != 1 {
+			t.Errorf("unexpected number of units for reboot-strategy=%v: %d", s.name, len(uu))
 		} else {
+			u := uu[0]
 			if u.Name != locksmithUnit {
 				t.Errorf("unit generated for reboot strategy=%v had bad name: %v", s.name, u.Name)
 			}

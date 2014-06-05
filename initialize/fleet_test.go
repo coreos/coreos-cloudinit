@@ -19,20 +19,21 @@ Environment="FLEET_PUBLIC_IP=12.34.56.78"
 
 func TestFleetUnit(t *testing.T) {
 	cfg := make(FleetEnvironment, 0)
-	u, err := cfg.Unit("/")
-	if u != nil {
+	uu, err := cfg.Units("/")
+	if len(uu) != 0 {
 		t.Errorf("unexpectedly generated unit with empty FleetEnvironment")
 	}
 
 	cfg["public-ip"] = "12.34.56.78"
 
-	u, err = cfg.Unit("/")
+	uu, err = cfg.Units("/")
 	if err != nil {
 		t.Errorf("error generating fleet unit: %v", err)
 	}
-	if u == nil {
-		t.Fatalf("unexpectedly got nil unit generating fleet unit!")
+	if len(uu) != 1 {
+		t.Fatalf("expected 1 unit generated, got %d", len(uu))
 	}
+	u := uu[0]
 	if !u.Runtime {
 		t.Errorf("bad Runtime for generated fleet unit!")
 	}

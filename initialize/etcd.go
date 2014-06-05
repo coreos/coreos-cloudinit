@@ -28,9 +28,9 @@ func (ee EtcdEnvironment) String() (out string) {
 	return
 }
 
-// Unit creates a Unit file drop-in for etcd, using any configured
+// Units creates a Unit file drop-in for etcd, using any configured
 // options and adding a default MachineID if unset.
-func (ee EtcdEnvironment) Unit(root string) (*system.Unit, error) {
+func (ee EtcdEnvironment) Units(root string) ([]system.Unit, error) {
 	if ee == nil {
 		return nil, nil
 	}
@@ -45,10 +45,11 @@ func (ee EtcdEnvironment) Unit(root string) (*system.Unit, error) {
 		}
 	}
 
-	return &system.Unit{
+	etcd := system.Unit{
 		Name:    "etcd.service",
 		Runtime: true,
 		DropIn:  true,
 		Content: ee.String(),
-	}, nil
+	}
+	return []system.Unit{etcd}, nil
 }

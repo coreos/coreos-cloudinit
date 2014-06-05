@@ -59,7 +59,7 @@ Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 }
 
 func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
-	ec := EtcdEnvironment{
+	ee := EtcdEnvironment{
 		"name":           "node001",
 		"discovery":      "http://disco.example.com/foobar",
 		"peer-bind-addr": "127.0.0.1:7002",
@@ -70,17 +70,18 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	u, err := ec.Unit(dir)
+	uu, err := ee.Units(dir)
 	if err != nil {
 		t.Fatalf("Generating etcd unit failed: %v", err)
 	}
-	if u == nil {
-		t.Fatalf("Returned nil etcd unit unexpectedly")
+	if len(uu) != 1 {
+		t.Fatalf("Expected 1 unit to be returned, got %d", len(uu))
 	}
+	u := uu[0]
 
-	dst := system.UnitDestination(u, dir)
+	dst := system.UnitDestination(&u, dir)
 	os.Stderr.WriteString("writing to " + dir + "\n")
-	if err := system.PlaceUnit(u, dst); err != nil {
+	if err := system.PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
 	}
 
@@ -124,17 +125,18 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 		t.Fatalf("Failed writing out /etc/machine-id: %v", err)
 	}
 
-	u, err := ee.Unit(dir)
+	uu, err := ee.Units(dir)
 	if err != nil {
 		t.Fatalf("Generating etcd unit failed: %v", err)
 	}
-	if u == nil {
-		t.Fatalf("Returned nil etcd unit unexpectedly")
+	if len(uu) == 0 {
+		t.Fatalf("Returned empty etcd units unexpectedly")
 	}
+	u := uu[0]
 
-	dst := system.UnitDestination(u, dir)
+	dst := system.UnitDestination(&u, dir)
 	os.Stderr.WriteString("writing to " + dir + "\n")
-	if err := system.PlaceUnit(u, dst); err != nil {
+	if err := system.PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
 	}
 
@@ -159,8 +161,8 @@ func TestEtcdEnvironmentWhenNil(t *testing.T) {
 	if ee != nil {
 		t.Fatalf("EtcdEnvironment is not nil")
 	}
-	u, err := ee.Unit("")
-	if u != nil || err != nil {
-		t.Fatalf("Unit returned a non-nil value for nil input")
+	uu, err := ee.Units("")
+	if len(uu) != 0 || err != nil {
+		t.Fatalf("Units returned value for nil input")
 	}
 }

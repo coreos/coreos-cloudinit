@@ -126,24 +126,39 @@ func (uc UpdateConfig) File(root string) (*system.File, error) {
 	}, nil
 }
 
-// GetUnit generates a locksmith system.Unit, if reboot-strategy was set in
-// cloud-config, for the cloud-init initializer to act on appropriately
-func (uc UpdateConfig) Unit(root string) (*system.Unit, error) {
-	strategy, ok := uc["reboot-strategy"]
-	if !ok {
-		return nil, nil
+// Units generates units for the cloud-init initializer to act on:
+// - a locksmith system.Unit, if "reboot-strategy" was set in cloud-config
+// - an update_engine system.Unit, if "group" was set in cloud-config
+func (uc UpdateConfig) Units(root string) ([]system.Unit, error) {
+	var units []system.Unit
+	if strategy, ok := uc["reboot-strategy"]; ok {
+		ls := &system.Unit{
+			Name:    locksmithUnit,
+			Command: "restart",
+			Mask:    false,
+		}
+
+		if strategy == "off" {
+			ls.Command = "stop"
+			ls.Mask = true
+		}
+		units = append(units, *ls)
 	}
 
-	u := &system.Unit{
-		Name:    locksmithUnit,
-		Command: "restart",
-		Mask:    false,
+	rue := false
+	if _, ok := uc["group"]; ok {
+		rue = true
+	}
+	if _, ok := uc["server"]; ok {
+		rue = true
+	}
+	if rue {
+		ue := system.Unit{
+			Name:    "update-engine",
+			Command: "restart",
+		}
+		units = append(units, ue)
 	}
 
-	if strategy == "off" {
-		u.Command = "stop"
-		u.Mask = true
-	}
-
-	return u, nil
+	return units, nil
 }
