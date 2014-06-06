@@ -3,6 +3,7 @@ package initialize
 import (
 	"io/ioutil"
 	"path"
+	"strings"
 
 	"github.com/coreos/coreos-cloudinit/system"
 )
@@ -28,21 +29,23 @@ func PersistScriptInWorkspace(script system.Script, workspace string) (string, e
 	}
 	tmp.Close()
 
+	relpath := strings.TrimPrefix(tmp.Name(), workspace)
+
 	file := system.File{
-		Path: tmp.Name(),
+		Path:               relpath,
 		RawFilePermissions: "0744",
-		Content: string(script),
+		Content:            string(script),
 	}
 
-	err = system.WriteFile(&file)
-	return file.Path, err
+	return system.WriteFile(&file, workspace)
 }
 
 func PersistUnitNameInWorkspace(name string, workspace string) error {
 	file := system.File{
-		Path: path.Join(workspace, "scripts", "unit-name"),
+		Path:               path.Join("scripts", "unit-name"),
 		RawFilePermissions: "0644",
-		Content: name,
+		Content:            name,
 	}
-	return system.WriteFile(&file)
+	_, err := system.WriteFile(&file, workspace)
+	return err
 }

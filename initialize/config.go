@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"path"
 
 	"github.com/coreos/coreos-cloudinit/third_party/launchpad.net/goyaml"
 
@@ -221,11 +220,11 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	for _, file := range cfg.WriteFiles {
-		file.Path = path.Join(env.Root(), file.Path)
-		if err := system.WriteFile(&file); err != nil {
+		path, err := system.WriteFile(&file, env.Root())
+		if err != nil {
 			return err
 		}
-		log.Printf("Wrote file %s to filesystem", file.Path)
+		log.Printf("Wrote file %s to filesystem", path)
 	}
 
 	commands := make(map[string]string, 0)

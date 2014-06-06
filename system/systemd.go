@@ -78,12 +78,12 @@ func PlaceUnit(u *Unit, dst string) error {
 	}
 
 	file := File{
-		Path:               dst,
+		Path:               filepath.Base(dst),
 		Content:            u.Content,
 		RawFilePermissions: "0644",
 	}
 
-	err := WriteFile(&file)
+	_, err := WriteFile(&file, dir)
 	if err != nil {
 		return err
 	}

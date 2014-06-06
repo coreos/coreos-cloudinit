@@ -205,8 +205,7 @@ func TestUpdateConfWrittenToDisk(t *testing.T) {
 			t.Fatal("Unexpectedly got nil updateconfig file")
 		}
 
-		f.Path = path.Join(dir, f.Path)
-		if err := system.WriteFile(f); err != nil {
+		if _, err := system.WriteFile(f, dir); err != nil {
 			t.Fatalf("Error writing update config: %v", err)
 		}
 
