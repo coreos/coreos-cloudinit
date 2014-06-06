@@ -79,7 +79,7 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 	u := uu[0]
 
-	dst := system.UnitDestination(&u, dir)
+	dst := u.Destination(dir)
 	os.Stderr.WriteString("writing to " + dir + "\n")
 	if err := system.PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
@@ -134,7 +134,7 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 	}
 	u := uu[0]
 
-	dst := system.UnitDestination(&u, dir)
+	dst := u.Destination(dir)
 	os.Stderr.WriteString("writing to " + dir + "\n")
 	if err := system.PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)

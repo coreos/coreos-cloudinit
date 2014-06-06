@@ -99,7 +99,8 @@ For more information on fleet configuration, see the [fleet documentation][fleet
 
 The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
 
-These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
+These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field. 
+The `reboot-strategy` parameter also affects the behaviour of [locksmith](https://github.com/coreos/locksmith). 
 
 - **reboot-strategy**: One of "reboot", "etcd-lock", "best-effort" or "off" for controlling when reboots are issued after an update is performed.
   - _reboot_: Reboot immediately after an update is applied.
@@ -108,6 +109,10 @@ These fields will be written out to and replace `/etc/coreos/update.conf`. If on
   - _off_ - Disable rebooting after updates are applied (not recommended).
 - **server**: is the omaha endpoint URL which will be queried for updates.
 - **group**:  signifies the channel which should be used for automatic updates.  This value defaults to the version of the image initially downloaded. (one of "master", "alpha", "beta", "stable")
+
+*Note: cloudinit will only manipulate the locksmith unit file in the systemd runtime directory (`/run/systemd/system/locksmithd.service`). If any manual modifications are made to an overriding unit configuration file (e.g. `/etc/systemd/system/locksmithd.service`), cloudinit will no longer be able to control the locksmith service unit.*
+
+##### Example
 
 ```
 #cloud-config

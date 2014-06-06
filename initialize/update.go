@@ -136,6 +136,7 @@ func (uc UpdateConfig) Units(root string) ([]system.Unit, error) {
 			Name:    locksmithUnit,
 			Command: "restart",
 			Mask:    false,
+			Runtime: true,
 		}
 
 		if strategy == "off" {
