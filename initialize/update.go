@@ -36,7 +36,6 @@ var updateOptions = []*updateOption{
 	&updateOption{
 		key:    "group",
 		prefix: "GROUP=",
-		valid:  []string{"master", "beta", "alpha", "stable"},
 	},
 	&updateOption{
 		key:    "server",
