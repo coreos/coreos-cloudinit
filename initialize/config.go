@@ -227,13 +227,23 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		log.Printf("Wrote file %s to filesystem", path)
 	}
 
+	um := system.NewUnitManager(env.Root())
+	return processUnits(cfg.Coreos.Units, env.Root(), um)
+
+}
+
+// processUnits takes a set of Units and applies them to the given root using
+// the given UnitManager. This can involve things like writing unit files to
+// disk, masking/unmasking units, or invoking systemd
+// commands against units. It returns any error encountered.
+func processUnits(units []system.Unit, root string, um system.UnitManager) error {
 	commands := make(map[string]string, 0)
 	reload := false
-	for _, unit := range cfg.Coreos.Units {
-		dst := unit.Destination(env.Root())
+	for _, unit := range units {
+		dst := unit.Destination(root)
 		if unit.Content != "" {
 			log.Printf("Writing unit %s to filesystem at path %s", unit.Name, dst)
-			if err := system.PlaceUnit(&unit, dst); err != nil {
+			if err := um.PlaceUnit(&unit, dst); err != nil {
 				return err
 			}
 			log.Printf("Placed unit %s at %s", unit.Name, dst)
@@ -242,12 +252,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 
 		if unit.Mask {
 			log.Printf("Masking unit file %s", unit.Name)
-			if err := system.MaskUnit(&unit, env.Root()); err != nil {
+			if err := um.MaskUnit(&unit); err != nil {
 				return err
 			}
 		} else if unit.Runtime {
 			log.Printf("Ensuring runtime unit file %s is unmasked", unit.Name)
-			if err := system.UnmaskUnit(&unit, env.Root()); err != nil {
+			if err := um.UnmaskUnit(&unit); err != nil {
 				return err
 			}
 		}
@@ -255,7 +265,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		if unit.Enable {
 			if unit.Group() != "network" {
 				log.Printf("Enabling unit file %s", unit.Name)
-				if err := system.EnableUnitFile(unit.Name, unit.Runtime); err != nil {
+				if err := um.EnableUnitFile(unit.Name, unit.Runtime); err != nil {
 					return err
 				}
 				log.Printf("Enabled unit %s", unit.Name)
@@ -272,14 +282,14 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	if reload {
-		if err := system.DaemonReload(); err != nil {
+		if err := um.DaemonReload(); err != nil {
 			return errors.New(fmt.Sprintf("failed systemd daemon-reload: %v", err))
 		}
 	}
 
 	for unit, command := range commands {
 		log.Printf("Calling unit command '%s %s'", command, unit)
-		res, err := system.RunUnitCommand(command, unit)
+		res, err := um.RunUnitCommand(command, unit)
 		if err != nil {
 			return err
 		}
