@@ -70,6 +70,8 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
+	sd := system.NewUnitManager(dir)
+
 	uu, err := ee.Units(dir)
 	if err != nil {
 		t.Fatalf("Generating etcd unit failed: %v", err)
@@ -81,7 +83,7 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 
 	dst := u.Destination(dir)
 	os.Stderr.WriteString("writing to " + dir + "\n")
-	if err := system.PlaceUnit(&u, dst); err != nil {
+	if err := sd.PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
 	}
 
@@ -119,6 +121,8 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
+	sd := system.NewUnitManager(dir)
+
 	os.Mkdir(path.Join(dir, "etc"), os.FileMode(0755))
 	err = ioutil.WriteFile(path.Join(dir, "etc", "machine-id"), []byte("node007"), os.FileMode(0444))
 	if err != nil {
@@ -136,7 +140,7 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 
 	dst := u.Destination(dir)
 	os.Stderr.WriteString("writing to " + dir + "\n")
-	if err := system.PlaceUnit(&u, dst); err != nil {
+	if err := sd.PlaceUnit(&u, dst); err != nil {
 		t.Fatalf("Writing of EtcdEnvironment failed: %v", err)
 	}
 
