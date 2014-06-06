@@ -19,16 +19,17 @@ func (fe FleetEnvironment) String() (out string) {
 	return
 }
 
-// Unit generates a Unit file drop-in for fleet, if any fleet options were
+// Units generates a Unit file drop-in for fleet, if any fleet options were
 // configured in cloud-config
-func (fe FleetEnvironment) Unit(root string) (*system.Unit, error) {
+func (fe FleetEnvironment) Units(root string) ([]system.Unit, error) {
 	if len(fe) < 1 {
 		return nil, nil
 	}
-	return &system.Unit{
+	fleet := system.Unit{
 		Name:    "fleet.service",
 		Runtime: true,
 		DropIn:  true,
 		Content: fe.String(),
-	}, nil
+	}
+	return []system.Unit{fleet}, nil
 }

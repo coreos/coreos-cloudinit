@@ -20,11 +20,9 @@ type CloudConfigFile interface {
 }
 
 // CloudConfigUnit represents a CoreOS specific configuration option that can generate
-// an associated system.Unit to be created/enabled appropriately
+// associated system.Units to be created/enabled appropriately
 type CloudConfigUnit interface {
-	// Unit should either return (*system.Unit, error), or (nil, nil) if nothing
-	// needs to be done for this configuration option.
-	Unit(root string) (*system.Unit, error)
+	Units(root string) ([]system.Unit, error)
 }
 
 // CloudConfig encapsulates the entire cloud-config configuration file and maps directly to YAML
@@ -215,13 +213,11 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	for _, ccu := range []CloudConfigUnit{cfg.Coreos.Etcd, cfg.Coreos.Fleet, cfg.Coreos.Update} {
-		u, err := ccu.Unit(env.Root())
+		u, err := ccu.Units(env.Root())
 		if err != nil {
 			return err
 		}
-		if u != nil {
-			cfg.Coreos.Units = append(cfg.Coreos.Units, *u)
-		}
+		cfg.Coreos.Units = append(cfg.Coreos.Units, u...)
 	}
 
 	for _, file := range cfg.WriteFiles {
