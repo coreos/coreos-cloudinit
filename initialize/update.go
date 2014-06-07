@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	locksmithUnit = "locksmithd.service"
+	locksmithUnit    = "locksmithd.service"
+	updateEngineUnit = "update-engine.service"
 )
 
 // updateOption represents a configurable update option, which, if set, will be
@@ -154,7 +155,7 @@ func (uc UpdateConfig) Units(root string) ([]system.Unit, error) {
 	}
 	if rue {
 		ue := system.Unit{
-			Name:    "update-engine",
+			Name:    updateEngineUnit,
 			Command: "restart",
 		}
 		units = append(units, ue)
