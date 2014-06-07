@@ -14,7 +14,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
-const version = "0.7.6"
+const version = "0.7.6+git"
 
 func main() {
 	var printVersion bool
