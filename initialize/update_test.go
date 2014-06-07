@@ -114,8 +114,8 @@ SERVER=http://foo.com`
 		t.Errorf("unexpected number of files returned from UpdateConfig: want 1, got %d", len(uu))
 	} else {
 		unit := uu[0]
-		if unit.Name != "update-engine" {
-			t.Errorf("bad name for generated unit: want update-engine, got %s", unit.Name)
+		if unit.Name != "update-engine.service" {
+			t.Errorf("bad name for generated unit: want update-engine.service, got %s", unit.Name)
 		}
 		if unit.Command != "restart" {
 			t.Errorf("bad command for generated unit: want restart, got %s", unit.Command)
