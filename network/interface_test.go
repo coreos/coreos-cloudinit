@@ -143,16 +143,26 @@ func TestVLANInterfaceName(t *testing.T) {
 }
 
 func TestVLANInterfaceNetdev(t *testing.T) {
-	v := vlanInterface{logicalInterface{name: "testname"}, 1, ""}
-	netdev := `[NetDev]
-Kind=vlan
-Name=testname
-
-[VLAN]
-Id=1
-`
-	if v.Netdev() != netdev {
-		t.FailNow()
+	for _, tt := range []struct {
+		i vlanInterface
+		l string
+	}{
+		{
+			vlanInterface{logicalInterface{name: "testname"}, 1, ""},
+			"[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=1\n",
+		},
+		{
+			vlanInterface{logicalInterface{name: "testname", config: configMethodStatic{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
+			"[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+		},
+		{
+			vlanInterface{logicalInterface{name: "testname", config: configMethodDHCP{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
+			"[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+		},
+	} {
+		if tt.i.Netdev() != tt.l {
+			t.Fatalf("bad netdev config (%q): got %q, want %q", tt.i, tt.i.Netdev(), tt.l)
+		}
 	}
 }
 

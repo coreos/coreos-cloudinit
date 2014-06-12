@@ -40,13 +40,16 @@ type configMethodStatic struct {
 	address     net.IPNet
 	nameservers []net.IP
 	routes      []route
+	hwaddress   net.HardwareAddr
 }
 
 type configMethodLoopback struct{}
 
 type configMethodManual struct{}
 
-type configMethodDHCP struct{}
+type configMethodDHCP struct {
+	hwaddress net.HardwareAddr
+}
 
 func parseStanzas(lines []string) (stanzas []stanza, err error) {
 	rawStanzas, err := splitStanzas(lines)
@@ -217,6 +220,11 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 				})
 			}
 		}
+		if hwaddress, err := parseHwaddress(optionMap, iface); err == nil {
+			config.hwaddress = hwaddress
+		} else {
+			return nil, err
+		}
 		for _, nameserver := range optionMap["dns-nameservers"] {
 			config.nameservers = append(config.nameservers, net.ParseIP(nameserver))
 		}
@@ -245,7 +253,13 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 	case "manual":
 		conf = configMethodManual{}
 	case "dhcp":
-		conf = configMethodDHCP{}
+		config := configMethodDHCP{}
+		if hwaddress, err := parseHwaddress(optionMap, iface); err == nil {
+			config.hwaddress = hwaddress
+		} else {
+			return nil, err
+		}
+		conf = config
 	default:
 		return nil, fmt.Errorf("invalid config method %q", confMethod)
 	}
@@ -263,6 +277,19 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 	}
 
 	return parsePhysicalStanza(iface, conf, attributes, optionMap)
+}
+
+func parseHwaddress(options map[string][]string, iface string) (net.HardwareAddr, error) {
+	if hwaddress, ok := options["hwaddress"]; ok && len(hwaddress) == 2 {
+		switch hwaddress[0] {
+		case "ether":
+			if address, err := net.ParseMAC(hwaddress[1]); err == nil {
+				return address, nil
+			}
+			return nil, fmt.Errorf("malformed hwaddress option for %q", iface)
+		}
+	}
+	return nil, nil
 }
 
 func parseBondStanza(iface string, conf configMethod, attributes []string, options map[string][]string) (*stanzaInterface, error) {

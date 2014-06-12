@@ -48,6 +48,10 @@ func (i *logicalInterface) Network() string {
 	return config
 }
 
+func (i *logicalInterface) Link() string {
+	return ""
+}
+
 type physicalInterface struct {
 	logicalInterface
 }
@@ -57,10 +61,6 @@ func (p *physicalInterface) Name() string {
 }
 
 func (p *physicalInterface) Netdev() string {
-	return ""
-}
-
-func (p *physicalInterface) Link() string {
 	return ""
 }
 
@@ -77,10 +77,6 @@ func (b *bondInterface) Netdev() string {
 	return fmt.Sprintf("[NetDev]\nKind=bond\nName=%s\n", b.name)
 }
 
-func (b *bondInterface) Link() string {
-	return ""
-}
-
 type vlanInterface struct {
 	logicalInterface
 	id        int
@@ -92,11 +88,19 @@ func (v *vlanInterface) Name() string {
 }
 
 func (v *vlanInterface) Netdev() string {
-	return fmt.Sprintf("[NetDev]\nKind=vlan\nName=%s\n\n[VLAN]\nId=%d\n", v.name, v.id)
-}
-
-func (v *vlanInterface) Link() string {
-	return ""
+	config := fmt.Sprintf("[NetDev]\nKind=vlan\nName=%s\n", v.name)
+	switch c := v.config.(type) {
+	case configMethodStatic:
+		if c.hwaddress != nil {
+			config += fmt.Sprintf("MACAddress=%s\n", c.hwaddress)
+		}
+	case configMethodDHCP:
+		if c.hwaddress != nil {
+			config += fmt.Sprintf("MACAddress=%s\n", c.hwaddress)
+		}
+	}
+	config += fmt.Sprintf("\n[VLAN]\nId=%d\n", v.id)
+	return config
 }
 
 func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {

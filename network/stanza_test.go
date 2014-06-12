@@ -42,6 +42,8 @@ func TestBadParseInterfaceStanza(t *testing.T) {
 		{[]string{"eth", "inet", "static"}, []string{"netmask 255.255.255.0"}, "malformed static network config"},
 		{[]string{"eth", "inet", "static"}, []string{"address invalid", "netmask 255.255.255.0"}, "malformed static network config"},
 		{[]string{"eth", "inet", "static"}, []string{"address 192.168.1.100", "netmask invalid"}, "malformed static network config"},
+		{[]string{"eth", "inet", "static"}, []string{"address 192.168.1.100", "netmask 255.255.255.0", "hwaddress ether NotAnAddress"}, "malformed hwaddress option"},
+		{[]string{"eth", "inet", "dhcp"}, []string{"hwaddress ether NotAnAddress"}, "malformed hwaddress option"},
 	} {
 		_, err := parseInterfaceStanza(tt.in, tt.opts)
 		if err == nil || !strings.HasPrefix(err.Error(), tt.e) {
@@ -407,7 +409,46 @@ func TestParseInterfaceStanzaOptions(t *testing.T) {
 	}
 }
 
-func TestParseInterfaceStazaBond(t *testing.T) {
+func TestParseInterfaceStanzaHwaddress(t *testing.T) {
+	for _, tt := range []struct {
+		attr []string
+		opt  []string
+		hw   net.HardwareAddr
+	}{
+		{
+			[]string{"mybond", "inet", "dhcp"},
+			[]string{},
+			nil,
+		},
+		{
+			[]string{"mybond", "inet", "dhcp"},
+			[]string{"hwaddress ether 00:01:02:03:04:05"},
+			net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5}),
+		},
+		{
+			[]string{"mybond", "inet", "static"},
+			[]string{"hwaddress ether 00:01:02:03:04:05", "address 192.168.1.100", "netmask 255.255.255.0"},
+			net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5}),
+		},
+	} {
+		iface, err := parseInterfaceStanza(tt.attr, tt.opt)
+		if err != nil {
+			t.Fatalf("error in parseInterfaceStanza (%q, %q): %q", tt.attr, tt.opt, err)
+		}
+		switch c := iface.configMethod.(type) {
+		case configMethodStatic:
+			if !reflect.DeepEqual(c.hwaddress, tt.hw) {
+				t.Fatalf("bad hwaddress (%q, %q): got %q, want %q", tt.attr, tt.opt, c.hwaddress, tt.hw)
+			}
+		case configMethodDHCP:
+			if !reflect.DeepEqual(c.hwaddress, tt.hw) {
+				t.Fatalf("bad hwaddress (%q, %q): got %q, want %q", tt.attr, tt.opt, c.hwaddress, tt.hw)
+			}
+		}
+	}
+}
+
+func TestParseInterfaceStanzaBond(t *testing.T) {
 	iface, err := parseInterfaceStanza([]string{"mybond", "inet", "manual"}, []string{"bond-slaves eth"})
 	if err != nil {
 		t.FailNow()
@@ -417,7 +458,7 @@ func TestParseInterfaceStazaBond(t *testing.T) {
 	}
 }
 
-func TestParseInterfaceStazaVLANName(t *testing.T) {
+func TestParseInterfaceStanzaVLANName(t *testing.T) {
 	iface, err := parseInterfaceStanza([]string{"eth0.1", "inet", "manual"}, nil)
 	if err != nil {
 		t.FailNow()
@@ -427,7 +468,7 @@ func TestParseInterfaceStazaVLANName(t *testing.T) {
 	}
 }
 
-func TestParseInterfaceStazaVLANOption(t *testing.T) {
+func TestParseInterfaceStanzaVLANOption(t *testing.T) {
 	iface, err := parseInterfaceStanza([]string{"vlan1", "inet", "manual"}, []string{"vlan_raw_device eth"})
 	if err != nil {
 		t.FailNow()
