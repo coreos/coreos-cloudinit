@@ -96,7 +96,7 @@ func splitStanzas(lines []string) ([][]string, error) {
 		} else if curStanza != nil {
 			curStanza = append(curStanza, line)
 		} else {
-			return nil, fmt.Errorf("missing stanza start '%s'", line)
+			return nil, fmt.Errorf("missing stanza start %q", line)
 		}
 	}
 
@@ -142,7 +142,7 @@ func parseStanza(rawStanza []string) (stanza, error) {
 	case "iface":
 		return parseInterfaceStanza(attributes, rawStanza[1:])
 	default:
-		return nil, fmt.Errorf("unknown stanza '%s'", kind)
+		return nil, fmt.Errorf("unknown stanza %q", kind)
 	}
 }
 
@@ -204,7 +204,7 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 			}
 		}
 		if config.address.IP == nil || config.address.Mask == nil {
-			return nil, fmt.Errorf("malformed static network config for '%s'", iface)
+			return nil, fmt.Errorf("malformed static network config for %q", iface)
 		}
 		if gateways, ok := optionMap["gateway"]; ok {
 			if len(gateways) == 1 {
@@ -247,7 +247,7 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 	case "dhcp":
 		conf = configMethodDHCP{}
 	default:
-		return nil, fmt.Errorf("invalid config method '%s'", confMethod)
+		return nil, fmt.Errorf("invalid config method %q", confMethod)
 	}
 
 	if _, ok := optionMap["vlan_raw_device"]; ok {
@@ -282,11 +282,11 @@ func parseVLANStanza(iface string, conf configMethod, attributes []string, optio
 	} else if strings.HasPrefix(iface, "vlan") {
 		id = strings.TrimPrefix(iface, "vlan")
 	} else {
-		return nil, fmt.Errorf("malformed vlan name %s", iface)
+		return nil, fmt.Errorf("malformed vlan name %q", iface)
 	}
 
 	if _, err := strconv.Atoi(id); err != nil {
-		return nil, fmt.Errorf("malformed vlan name %s", iface)
+		return nil, fmt.Errorf("malformed vlan name %q", iface)
 	}
 	options["id"] = []string{id}
 	options["raw_device"] = options["vlan_raw_device"]

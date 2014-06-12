@@ -36,7 +36,9 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 	sysInterfaceMap := make(map[string]*net.Interface)
 	if systemInterfaces, err := net.Interfaces(); err == nil {
 		for _, iface := range systemInterfaces {
-			sysInterfaceMap[iface.Name] = &iface
+			// Need a copy of the interface so we can take the address
+			temp := iface
+			sysInterfaceMap[temp.Name] = &temp
 		}
 	} else {
 		return err
