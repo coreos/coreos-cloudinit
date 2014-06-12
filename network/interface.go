@@ -7,15 +7,23 @@ import (
 
 type InterfaceGenerator interface {
 	Name() string
+	Filename() string
 	Netdev() string
 	Link() string
 	Network() string
 }
 
+type networkInterface interface {
+	InterfaceGenerator
+	Children() []networkInterface
+	setConfigDepth(int)
+}
+
 type logicalInterface struct {
-	name     string
-	config   configMethod
-	children []InterfaceGenerator
+	name        string
+	config      configMethod
+	children    []networkInterface
+	configDepth int
 }
 
 func (i *logicalInterface) Network() string {
@@ -50,6 +58,18 @@ func (i *logicalInterface) Network() string {
 
 func (i *logicalInterface) Link() string {
 	return ""
+}
+
+func (i *logicalInterface) Filename() string {
+	return fmt.Sprintf("%02x-%s", i.configDepth, i.name)
+}
+
+func (i *logicalInterface) Children() []networkInterface {
+	return i.children
+}
+
+func (i *logicalInterface) setConfigDepth(depth int) {
+	i.configDepth = depth
 }
 
 type physicalInterface struct {
@@ -104,8 +124,20 @@ func (v *vlanInterface) Netdev() string {
 }
 
 func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
-	interfaceMap := make(map[string]InterfaceGenerator)
+	interfaceMap := createInterfaces(stanzas)
+	linkAncestors(interfaceMap)
+	markConfigDepths(interfaceMap)
 
+	interfaces := make([]InterfaceGenerator, 0, len(interfaceMap))
+	for _, iface := range interfaceMap {
+		interfaces = append(interfaces, iface)
+	}
+
+	return interfaces
+}
+
+func createInterfaces(stanzas []*stanzaInterface) map[string]networkInterface {
+	interfaceMap := make(map[string]networkInterface)
 	for _, iface := range stanzas {
 		switch iface.kind {
 		case interfaceBond:
@@ -113,7 +145,7 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 				logicalInterface{
 					name:     iface.name,
 					config:   iface.configMethod,
-					children: []InterfaceGenerator{},
+					children: []networkInterface{},
 				},
 				iface.options["slaves"],
 			}
@@ -123,7 +155,7 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 						logicalInterface{
 							name:     slave,
 							config:   configMethodManual{},
-							children: []InterfaceGenerator{},
+							children: []networkInterface{},
 						},
 					}
 				}
@@ -137,7 +169,7 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 				logicalInterface{
 					name:     iface.name,
 					config:   iface.configMethod,
-					children: []InterfaceGenerator{},
+					children: []networkInterface{},
 				},
 			}
 
@@ -151,7 +183,7 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 						logicalInterface{
 							name:     rawDevice,
 							config:   configMethodManual{},
-							children: []InterfaceGenerator{},
+							children: []networkInterface{},
 						},
 					}
 				}
@@ -160,14 +192,17 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 				logicalInterface{
 					name:     iface.name,
 					config:   iface.configMethod,
-					children: []InterfaceGenerator{},
+					children: []networkInterface{},
 				},
 				id,
 				rawDevice,
 			}
 		}
 	}
+	return interfaceMap
+}
 
+func linkAncestors(interfaceMap map[string]networkInterface) {
 	for _, iface := range interfaceMap {
 		switch i := iface.(type) {
 		case *vlanInterface:
@@ -192,11 +227,27 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 			}
 		}
 	}
+}
 
-	interfaces := make([]InterfaceGenerator, 0, len(interfaceMap))
-	for _, iface := range interfaceMap {
-		interfaces = append(interfaces, iface)
+func markConfigDepths(interfaceMap map[string]networkInterface) {
+	rootInterfaceMap := make(map[string]networkInterface)
+	for k, v := range interfaceMap {
+		rootInterfaceMap[k] = v
 	}
 
-	return interfaces
+	for _, iface := range interfaceMap {
+		for _, child := range iface.Children() {
+			delete(rootInterfaceMap, child.Name())
+		}
+	}
+	for _, iface := range rootInterfaceMap {
+		setDepth(iface, 0)
+	}
+}
+
+func setDepth(iface networkInterface, depth int) {
+	iface.setConfigDepth(depth)
+	for _, child := range iface.Children() {
+		setDepth(child, depth+1)
+	}
 }

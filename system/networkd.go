@@ -66,15 +66,15 @@ func restartNetworkd() error {
 
 func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
 	for _, iface := range interfaces {
-		filename := path.Join(runtimeNetworkPath, fmt.Sprintf("%s.netdev", iface.Name()))
+		filename := path.Join(runtimeNetworkPath, fmt.Sprintf("%s.netdev", iface.Filename()))
 		if err := writeConfig(filename, iface.Netdev()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.link", iface.Name()))
+		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.link", iface.Filename()))
 		if err := writeConfig(filename, iface.Link()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.network", iface.Name()))
+		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.network", iface.Filename()))
 		if err := writeConfig(filename, iface.Network()); err != nil {
 			return err
 		}
