@@ -100,93 +100,98 @@ func (v *vlanInterface) Link() string {
 }
 
 func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
-	bondStanzas := make(map[string]*stanzaInterface)
-	physicalStanzas := make(map[string]*stanzaInterface)
-	vlanStanzas := make(map[string]*stanzaInterface)
+	interfaceMap := make(map[string]InterfaceGenerator)
+
 	for _, iface := range stanzas {
 		switch iface.kind {
 		case interfaceBond:
-			bondStanzas[iface.name] = iface
+			interfaceMap[iface.name] = &bondInterface{
+				logicalInterface{
+					name:     iface.name,
+					config:   iface.configMethod,
+					children: []InterfaceGenerator{},
+				},
+				iface.options["slaves"],
+			}
+			for _, slave := range iface.options["slaves"] {
+				if _, ok := interfaceMap[slave]; !ok {
+					interfaceMap[slave] = &physicalInterface{
+						logicalInterface{
+							name:     slave,
+							config:   configMethodManual{},
+							children: []InterfaceGenerator{},
+						},
+					}
+				}
+			}
+
 		case interfacePhysical:
-			physicalStanzas[iface.name] = iface
+			if _, ok := iface.configMethod.(configMethodLoopback); ok {
+				continue
+			}
+			interfaceMap[iface.name] = &physicalInterface{
+				logicalInterface{
+					name:     iface.name,
+					config:   iface.configMethod,
+					children: []InterfaceGenerator{},
+				},
+			}
+
 		case interfaceVLAN:
-			vlanStanzas[iface.name] = iface
-		}
-	}
-
-	physicals := make(map[string]*physicalInterface)
-	for _, p := range physicalStanzas {
-		if _, ok := p.configMethod.(configMethodLoopback); ok {
-			continue
-		}
-		physicals[p.name] = &physicalInterface{
-			logicalInterface{
-				name:     p.name,
-				config:   p.configMethod,
-				children: []InterfaceGenerator{},
-			},
-		}
-	}
-
-	bonds := make(map[string]*bondInterface)
-	for _, b := range bondStanzas {
-		bonds[b.name] = &bondInterface{
-			logicalInterface{
-				name:     b.name,
-				config:   b.configMethod,
-				children: []InterfaceGenerator{},
-			},
-			b.options["slaves"],
-		}
-	}
-
-	vlans := make(map[string]*vlanInterface)
-	for _, v := range vlanStanzas {
-		var rawDevice string
-		id, _ := strconv.Atoi(v.options["id"][0])
-		if device := v.options["raw_device"]; len(device) == 1 {
-			rawDevice = device[0]
-		}
-		vlans[v.name] = &vlanInterface{
-			logicalInterface{
-				name:     v.name,
-				config:   v.configMethod,
-				children: []InterfaceGenerator{},
-			},
-			id,
-			rawDevice,
-		}
-	}
-
-	for _, vlan := range vlans {
-		if physical, ok := physicals[vlan.rawDevice]; ok {
-			physical.children = append(physical.children, vlan)
-		}
-		if bond, ok := bonds[vlan.rawDevice]; ok {
-			bond.children = append(bond.children, vlan)
-		}
-	}
-
-	for _, bond := range bonds {
-		for _, slave := range bond.slaves {
-			if physical, ok := physicals[slave]; ok {
-				physical.children = append(physical.children, bond)
+			var rawDevice string
+			id, _ := strconv.Atoi(iface.options["id"][0])
+			if device := iface.options["raw_device"]; len(device) == 1 {
+				rawDevice = device[0]
+				if _, ok := interfaceMap[rawDevice]; !ok {
+					interfaceMap[rawDevice] = &physicalInterface{
+						logicalInterface{
+							name:     rawDevice,
+							config:   configMethodManual{},
+							children: []InterfaceGenerator{},
+						},
+					}
+				}
 			}
-			if pBond, ok := bonds[slave]; ok {
-				pBond.children = append(pBond.children, bond)
+			interfaceMap[iface.name] = &vlanInterface{
+				logicalInterface{
+					name:     iface.name,
+					config:   iface.configMethod,
+					children: []InterfaceGenerator{},
+				},
+				id,
+				rawDevice,
 			}
 		}
 	}
 
-	interfaces := make([]InterfaceGenerator, 0, len(physicals)+len(bonds)+len(vlans))
-	for _, physical := range physicals {
-		interfaces = append(interfaces, physical)
+	for _, iface := range interfaceMap {
+		switch i := iface.(type) {
+		case *vlanInterface:
+			if parent, ok := interfaceMap[i.rawDevice]; ok {
+				switch p := parent.(type) {
+				case *physicalInterface:
+					p.children = append(p.children, iface)
+				case *bondInterface:
+					p.children = append(p.children, iface)
+				}
+			}
+		case *bondInterface:
+			for _, slave := range i.slaves {
+				if parent, ok := interfaceMap[slave]; ok {
+					switch p := parent.(type) {
+					case *physicalInterface:
+						p.children = append(p.children, iface)
+					case *bondInterface:
+						p.children = append(p.children, iface)
+					}
+				}
+			}
+		}
 	}
-	for _, bond := range bonds {
-		interfaces = append(interfaces, bond)
-	}
-	for _, vlan := range vlans {
-		interfaces = append(interfaces, vlan)
+
+	interfaces := make([]InterfaceGenerator, 0, len(interfaceMap))
+	for _, iface := range interfaceMap {
+		interfaces = append(interfaces, iface)
 	}
 
 	return interfaces

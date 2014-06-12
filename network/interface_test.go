@@ -224,6 +224,76 @@ func TestBuildInterfacesLo(t *testing.T) {
 	}
 }
 
+func TestBuildInterfacesBlindBond(t *testing.T) {
+	stanzas := []*stanzaInterface{
+		{
+			name:         "bond0",
+			kind:         interfaceBond,
+			auto:         false,
+			configMethod: configMethodManual{},
+			options: map[string][]string{
+				"slaves": []string{"eth0"},
+			},
+		},
+	}
+	interfaces := buildInterfaces(stanzas)
+	bond0 := &bondInterface{
+		logicalInterface{
+			name:     "bond0",
+			config:   configMethodManual{},
+			children: []InterfaceGenerator{},
+		},
+		[]string{"eth0"},
+	}
+	eth0 := &physicalInterface{
+		logicalInterface{
+			name:     "eth0",
+			config:   configMethodManual{},
+			children: []InterfaceGenerator{bond0},
+		},
+	}
+	expect := []InterfaceGenerator{bond0, eth0}
+	if !reflect.DeepEqual(interfaces, expect) {
+		t.FailNow()
+	}
+}
+
+func TestBuildInterfacesBlindVLAN(t *testing.T) {
+	stanzas := []*stanzaInterface{
+		{
+			name:         "vlan0",
+			kind:         interfaceVLAN,
+			auto:         false,
+			configMethod: configMethodManual{},
+			options: map[string][]string{
+				"id":         []string{"0"},
+				"raw_device": []string{"eth0"},
+			},
+		},
+	}
+	interfaces := buildInterfaces(stanzas)
+	vlan0 := &vlanInterface{
+		logicalInterface{
+			name:     "vlan0",
+			config:   configMethodManual{},
+			children: []InterfaceGenerator{},
+		},
+		0,
+		"eth0",
+	}
+	eth0 := &physicalInterface{
+		logicalInterface{
+			name:     "eth0",
+			config:   configMethodManual{},
+			children: []InterfaceGenerator{vlan0},
+		},
+	}
+	expect := []InterfaceGenerator{eth0, vlan0}
+	if !reflect.DeepEqual(interfaces, expect) {
+		t.FailNow()
+	}
+}
+
 func TestBuildInterfaces(t *testing.T) {
 	stanzas := []*stanzaInterface{
 		&stanzaInterface{
@@ -303,7 +373,7 @@ func TestBuildInterfaces(t *testing.T) {
 		logicalInterface{
 			name:     "bond0",
 			config:   configMethodManual{},
-			children: []InterfaceGenerator{vlan1, bond1},
+			children: []InterfaceGenerator{bond1, vlan1},
 		},
 		[]string{"eth0"},
 	}
@@ -311,7 +381,7 @@ func TestBuildInterfaces(t *testing.T) {
 		logicalInterface{
 			name:     "eth0",
 			config:   configMethodManual{},
-			children: []InterfaceGenerator{vlan0, bond0},
+			children: []InterfaceGenerator{bond0, vlan0},
 		},
 	}
 	expect := []InterfaceGenerator{eth0, bond0, bond1, vlan0, vlan1}
