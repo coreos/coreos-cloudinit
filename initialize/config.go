@@ -3,10 +3,13 @@ package initialize
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"path"
 
 	"github.com/coreos/coreos-cloudinit/third_party/launchpad.net/goyaml"
 
+	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -226,6 +229,32 @@ func Apply(cfg CloudConfig, env *Environment) error {
 			return err
 		}
 		log.Printf("Wrote file %s to filesystem", path)
+	}
+
+	if env.NetconfType() != "" {
+		netconfBytes, err := ioutil.ReadFile(path.Join(env.ConfigRoot(), cfg.NetworkConfigPath))
+		if err != nil {
+			return err
+		}
+
+		var interfaces []network.InterfaceGenerator
+		switch env.NetconfType() {
+		case "debian":
+			interfaces, err = network.ProcessDebianNetconf(string(netconfBytes))
+		default:
+			return fmt.Errorf("Unsupported network config format %q", env.NetconfType())
+		}
+
+		if err != nil {
+			return err
+		}
+
+		if err := system.WriteNetworkdConfigs(interfaces); err != nil {
+			return err
+		}
+		if err := system.RestartNetwork(interfaces); err != nil {
+			return err
+		}
 	}
 
 	commands := make(map[string]string, 0)

@@ -1,16 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
-	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -89,25 +85,38 @@ func main() {
 		}
 	}
 
+	fmt.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
+	metadataBytes, err := ds.FetchMetadata()
+	if err != nil {
+		fmt.Printf("Failed fetching meta-data from datasource: %v\n", err)
+		if ignoreFailure {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
+	}
+
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName)
 	if len(userdataBytes) > 0 {
 		if err := processUserdata(string(userdataBytes), env); err != nil {
-			fmt.Printf("Failed resolving user-data: %v\n", err)
+			fmt.Printf("Failed to process user-data: %v\n", err)
 			if !ignoreFailure {
 				os.Exit(1)
 			}
 		}
 	} else {
-		fmt.Println("No user data to handle.")
+		fmt.Println("No user-data to handle.")
 	}
 
-	if convertNetconf != "" {
-		if err := processNetconf(convertNetconf, configdrive); err != nil {
-			fmt.Printf("Failed to process network config: %v\n", err)
+	if len(metadataBytes) > 0 {
+		if err := processMetadata(string(metadataBytes), env); err != nil {
+			fmt.Printf("Failed to process meta-data: %v\n", err)
 			if !ignoreFailure {
 				os.Exit(1)
 			}
 		}
+	} else {
+		fmt.Println("No meta-data to handle.")
 	}
 }
 
@@ -142,47 +151,17 @@ func processUserdata(userdata string, env *initialize.Environment) error {
 	return err
 }
 
-func processNetconf(convertNetconf, configdrive string) error {
-	openstackRoot := path.Join(configdrive, "openstack")
-	metadataFilename := path.Join(openstackRoot, "latest", "meta_data.json")
-	metadataBytes, err := ioutil.ReadFile(metadataFilename)
+func processMetadata(metadata string, env *initialize.Environment) error {
+	parsed, err := initialize.ParseMetaData(metadata)
 	if err != nil {
+		fmt.Printf("Failed parsing meta-data: %v\n", err)
 		return err
 	}
-
-	var metadata struct {
-		NetworkConfig struct {
-			ContentPath string `json:"content_path"`
-		} `json:"network_config"`
-	}
-	if err := json.Unmarshal(metadataBytes, &metadata); err != nil {
-		return err
-	}
-	configPath := metadata.NetworkConfig.ContentPath
-	if configPath == "" {
-		fmt.Printf("No network config specified in %q.\n", metadataFilename)
-		return nil
-	}
-
-	netconfBytes, err := ioutil.ReadFile(path.Join(openstackRoot, configPath))
+	err = initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
+		fmt.Printf("Failed preparing workspace: %v\n", err)
 		return err
 	}
 
-	var interfaces []network.InterfaceGenerator
-	switch convertNetconf {
-	case "debian":
-		interfaces, err = network.ProcessDebianNetconf(string(netconfBytes))
-	default:
-		return fmt.Errorf("Unsupported network config format %q", convertNetconf)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if err := system.WriteNetworkdConfigs(interfaces); err != nil {
-		return err
-	}
-	return system.RestartNetwork(interfaces)
+	return initialize.Apply(parsed, env)
 }
