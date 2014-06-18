@@ -79,7 +79,7 @@ func main() {
 	}
 
 	fmt.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
-	userdataBytes, err := ds.Fetch()
+	userdataBytes, err := ds.FetchUserdata()
 	if err != nil {
 		fmt.Printf("Failed fetching user-data from datasource: %v\n", err)
 		if ignoreFailure {

@@ -18,7 +18,11 @@ func (self *configDrive) ConfigRoot() string {
 	return self.root
 }
 
-func (self *configDrive) Fetch() ([]byte, error) {
+func (self *configDrive) FetchMetadata() ([]byte, error) {
+	return self.readFile("meta_data.json")
+}
+
+func (self *configDrive) FetchUserdata() ([]byte, error) {
 	return self.readFile("user_data")
 }
 

@@ -77,7 +77,7 @@ func TestProcCmdlineAndFetchConfig(t *testing.T) {
 
 	p := NewProcCmdline()
 	p.Location = file.Name()
-	cfg, err := p.Fetch()
+	cfg, err := p.FetchUserdata()
 	if err != nil {
 		t.Errorf("Test produced error: %v", err)
 	}

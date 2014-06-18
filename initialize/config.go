@@ -34,10 +34,11 @@ type CloudConfig struct {
 		Update UpdateConfig
 		Units  []system.Unit
 	}
-	WriteFiles     []system.File `yaml:"write_files"`
-	Hostname       string
-	Users          []system.User
-	ManageEtcHosts EtcHosts `yaml:"manage_etc_hosts"`
+	WriteFiles        []system.File `yaml:"write_files"`
+	Hostname          string
+	Users             []system.User
+	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
+	NetworkConfigPath string
 }
 
 type warner func(format string, v ...interface{})

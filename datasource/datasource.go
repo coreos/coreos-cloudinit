@@ -2,6 +2,7 @@ package datasource
 
 type Datasource interface {
 	ConfigRoot() string
-	Fetch() ([]byte, error)
+	FetchMetadata() ([]byte, error)
+	FetchUserdata() ([]byte, error)
 	Type() string
 }

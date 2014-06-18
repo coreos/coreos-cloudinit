@@ -26,7 +26,11 @@ func (self *procCmdline) ConfigRoot() string {
 	return ""
 }
 
-func (self *procCmdline) Fetch() ([]byte, error) {
+func (self *procCmdline) FetchMetadata() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (self *procCmdline) FetchUserdata() ([]byte, error) {
 	contents, err := ioutil.ReadFile(self.Location)
 	if err != nil {
 		return nil, err
