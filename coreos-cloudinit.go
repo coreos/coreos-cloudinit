@@ -89,7 +89,7 @@ func main() {
 		}
 	}
 
-	env := initialize.NewEnvironment("/", workspace, sshKeyName)
+	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName)
 	if len(userdataBytes) > 0 {
 		if err := processUserdata(string(userdataBytes), env); err != nil {
 			fmt.Printf("Failed resolving user-data: %v\n", err)

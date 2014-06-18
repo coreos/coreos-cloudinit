@@ -12,6 +12,10 @@ func NewLocalFile(path string) *localFile {
 	return &localFile{path}
 }
 
+func (self *localFile) ConfigRoot() string {
+	return ""
+}
+
 func (self *localFile) Fetch() ([]byte, error) {
 	return ioutil.ReadFile(self.path)
 }

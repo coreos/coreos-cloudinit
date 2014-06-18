@@ -14,12 +14,16 @@ const (
 	ProcCmdlineCloudConfigFlag = "cloud-config-url"
 )
 
-type procCmdline struct{
+type procCmdline struct {
 	Location string
 }
 
 func NewProcCmdline() *procCmdline {
 	return &procCmdline{Location: ProcCmdlineLocation}
+}
+
+func (self *procCmdline) ConfigRoot() string {
+	return ""
 }
 
 func (self *procCmdline) Fetch() ([]byte, error) {

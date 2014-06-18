@@ -10,6 +10,10 @@ func NewMetadataService(url string) *metadataService {
 	return &metadataService{url}
 }
 
+func (self *metadataService) ConfigRoot() string {
+	return ""
+}
+
 func (ms *metadataService) Fetch() ([]byte, error) {
 	client := pkg.NewHttpClient()
 	return client.Get(ms.url)

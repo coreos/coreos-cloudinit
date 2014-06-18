@@ -10,17 +10,19 @@ const DefaultSSHKeyName = "coreos-cloudinit"
 
 type Environment struct {
 	root          string
+	configRoot    string
 	workspace     string
+	netconfType   string
 	sshKeyName    string
 	substitutions map[string]string
 }
 
-func NewEnvironment(root, workspace, sshKeyName string) *Environment {
+func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string) *Environment {
 	substitutions := map[string]string{
 		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
 		"$private_ipv4": os.Getenv("COREOS_PRIVATE_IPV4"),
 	}
-	return &Environment{root, workspace, sshKeyName, substitutions}
+	return &Environment{root, configRoot, workspace, netconfType, sshKeyName, substitutions}
 }
 
 func (self *Environment) Workspace() string {
@@ -29,6 +31,14 @@ func (self *Environment) Workspace() string {
 
 func (self *Environment) Root() string {
 	return self.root
+}
+
+func (self *Environment) ConfigRoot() string {
+	return self.configRoot
+}
+
+func (self *Environment) NetconfType() string {
+	return self.netconfType
 }
 
 func (self *Environment) SSHKeyName() string {
