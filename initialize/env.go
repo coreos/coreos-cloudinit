@@ -15,12 +15,12 @@ type Environment struct {
 	substitutions map[string]string
 }
 
-func NewEnvironment(root, workspace string) *Environment {
+func NewEnvironment(root, workspace, sshKeyName string) *Environment {
 	substitutions := map[string]string{
 		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
 		"$private_ipv4": os.Getenv("COREOS_PRIVATE_IPV4"),
 	}
-	return &Environment{root, workspace, DefaultSSHKeyName, substitutions}
+	return &Environment{root, workspace, sshKeyName, substitutions}
 }
 
 func (self *Environment) Workspace() string {
