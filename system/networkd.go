@@ -36,7 +36,9 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 	sysInterfaceMap := make(map[string]*net.Interface)
 	if systemInterfaces, err := net.Interfaces(); err == nil {
 		for _, iface := range systemInterfaces {
-			sysInterfaceMap[iface.Name] = &iface
+			// Need a copy of the interface so we can take the address
+			temp := iface
+			sysInterfaceMap[temp.Name] = &temp
 		}
 	} else {
 		return err
@@ -64,15 +66,15 @@ func restartNetworkd() error {
 
 func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
 	for _, iface := range interfaces {
-		filename := path.Join(runtimeNetworkPath, fmt.Sprintf("%s.netdev", iface.Name()))
+		filename := path.Join(runtimeNetworkPath, fmt.Sprintf("%s.netdev", iface.Filename()))
 		if err := writeConfig(filename, iface.Netdev()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.link", iface.Name()))
+		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.link", iface.Filename()))
 		if err := writeConfig(filename, iface.Link()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.network", iface.Name()))
+		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.network", iface.Filename()))
 		if err := writeConfig(filename, iface.Network()); err != nil {
 			return err
 		}

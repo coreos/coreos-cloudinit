@@ -30,7 +30,7 @@ func TestPhysicalInterfaceLink(t *testing.T) {
 func TestPhysicalInterfaceNetwork(t *testing.T) {
 	p := physicalInterface{logicalInterface{
 		name: "testname",
-		children: []InterfaceGenerator{
+		children: []networkInterface{
 			&bondInterface{
 				logicalInterface{
 					name: "testbond1",
@@ -96,7 +96,7 @@ func TestBondInterfaceNetwork(t *testing.T) {
 		logicalInterface{
 			name:   "testname",
 			config: configMethodDHCP{},
-			children: []InterfaceGenerator{
+			children: []networkInterface{
 				&bondInterface{
 					logicalInterface{
 						name: "testbond1",
@@ -143,16 +143,26 @@ func TestVLANInterfaceName(t *testing.T) {
 }
 
 func TestVLANInterfaceNetdev(t *testing.T) {
-	v := vlanInterface{logicalInterface{name: "testname"}, 1, ""}
-	netdev := `[NetDev]
-Kind=vlan
-Name=testname
-
-[VLAN]
-Id=1
-`
-	if v.Netdev() != netdev {
-		t.FailNow()
+	for _, tt := range []struct {
+		i vlanInterface
+		l string
+	}{
+		{
+			vlanInterface{logicalInterface{name: "testname"}, 1, ""},
+			"[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=1\n",
+		},
+		{
+			vlanInterface{logicalInterface{name: "testname", config: configMethodStatic{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
+			"[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+		},
+		{
+			vlanInterface{logicalInterface{name: "testname", config: configMethodDHCP{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
+			"[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+		},
+	} {
+		if tt.i.Netdev() != tt.l {
+			t.Fatalf("bad netdev config (%q): got %q, want %q", tt.i, tt.i.Netdev(), tt.l)
+		}
 	}
 }
 
@@ -224,6 +234,80 @@ func TestBuildInterfacesLo(t *testing.T) {
 	}
 }
 
+func TestBuildInterfacesBlindBond(t *testing.T) {
+	stanzas := []*stanzaInterface{
+		{
+			name:         "bond0",
+			kind:         interfaceBond,
+			auto:         false,
+			configMethod: configMethodManual{},
+			options: map[string][]string{
+				"slaves": []string{"eth0"},
+			},
+		},
+	}
+	interfaces := buildInterfaces(stanzas)
+	bond0 := &bondInterface{
+		logicalInterface{
+			name:        "bond0",
+			config:      configMethodManual{},
+			children:    []networkInterface{},
+			configDepth: 1,
+		},
+		[]string{"eth0"},
+	}
+	eth0 := &physicalInterface{
+		logicalInterface{
+			name:        "eth0",
+			config:      configMethodManual{},
+			children:    []networkInterface{bond0},
+			configDepth: 0,
+		},
+	}
+	expect := []InterfaceGenerator{bond0, eth0}
+	if !reflect.DeepEqual(interfaces, expect) {
+		t.FailNow()
+	}
+}
+
+func TestBuildInterfacesBlindVLAN(t *testing.T) {
+	stanzas := []*stanzaInterface{
+		{
+			name:         "vlan0",
+			kind:         interfaceVLAN,
+			auto:         false,
+			configMethod: configMethodManual{},
+			options: map[string][]string{
+				"id":         []string{"0"},
+				"raw_device": []string{"eth0"},
+			},
+		},
+	}
+	interfaces := buildInterfaces(stanzas)
+	vlan0 := &vlanInterface{
+		logicalInterface{
+			name:        "vlan0",
+			config:      configMethodManual{},
+			children:    []networkInterface{},
+			configDepth: 1,
+		},
+		0,
+		"eth0",
+	}
+	eth0 := &physicalInterface{
+		logicalInterface{
+			name:        "eth0",
+			config:      configMethodManual{},
+			children:    []networkInterface{vlan0},
+			configDepth: 0,
+		},
+	}
+	expect := []InterfaceGenerator{eth0, vlan0}
+	if !reflect.DeepEqual(interfaces, expect) {
+		t.FailNow()
+	}
+}
+
 func TestBuildInterfaces(t *testing.T) {
 	stanzas := []*stanzaInterface{
 		&stanzaInterface{
@@ -275,47 +359,68 @@ func TestBuildInterfaces(t *testing.T) {
 	interfaces := buildInterfaces(stanzas)
 	vlan1 := &vlanInterface{
 		logicalInterface{
-			name:     "vlan1",
-			config:   configMethodManual{},
-			children: []InterfaceGenerator{},
+			name:        "vlan1",
+			config:      configMethodManual{},
+			children:    []networkInterface{},
+			configDepth: 2,
 		},
 		1,
 		"bond0",
 	}
 	vlan0 := &vlanInterface{
 		logicalInterface{
-			name:     "vlan0",
-			config:   configMethodManual{},
-			children: []InterfaceGenerator{},
+			name:        "vlan0",
+			config:      configMethodManual{},
+			children:    []networkInterface{},
+			configDepth: 1,
 		},
 		0,
 		"eth0",
 	}
 	bond1 := &bondInterface{
 		logicalInterface{
-			name:     "bond1",
-			config:   configMethodManual{},
-			children: []InterfaceGenerator{},
+			name:        "bond1",
+			config:      configMethodManual{},
+			children:    []networkInterface{},
+			configDepth: 2,
 		},
 		[]string{"bond0"},
 	}
 	bond0 := &bondInterface{
 		logicalInterface{
-			name:     "bond0",
-			config:   configMethodManual{},
-			children: []InterfaceGenerator{vlan1, bond1},
+			name:        "bond0",
+			config:      configMethodManual{},
+			children:    []networkInterface{bond1, vlan1},
+			configDepth: 1,
 		},
 		[]string{"eth0"},
 	}
 	eth0 := &physicalInterface{
 		logicalInterface{
-			name:     "eth0",
-			config:   configMethodManual{},
-			children: []InterfaceGenerator{vlan0, bond0},
+			name:        "eth0",
+			config:      configMethodManual{},
+			children:    []networkInterface{bond0, vlan0},
+			configDepth: 0,
 		},
 	}
 	expect := []InterfaceGenerator{eth0, bond0, bond1, vlan0, vlan1}
 	if !reflect.DeepEqual(interfaces, expect) {
 		t.FailNow()
+	}
+}
+
+func TestFilename(t *testing.T) {
+	for _, tt := range []struct {
+		i logicalInterface
+		f string
+	}{
+		{logicalInterface{name: "iface", configDepth: 0}, "00-iface"},
+		{logicalInterface{name: "iface", configDepth: 9}, "09-iface"},
+		{logicalInterface{name: "iface", configDepth: 10}, "0a-iface"},
+		{logicalInterface{name: "iface", configDepth: 53}, "35-iface"},
+	} {
+		if tt.i.Filename() != tt.f {
+			t.Fatalf("bad filename (%q): got %q, want %q", tt.i, tt.i.Filename(), tt.f)
+		}
 	}
 }

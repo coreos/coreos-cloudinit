@@ -7,15 +7,23 @@ import (
 
 type InterfaceGenerator interface {
 	Name() string
+	Filename() string
 	Netdev() string
 	Link() string
 	Network() string
 }
 
+type networkInterface interface {
+	InterfaceGenerator
+	Children() []networkInterface
+	setConfigDepth(int)
+}
+
 type logicalInterface struct {
-	name     string
-	config   configMethod
-	children []InterfaceGenerator
+	name        string
+	config      configMethod
+	children    []networkInterface
+	configDepth int
 }
 
 func (i *logicalInterface) Network() string {
@@ -48,6 +56,22 @@ func (i *logicalInterface) Network() string {
 	return config
 }
 
+func (i *logicalInterface) Link() string {
+	return ""
+}
+
+func (i *logicalInterface) Filename() string {
+	return fmt.Sprintf("%02x-%s", i.configDepth, i.name)
+}
+
+func (i *logicalInterface) Children() []networkInterface {
+	return i.children
+}
+
+func (i *logicalInterface) setConfigDepth(depth int) {
+	i.configDepth = depth
+}
+
 type physicalInterface struct {
 	logicalInterface
 }
@@ -57,10 +81,6 @@ func (p *physicalInterface) Name() string {
 }
 
 func (p *physicalInterface) Netdev() string {
-	return ""
-}
-
-func (p *physicalInterface) Link() string {
 	return ""
 }
 
@@ -77,10 +97,6 @@ func (b *bondInterface) Netdev() string {
 	return fmt.Sprintf("[NetDev]\nKind=bond\nName=%s\n", b.name)
 }
 
-func (b *bondInterface) Link() string {
-	return ""
-}
-
 type vlanInterface struct {
 	logicalInterface
 	id        int
@@ -92,102 +108,146 @@ func (v *vlanInterface) Name() string {
 }
 
 func (v *vlanInterface) Netdev() string {
-	return fmt.Sprintf("[NetDev]\nKind=vlan\nName=%s\n\n[VLAN]\nId=%d\n", v.name, v.id)
-}
-
-func (v *vlanInterface) Link() string {
-	return ""
+	config := fmt.Sprintf("[NetDev]\nKind=vlan\nName=%s\n", v.name)
+	switch c := v.config.(type) {
+	case configMethodStatic:
+		if c.hwaddress != nil {
+			config += fmt.Sprintf("MACAddress=%s\n", c.hwaddress)
+		}
+	case configMethodDHCP:
+		if c.hwaddress != nil {
+			config += fmt.Sprintf("MACAddress=%s\n", c.hwaddress)
+		}
+	}
+	config += fmt.Sprintf("\n[VLAN]\nId=%d\n", v.id)
+	return config
 }
 
 func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
-	bondStanzas := make(map[string]*stanzaInterface)
-	physicalStanzas := make(map[string]*stanzaInterface)
-	vlanStanzas := make(map[string]*stanzaInterface)
-	for _, iface := range stanzas {
-		switch iface.kind {
-		case interfaceBond:
-			bondStanzas[iface.name] = iface
-		case interfacePhysical:
-			physicalStanzas[iface.name] = iface
-		case interfaceVLAN:
-			vlanStanzas[iface.name] = iface
-		}
-	}
+	interfaceMap := createInterfaces(stanzas)
+	linkAncestors(interfaceMap)
+	markConfigDepths(interfaceMap)
 
-	physicals := make(map[string]*physicalInterface)
-	for _, p := range physicalStanzas {
-		if _, ok := p.configMethod.(configMethodLoopback); ok {
-			continue
-		}
-		physicals[p.name] = &physicalInterface{
-			logicalInterface{
-				name:     p.name,
-				config:   p.configMethod,
-				children: []InterfaceGenerator{},
-			},
-		}
-	}
-
-	bonds := make(map[string]*bondInterface)
-	for _, b := range bondStanzas {
-		bonds[b.name] = &bondInterface{
-			logicalInterface{
-				name:     b.name,
-				config:   b.configMethod,
-				children: []InterfaceGenerator{},
-			},
-			b.options["slaves"],
-		}
-	}
-
-	vlans := make(map[string]*vlanInterface)
-	for _, v := range vlanStanzas {
-		var rawDevice string
-		id, _ := strconv.Atoi(v.options["id"][0])
-		if device := v.options["raw_device"]; len(device) == 1 {
-			rawDevice = device[0]
-		}
-		vlans[v.name] = &vlanInterface{
-			logicalInterface{
-				name:     v.name,
-				config:   v.configMethod,
-				children: []InterfaceGenerator{},
-			},
-			id,
-			rawDevice,
-		}
-	}
-
-	for _, vlan := range vlans {
-		if physical, ok := physicals[vlan.rawDevice]; ok {
-			physical.children = append(physical.children, vlan)
-		}
-		if bond, ok := bonds[vlan.rawDevice]; ok {
-			bond.children = append(bond.children, vlan)
-		}
-	}
-
-	for _, bond := range bonds {
-		for _, slave := range bond.slaves {
-			if physical, ok := physicals[slave]; ok {
-				physical.children = append(physical.children, bond)
-			}
-			if pBond, ok := bonds[slave]; ok {
-				pBond.children = append(pBond.children, bond)
-			}
-		}
-	}
-
-	interfaces := make([]InterfaceGenerator, 0, len(physicals)+len(bonds)+len(vlans))
-	for _, physical := range physicals {
-		interfaces = append(interfaces, physical)
-	}
-	for _, bond := range bonds {
-		interfaces = append(interfaces, bond)
-	}
-	for _, vlan := range vlans {
-		interfaces = append(interfaces, vlan)
+	interfaces := make([]InterfaceGenerator, 0, len(interfaceMap))
+	for _, iface := range interfaceMap {
+		interfaces = append(interfaces, iface)
 	}
 
 	return interfaces
+}
+
+func createInterfaces(stanzas []*stanzaInterface) map[string]networkInterface {
+	interfaceMap := make(map[string]networkInterface)
+	for _, iface := range stanzas {
+		switch iface.kind {
+		case interfaceBond:
+			interfaceMap[iface.name] = &bondInterface{
+				logicalInterface{
+					name:     iface.name,
+					config:   iface.configMethod,
+					children: []networkInterface{},
+				},
+				iface.options["slaves"],
+			}
+			for _, slave := range iface.options["slaves"] {
+				if _, ok := interfaceMap[slave]; !ok {
+					interfaceMap[slave] = &physicalInterface{
+						logicalInterface{
+							name:     slave,
+							config:   configMethodManual{},
+							children: []networkInterface{},
+						},
+					}
+				}
+			}
+
+		case interfacePhysical:
+			if _, ok := iface.configMethod.(configMethodLoopback); ok {
+				continue
+			}
+			interfaceMap[iface.name] = &physicalInterface{
+				logicalInterface{
+					name:     iface.name,
+					config:   iface.configMethod,
+					children: []networkInterface{},
+				},
+			}
+
+		case interfaceVLAN:
+			var rawDevice string
+			id, _ := strconv.Atoi(iface.options["id"][0])
+			if device := iface.options["raw_device"]; len(device) == 1 {
+				rawDevice = device[0]
+				if _, ok := interfaceMap[rawDevice]; !ok {
+					interfaceMap[rawDevice] = &physicalInterface{
+						logicalInterface{
+							name:     rawDevice,
+							config:   configMethodManual{},
+							children: []networkInterface{},
+						},
+					}
+				}
+			}
+			interfaceMap[iface.name] = &vlanInterface{
+				logicalInterface{
+					name:     iface.name,
+					config:   iface.configMethod,
+					children: []networkInterface{},
+				},
+				id,
+				rawDevice,
+			}
+		}
+	}
+	return interfaceMap
+}
+
+func linkAncestors(interfaceMap map[string]networkInterface) {
+	for _, iface := range interfaceMap {
+		switch i := iface.(type) {
+		case *vlanInterface:
+			if parent, ok := interfaceMap[i.rawDevice]; ok {
+				switch p := parent.(type) {
+				case *physicalInterface:
+					p.children = append(p.children, iface)
+				case *bondInterface:
+					p.children = append(p.children, iface)
+				}
+			}
+		case *bondInterface:
+			for _, slave := range i.slaves {
+				if parent, ok := interfaceMap[slave]; ok {
+					switch p := parent.(type) {
+					case *physicalInterface:
+						p.children = append(p.children, iface)
+					case *bondInterface:
+						p.children = append(p.children, iface)
+					}
+				}
+			}
+		}
+	}
+}
+
+func markConfigDepths(interfaceMap map[string]networkInterface) {
+	rootInterfaceMap := make(map[string]networkInterface)
+	for k, v := range interfaceMap {
+		rootInterfaceMap[k] = v
+	}
+
+	for _, iface := range interfaceMap {
+		for _, child := range iface.Children() {
+			delete(rootInterfaceMap, child.Name())
+		}
+	}
+	for _, iface := range rootInterfaceMap {
+		setDepth(iface, 0)
+	}
+}
+
+func setDepth(iface networkInterface, depth int) {
+	iface.setConfigDepth(depth)
+	for _, child := range iface.Children() {
+		setDepth(child, depth+1)
+	}
 }

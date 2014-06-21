@@ -40,13 +40,16 @@ type configMethodStatic struct {
 	address     net.IPNet
 	nameservers []net.IP
 	routes      []route
+	hwaddress   net.HardwareAddr
 }
 
 type configMethodLoopback struct{}
 
 type configMethodManual struct{}
 
-type configMethodDHCP struct{}
+type configMethodDHCP struct {
+	hwaddress net.HardwareAddr
+}
 
 func parseStanzas(lines []string) (stanzas []stanza, err error) {
 	rawStanzas, err := splitStanzas(lines)
@@ -96,7 +99,7 @@ func splitStanzas(lines []string) ([][]string, error) {
 		} else if curStanza != nil {
 			curStanza = append(curStanza, line)
 		} else {
-			return nil, fmt.Errorf("missing stanza start '%s'", line)
+			return nil, fmt.Errorf("missing stanza start %q", line)
 		}
 	}
 
@@ -142,7 +145,7 @@ func parseStanza(rawStanza []string) (stanza, error) {
 	case "iface":
 		return parseInterfaceStanza(attributes, rawStanza[1:])
 	default:
-		return nil, fmt.Errorf("unknown stanza '%s'", kind)
+		return nil, fmt.Errorf("unknown stanza %q", kind)
 	}
 }
 
@@ -204,7 +207,7 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 			}
 		}
 		if config.address.IP == nil || config.address.Mask == nil {
-			return nil, fmt.Errorf("malformed static network config for '%s'", iface)
+			return nil, fmt.Errorf("malformed static network config for %q", iface)
 		}
 		if gateways, ok := optionMap["gateway"]; ok {
 			if len(gateways) == 1 {
@@ -216,6 +219,11 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 					gateway: net.ParseIP(gateways[0]),
 				})
 			}
+		}
+		if hwaddress, err := parseHwaddress(optionMap, iface); err == nil {
+			config.hwaddress = hwaddress
+		} else {
+			return nil, err
 		}
 		for _, nameserver := range optionMap["dns-nameservers"] {
 			config.nameservers = append(config.nameservers, net.ParseIP(nameserver))
@@ -245,9 +253,15 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 	case "manual":
 		conf = configMethodManual{}
 	case "dhcp":
-		conf = configMethodDHCP{}
+		config := configMethodDHCP{}
+		if hwaddress, err := parseHwaddress(optionMap, iface); err == nil {
+			config.hwaddress = hwaddress
+		} else {
+			return nil, err
+		}
+		conf = config
 	default:
-		return nil, fmt.Errorf("invalid config method '%s'", confMethod)
+		return nil, fmt.Errorf("invalid config method %q", confMethod)
 	}
 
 	if _, ok := optionMap["vlan_raw_device"]; ok {
@@ -263,6 +277,19 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 	}
 
 	return parsePhysicalStanza(iface, conf, attributes, optionMap)
+}
+
+func parseHwaddress(options map[string][]string, iface string) (net.HardwareAddr, error) {
+	if hwaddress, ok := options["hwaddress"]; ok && len(hwaddress) == 2 {
+		switch hwaddress[0] {
+		case "ether":
+			if address, err := net.ParseMAC(hwaddress[1]); err == nil {
+				return address, nil
+			}
+			return nil, fmt.Errorf("malformed hwaddress option for %q", iface)
+		}
+	}
+	return nil, nil
 }
 
 func parseBondStanza(iface string, conf configMethod, attributes []string, options map[string][]string) (*stanzaInterface, error) {
@@ -282,11 +309,11 @@ func parseVLANStanza(iface string, conf configMethod, attributes []string, optio
 	} else if strings.HasPrefix(iface, "vlan") {
 		id = strings.TrimPrefix(iface, "vlan")
 	} else {
-		return nil, fmt.Errorf("malformed vlan name %s", iface)
+		return nil, fmt.Errorf("malformed vlan name %q", iface)
 	}
 
 	if _, err := strconv.Atoi(id); err != nil {
-		return nil, fmt.Errorf("malformed vlan name %s", iface)
+		return nil, fmt.Errorf("malformed vlan name %q", iface)
 	}
 	options["id"] = []string{id}
 	options["raw_device"] = options["vlan_raw_device"]
