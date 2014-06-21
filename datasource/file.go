@@ -12,7 +12,15 @@ func NewLocalFile(path string) *localFile {
 	return &localFile{path}
 }
 
-func (self *localFile) Fetch() ([]byte, error) {
+func (self *localFile) ConfigRoot() string {
+	return ""
+}
+
+func (self *localFile) FetchMetadata() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (self *localFile) FetchUserdata() ([]byte, error) {
 	return ioutil.ReadFile(self.path)
 }
 

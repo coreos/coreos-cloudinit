@@ -7,21 +7,33 @@ import (
 )
 
 type configDrive struct {
-	path string
+	root string
 }
 
-func NewConfigDrive(path string) *configDrive {
-	return &configDrive{path}
+func NewConfigDrive(root string) *configDrive {
+	return &configDrive{path.Join(root, "openstack")}
 }
 
-func (self *configDrive) Fetch() ([]byte, error) {
-	data, err := ioutil.ReadFile(path.Join(self.path, "openstack", "latest", "user_data"))
-	if os.IsNotExist(err) {
-		err = nil
-	}
-	return data, err
+func (self *configDrive) ConfigRoot() string {
+	return self.root
+}
+
+func (self *configDrive) FetchMetadata() ([]byte, error) {
+	return self.readFile("meta_data.json")
+}
+
+func (self *configDrive) FetchUserdata() ([]byte, error) {
+	return self.readFile("user_data")
 }
 
 func (self *configDrive) Type() string {
 	return "cloud-drive"
+}
+
+func (self *configDrive) readFile(filename string) ([]byte, error) {
+	data, err := ioutil.ReadFile(path.Join(self.root, "latest", filename))
+	if os.IsNotExist(err) {
+		err = nil
+	}
+	return data, err
 }

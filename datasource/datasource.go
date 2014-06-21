@@ -1,6 +1,8 @@
 package datasource
 
 type Datasource interface {
-	Fetch() ([]byte, error)
+	ConfigRoot() string
+	FetchMetadata() ([]byte, error)
+	FetchUserdata() ([]byte, error)
 	Type() string
 }
