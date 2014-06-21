@@ -14,24 +14,24 @@ func NewConfigDrive(root string) *configDrive {
 	return &configDrive{path.Join(root, "openstack")}
 }
 
-func (self *configDrive) ConfigRoot() string {
-	return self.root
+func (cd *configDrive) ConfigRoot() string {
+	return cd.root
 }
 
-func (self *configDrive) FetchMetadata() ([]byte, error) {
-	return self.readFile("meta_data.json")
+func (cd *configDrive) FetchMetadata() ([]byte, error) {
+	return cd.readFile("meta_data.json")
 }
 
-func (self *configDrive) FetchUserdata() ([]byte, error) {
-	return self.readFile("user_data")
+func (cd *configDrive) FetchUserdata() ([]byte, error) {
+	return cd.readFile("user_data")
 }
 
-func (self *configDrive) Type() string {
+func (cd *configDrive) Type() string {
 	return "cloud-drive"
 }
 
-func (self *configDrive) readFile(filename string) ([]byte, error) {
-	data, err := ioutil.ReadFile(path.Join(self.root, "latest", filename))
+func (cd *configDrive) readFile(filename string) ([]byte, error) {
+	data, err := ioutil.ReadFile(path.Join(cd.root, "latest", filename))
 	if os.IsNotExist(err) {
 		err = nil
 	}

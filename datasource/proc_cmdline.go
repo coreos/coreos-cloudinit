@@ -22,16 +22,16 @@ func NewProcCmdline() *procCmdline {
 	return &procCmdline{Location: ProcCmdlineLocation}
 }
 
-func (self *procCmdline) ConfigRoot() string {
+func (c *procCmdline) ConfigRoot() string {
 	return ""
 }
 
-func (self *procCmdline) FetchMetadata() ([]byte, error) {
+func (c *procCmdline) FetchMetadata() ([]byte, error) {
 	return []byte{}, nil
 }
 
-func (self *procCmdline) FetchUserdata() ([]byte, error) {
-	contents, err := ioutil.ReadFile(self.Location)
+func (c *procCmdline) FetchUserdata() ([]byte, error) {
+	contents, err := ioutil.ReadFile(c.Location)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (self *procCmdline) FetchUserdata() ([]byte, error) {
 	return cfg, nil
 }
 
-func (self *procCmdline) Type() string {
+func (c *procCmdline) Type() string {
 	return "proc-cmdline"
 }
 
