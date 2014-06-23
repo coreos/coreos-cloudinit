@@ -3,6 +3,7 @@ package initialize
 import (
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/coreos/coreos-cloudinit/system"
 )
@@ -19,9 +20,16 @@ func (ee EtcdEnvironment) String() (out string) {
 		}
 	}
 
+	var sorted sort.StringSlice
+	for k, _ := range norm {
+		sorted = append(sorted, k)
+	}
+	sorted.Sort()
+
 	out += "[Service]\n"
 
-	for key, val := range norm {
+	for _, key := range sorted {
+		val := norm[key]
 		out += fmt.Sprintf("Environment=\"ETCD_%s=%s\"\n", key, val)
 	}
 
