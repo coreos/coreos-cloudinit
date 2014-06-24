@@ -102,8 +102,8 @@ func TestEtcdEnvironmentWrittenToDisk(t *testing.T) {
 	}
 
 	expect := `[Service]
-Environment="ETCD_NAME=node001"
 Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
+Environment="ETCD_NAME=node001"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `
 	if string(contents) != expect {
