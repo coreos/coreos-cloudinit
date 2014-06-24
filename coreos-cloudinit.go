@@ -12,56 +12,48 @@ import (
 
 const version = "0.7.7+git"
 
-func main() {
-	var printVersion bool
+var (
+	printVersion  bool
+	ignoreFailure bool
+	sources       struct {
+		file        string
+		configDrive string
+		url         string
+		procCmdLine bool
+	}
+	convertNetconf string
+	workspace      string
+	sshKeyName     string
+)
+
+func init() {
 	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
-
-	var ignoreFailure bool
 	flag.BoolVar(&ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
-
-	var file string
-	flag.StringVar(&file, "from-file", "", "Read user-data from provided file")
-
-	var configdrive string
-	flag.StringVar(&configdrive, "from-configdrive", "", "Read user-data from provided cloud-drive directory")
-
-	var url string
-	flag.StringVar(&url, "from-url", "", "Download user-data from provided url")
-
-	var useProcCmdline bool
-	flag.BoolVar(&useProcCmdline, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
-
-	var convertNetconf string
+	flag.StringVar(&sources.file, "from-file", "", "Read user-data from provided file")
+	flag.StringVar(&sources.configDrive, "from-configdrive", "", "Read user-data from provided cloud-drive directory")
+	flag.StringVar(&sources.url, "from-url", "", "Download user-data from provided url")
+	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
 	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files (requires the -from-configdrive flag)")
-
-	var workspace string
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
-
-	var sshKeyName string
 	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
+}
 
+func main() {
 	flag.Parse()
+
+	die := func() {
+		if ignoreFailure {
+			os.Exit(0)
+		}
+		os.Exit(1)
+	}
 
 	if printVersion == true {
 		fmt.Printf("coreos-cloudinit version %s\n", version)
 		os.Exit(0)
 	}
 
-	var ds datasource.Datasource
-	if file != "" {
-		ds = datasource.NewLocalFile(file)
-	} else if url != "" {
-		ds = datasource.NewMetadataService(url)
-	} else if configdrive != "" {
-		ds = datasource.NewConfigDrive(configdrive)
-	} else if useProcCmdline {
-		ds = datasource.NewProcCmdline()
-	} else {
-		fmt.Println("Provide one of --from-file, --from-configdrive, --from-url or --from-proc-cmdline")
-		os.Exit(1)
-	}
-
-	if convertNetconf != "" && configdrive == "" {
+	if convertNetconf != "" && sources.configDrive == "" {
 		fmt.Println("-convert-netconf flag requires -from-configdrive")
 		os.Exit(1)
 	}
@@ -74,26 +66,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	ds := getDatasource()
+	if ds == nil {
+		fmt.Println("Provide exactly one of --from-file, --from-configdrive, --from-url or --from-proc-cmdline")
+		os.Exit(1)
+	}
+
 	fmt.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
 	userdataBytes, err := ds.FetchUserdata()
 	if err != nil {
 		fmt.Printf("Failed fetching user-data from datasource: %v\n", err)
-		if ignoreFailure {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		die()
 	}
 
 	fmt.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
 	metadataBytes, err := ds.FetchMetadata()
 	if err != nil {
 		fmt.Printf("Failed fetching meta-data from datasource: %v\n", err)
-		if ignoreFailure {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		die()
 	}
 
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName)
@@ -101,7 +91,7 @@ func main() {
 		if err := processUserdata(string(userdataBytes), env); err != nil {
 			fmt.Printf("Failed to process user-data: %v\n", err)
 			if !ignoreFailure {
-				os.Exit(1)
+				die()
 			}
 		}
 	} else {
@@ -111,13 +101,36 @@ func main() {
 	if len(metadataBytes) > 0 {
 		if err := processMetadata(string(metadataBytes), env); err != nil {
 			fmt.Printf("Failed to process meta-data: %v\n", err)
-			if !ignoreFailure {
-				os.Exit(1)
-			}
+			die()
 		}
 	} else {
 		fmt.Println("No meta-data to handle.")
 	}
+}
+
+func getDatasource() datasource.Datasource {
+	var ds datasource.Datasource
+	var n int
+	if sources.file != "" {
+		ds = datasource.NewLocalFile(sources.file)
+		n++
+	}
+	if sources.url != "" {
+		ds = datasource.NewMetadataService(sources.url)
+		n++
+	}
+	if sources.configDrive != "" {
+		ds = datasource.NewConfigDrive(sources.configDrive)
+		n++
+	}
+	if sources.procCmdLine {
+		ds = datasource.NewProcCmdline()
+		n++
+	}
+	if n != 1 {
+		return nil
+	}
+	return ds
 }
 
 func processUserdata(userdata string, env *initialize.Environment) error {
