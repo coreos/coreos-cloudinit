@@ -25,32 +25,32 @@ func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string)
 	return &Environment{root, configRoot, workspace, netconfType, sshKeyName, substitutions}
 }
 
-func (self *Environment) Workspace() string {
-	return path.Join(self.root, self.workspace)
+func (e *Environment) Workspace() string {
+	return path.Join(e.root, e.workspace)
 }
 
-func (self *Environment) Root() string {
-	return self.root
+func (e *Environment) Root() string {
+	return e.root
 }
 
-func (self *Environment) ConfigRoot() string {
-	return self.configRoot
+func (e *Environment) ConfigRoot() string {
+	return e.configRoot
 }
 
-func (self *Environment) NetconfType() string {
-	return self.netconfType
+func (e *Environment) NetconfType() string {
+	return e.netconfType
 }
 
-func (self *Environment) SSHKeyName() string {
-	return self.sshKeyName
+func (e *Environment) SSHKeyName() string {
+	return e.sshKeyName
 }
 
-func (self *Environment) SetSSHKeyName(name string) {
-	self.sshKeyName = name
+func (e *Environment) SetSSHKeyName(name string) {
+	e.sshKeyName = name
 }
 
-func (self *Environment) Apply(data string) string {
-	for key, val := range self.substitutions {
+func (e *Environment) Apply(data string) string {
+	for key, val := range e.substitutions {
 		data = strings.Replace(data, key, val, -1)
 	}
 	return data

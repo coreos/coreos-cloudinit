@@ -18,6 +18,20 @@ const (
 	HTTP_4xx = 4
 )
 
+type Err error
+
+type ErrTimeout struct{
+	Err
+}
+
+type ErrNotFound struct{
+	Err
+}
+
+type ErrInvalid struct{
+	Err
+}
+
 type HttpClient struct {
 	// Maximum exp backoff duration. Defaults to 5 seconds
 	MaxBackoff time.Duration
@@ -53,18 +67,18 @@ func expBackoff(interval, max time.Duration) time.Duration {
 // Fetches a given URL with support for exponential backoff and maximum retries
 func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 	if rawurl == "" {
-		return nil, errors.New("URL is empty. Skipping.")
+		return nil, ErrInvalid{errors.New("URL is empty. Skipping.")}
 	}
 
 	url, err := neturl.Parse(rawurl)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalid{err}
 	}
 
 	// Unfortunately, url.Parse is too generic to throw errors if a URL does not
 	// have a valid HTTP scheme. So, we have to do this extra validation
 	if !strings.HasPrefix(url.Scheme, "http") {
-		return nil, fmt.Errorf("URL %s does not have a valid HTTP scheme. Skipping.", rawurl)
+		return nil, ErrInvalid{fmt.Errorf("URL %s does not have a valid HTTP scheme. Skipping.", rawurl)}
 	}
 
 	dataURL := url.String()
@@ -106,7 +120,7 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 			}
 
 			if status == HTTP_4xx {
-				return nil, fmt.Errorf("Not found. HTTP status code: %d", resp.StatusCode)
+				return nil, ErrNotFound{fmt.Errorf("Not found. HTTP status code: %d", resp.StatusCode)}
 			}
 
 			log.Printf("Server error. HTTP status code: %d", resp.StatusCode)
@@ -119,5 +133,5 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 		time.Sleep(duration)
 	}
 
-	return nil, fmt.Errorf("Unable to fetch data. Maximum retries reached: %d", h.MaxRetries)
+	return nil, ErrTimeout{fmt.Errorf("Unable to fetch data. Maximum retries reached: %d", h.MaxRetries)}
 }
