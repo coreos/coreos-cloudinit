@@ -41,6 +41,12 @@ ExecStop=/usr/bin/echo $unknown`,
 			"$private_ipv4\n$public_ipv4",
 			"5.6.7.8\n1.2.3.4",
 		},
+		{
+			// No substitutions
+			nil,
+			"$private_ipv4\nfoobar",
+			"5.6.7.8\nfoobar",
+		},
 	} {
 
 		env := NewEnvironment("./", "./", "./", "", "", tt.subs)
