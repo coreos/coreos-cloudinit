@@ -1,26 +1,48 @@
 package initialize
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestEnvironmentApply(t *testing.T) {
-	subs := map[string]string{
-		"$public_ipv4":  "192.0.2.3",
-		"$private_ipv4": "192.0.2.203",
-	}
-	env := NewEnvironment("./", "./", "./", "", "", subs)
-	input := `[Service]
+	os.Setenv("COREOS_PUBLIC_IPV4", "1.2.3.4")
+	os.Setenv("COREOS_PRIVATE_IPV4", "5.6.7.8")
+	for _, tt := range []struct {
+		subs  map[string]string
+		input string
+		out   string
+	}{
+		{
+			map[string]string{
+				"$public_ipv4":  "192.0.2.3",
+				"$private_ipv4": "192.0.2.203",
+			},
+			`[Service]
 ExecStart=/usr/bin/echo "$public_ipv4"
 ExecStop=/usr/bin/echo $private_ipv4
-ExecStop=/usr/bin/echo $unknown
-`
-	expected := `[Service]
+ExecStop=/usr/bin/echo $unknown`,
+			`[Service]
 ExecStart=/usr/bin/echo "192.0.2.3"
 ExecStop=/usr/bin/echo 192.0.2.203
-ExecStop=/usr/bin/echo $unknown
-`
+ExecStop=/usr/bin/echo $unknown`,
+		},
+		{
+			map[string]string{"$private_ipv4": "127.0.0.1"},
+			"$private_ipv4\n$public_ipv4",
+			"127.0.0.1\n1.2.3.4",
+		},
+		{
+			map[string]string{"foo": "bar"},
+			"$private_ipv4\n$public_ipv4",
+			"5.6.7.8\n1.2.3.4",
+		},
+	} {
 
-	output := env.Apply(input)
-	if output != expected {
-		t.Fatalf("Environment incorrectly applied.\nOutput:\n%s\nExpected:\n%s", output, expected)
+		env := NewEnvironment("./", "./", "./", "", "", tt.subs)
+		got := env.Apply(tt.input)
+		if got != tt.out {
+			t.Fatalf("Environment incorrectly applied.\ngot:\n%s\nwant:\n%s", got, tt.out)
+		}
 	}
 }
