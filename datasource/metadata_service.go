@@ -9,6 +9,13 @@ import (
 	"github.com/coreos/coreos-cloudinit/pkg"
 )
 
+// metadataService retrieves metadata from either an OpenStack[1] or EC2[2] compatible endpoint.
+// It will first attempt to directly retrieve a JSON blob from the OpenStack endpoint. If that
+// fails with a 404, it then attempts to retrieve metadata bit-by-bit from the EC2 endpoint,
+// and populates that into an equivalent JSON blob.
+//
+// [1] http://docs.openstack.org/grizzly/openstack-compute/admin/content/metadata-service.html
+// [2] http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html#instancedata-data-categories
 type metadataService struct {
 	url string
 }
