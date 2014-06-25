@@ -55,8 +55,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	if convertNetconf != "" && sources.configDrive == "" && !sources.metadataService {
-		fmt.Println("-convert-netconf flag requires -from-configdrive or -from-metadata-service")
+	if convertNetconf != "" && sources.configDrive == "" {
+		fmt.Println("-convert-netconf flag requires -from-configdrive")
 		os.Exit(1)
 	}
 
