@@ -16,11 +16,11 @@ var (
 	printVersion  bool
 	ignoreFailure bool
 	sources       struct {
-		file        string
-		configDrive string
-		metadataService string
-		url         string
-		procCmdLine bool
+		file            string
+		configDrive     string
+		metadataService bool
+		url             string
+		procCmdLine     bool
 	}
 	convertNetconf string
 	workspace      string
@@ -32,7 +32,7 @@ func init() {
 	flag.BoolVar(&ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
 	flag.StringVar(&sources.file, "from-file", "", "Read user-data from provided file")
 	flag.StringVar(&sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
-	flag.StringVar(&sources.metadataService, "from-metadata-service", "", "Download data from provided url")
+	flag.BoolVar(&sources.metadataService, "from-metadata-service", false, "Download data from metadata service")
 	flag.StringVar(&sources.url, "from-url", "", "Download user-data from provided url")
 	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
 	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files (requires the -from-configdrive flag)")
@@ -55,7 +55,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if convertNetconf != "" && sources.configDrive == "" && sources.metadataService == "" {
+	if convertNetconf != "" && sources.configDrive == "" && !sources.metadataService {
 		fmt.Println("-convert-netconf flag requires -from-configdrive or -from-metadata-service")
 		os.Exit(1)
 	}
@@ -127,15 +127,15 @@ func getDatasource() datasource.Datasource {
 		n++
 	}
 	if sources.url != "" {
-		ds = datasource.NewMetadataService(sources.url)
+		ds = datasource.NewRemoteFile(sources.url)
 		n++
 	}
 	if sources.configDrive != "" {
 		ds = datasource.NewConfigDrive(sources.configDrive)
 		n++
 	}
-	if sources.metadataService != "" {
-		ds = datasource.NewMetadataService(sources.metadataService)
+	if sources.metadataService {
+		ds = datasource.NewMetadataService()
 		n++
 	}
 	if sources.procCmdLine {

@@ -137,19 +137,19 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			metadata: map[string]string{
-				"/latest/meta-data/":      "a\nb\nc/",
-				"/latest/meta-data/c/":    "d\ne/",
-				"/latest/meta-data/c/e/":  "f",
-				"/latest/meta-data/a":     "1",
-				"/latest/meta-data/b":     "2",
-				"/latest/meta-data/c/d":   "3",
-				"/latest/meta-data/c/e/f": "4",
+				"http://169.254.169.254/2009-04-04/meta-data/":      "a\nb\nc/",
+				"http://169.254.169.254/2009-04-04/meta-data/c/":    "d\ne/",
+				"http://169.254.169.254/2009-04-04/meta-data/c/e/":  "f",
+				"http://169.254.169.254/2009-04-04/meta-data/a":     "1",
+				"http://169.254.169.254/2009-04-04/meta-data/b":     "2",
+				"http://169.254.169.254/2009-04-04/meta-data/c/d":   "3",
+				"http://169.254.169.254/2009-04-04/meta-data/c/e/f": "4",
 			},
 			expect: []byte(`{"a":"1","b":"2","c":{"d":"3","e":{"f":"4"}}}`),
 		},
 		{
 			metadata: map[string]string{
-				"/latest/meta-data.json": "test",
+				"http://169.254.169.254/openstack/2012-08-10/meta_data.json": "test",
 			},
 			expect: []byte("test"),
 		},
@@ -157,7 +157,7 @@ func TestFetchMetadata(t *testing.T) {
 		{err: pkg.ErrNotFound{fmt.Errorf("test error")}},
 	} {
 		client := &TestHttpClient{tt.metadata, tt.err}
-		metadata, err := fetchMetadata(client, "")
+		metadata, err := fetchMetadata(client)
 		if err != tt.err {
 			t.Fatalf("bad error (%q): want %q, got %q", tt.metadata, tt.err, err)
 		}
