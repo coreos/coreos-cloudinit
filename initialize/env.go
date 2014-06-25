@@ -19,6 +19,9 @@ type Environment struct {
 
 // TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
 func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string, substitutions map[string]string) *Environment {
+	if substitutions == nil {
+		substitutions = make(map[string]string)
+	}
 	// If certain values are not in the supplied substitution, fall back to retrieving them from the environment
 	for k, v := range map[string]string{
 		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
