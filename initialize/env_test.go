@@ -1,14 +1,13 @@
 package initialize
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 func TestEnvironmentApply(t *testing.T) {
-	os.Setenv("COREOS_PUBLIC_IPV4", "192.0.2.3")
-	os.Setenv("COREOS_PRIVATE_IPV4", "192.0.2.203")
-	env := NewEnvironment("./", "./", "./", "", "")
+	subs := map[string]string{
+		"$public_ipv4":  "192.0.2.3",
+		"$private_ipv4": "192.0.2.203",
+	}
+	env := NewEnvironment("./", "./", "./", "", "", subs)
 	input := `[Service]
 ExecStart=/usr/bin/echo "$public_ipv4"
 ExecStop=/usr/bin/echo $private_ipv4

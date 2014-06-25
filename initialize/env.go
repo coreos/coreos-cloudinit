@@ -1,7 +1,6 @@
 package initialize
 
 import (
-	"os"
 	"path"
 	"strings"
 )
@@ -17,11 +16,8 @@ type Environment struct {
 	substitutions map[string]string
 }
 
-func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string) *Environment {
-	substitutions := map[string]string{
-		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
-		"$private_ipv4": os.Getenv("COREOS_PRIVATE_IPV4"),
-	}
+// TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
+func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string, substitutions map[string]string) *Environment {
 	return &Environment{root, configRoot, workspace, netconfType, sshKeyName, substitutions}
 }
 

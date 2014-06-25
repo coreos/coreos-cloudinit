@@ -86,7 +86,16 @@ func main() {
 		die()
 	}
 
-	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName)
+	var subs map[string]string
+	if len(metadataBytes) > 0 {
+		subs, err = initialize.ExtractIPsFromMetadata(metadataBytes)
+		if err != nil {
+			fmt.Printf("Failed extracting IPs from meta-data: %v\n", err)
+			die()
+		}
+	}
+	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName, subs)
+
 	if len(userdataBytes) > 0 {
 		if err := processUserdata(string(userdataBytes), env); err != nil {
 			fmt.Printf("Failed to process user-data: %v\n", err)
