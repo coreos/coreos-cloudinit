@@ -98,6 +98,15 @@ func main() {
 	}
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName, subs)
 
+	if len(metadataBytes) > 0 {
+		if err := processMetadata(string(metadataBytes), env); err != nil {
+			fmt.Printf("Failed to process meta-data: %v\n", err)
+			die()
+		}
+	} else {
+		fmt.Println("No meta-data to handle.")
+	}
+
 	if len(userdataBytes) > 0 {
 		if err := processUserdata(string(userdataBytes), env); err != nil {
 			fmt.Printf("Failed to process user-data: %v\n", err)
@@ -107,15 +116,6 @@ func main() {
 		}
 	} else {
 		fmt.Println("No user-data to handle.")
-	}
-
-	if len(metadataBytes) > 0 {
-		if err := processMetadata(string(metadataBytes), env); err != nil {
-			fmt.Printf("Failed to process meta-data: %v\n", err)
-			die()
-		}
-	} else {
-		fmt.Println("No meta-data to handle.")
 	}
 }
 
