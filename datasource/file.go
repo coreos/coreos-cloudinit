@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"io/ioutil"
+	"os"
 )
 
 type localFile struct {
@@ -10,6 +11,15 @@ type localFile struct {
 
 func NewLocalFile(path string) *localFile {
 	return &localFile{path}
+}
+
+func (f *localFile) IsAvailable() bool {
+	_, err := os.Stat(f.path)
+	return !os.IsNotExist(err)
+}
+
+func (f *localFile) AvailabilityChanges() bool {
+	return true
 }
 
 func (f *localFile) ConfigRoot() string {

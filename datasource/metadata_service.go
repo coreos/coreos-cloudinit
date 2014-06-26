@@ -39,6 +39,16 @@ func NewMetadataService() *metadataService {
 	return &metadataService{}
 }
 
+func (ms *metadataService) IsAvailable() bool {
+	client := pkg.NewHttpClient()
+	_, err := client.Get(BaseUrl)
+	return (err == nil)
+}
+
+func (ms *metadataService) AvailabilityChanges() bool {
+	return true
+}
+
 func (ms *metadataService) ConfigRoot() string {
 	return ""
 }

@@ -14,7 +14,7 @@ func TestExpBackoff(t *testing.T) {
 	duration := time.Millisecond
 	max := time.Hour
 	for i := 0; i < math.MaxUint16; i++ {
-		duration = expBackoff(duration, max)
+		duration = ExpBackoff(duration, max)
 		if duration < 0 {
 			t.Fatalf("duration too small: %v %v", duration, i)
 		}

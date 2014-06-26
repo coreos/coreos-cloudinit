@@ -10,6 +10,16 @@ func NewRemoteFile(url string) *remoteFile {
 	return &remoteFile{url}
 }
 
+func (f *remoteFile) IsAvailable() bool {
+	client := pkg.NewHttpClient()
+	_, err := client.Get(f.url)
+	return (err == nil)
+}
+
+func (f *remoteFile) AvailabilityChanges() bool {
+	return true
+}
+
 func (f *remoteFile) ConfigRoot() string {
 	return ""
 }

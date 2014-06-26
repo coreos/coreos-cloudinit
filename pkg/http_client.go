@@ -88,7 +88,7 @@ func NewHttpClient() *HttpClient {
 	return hc
 }
 
-func expBackoff(interval, max time.Duration) time.Duration {
+func ExpBackoff(interval, max time.Duration) time.Duration {
 	interval = interval * 2
 	if interval > max {
 		interval = max
@@ -131,7 +131,7 @@ func (h *HttpClient) GetRetry(rawurl string) ([]byte, error) {
 			return data, err
 		}
 
-		duration = expBackoff(duration, h.MaxBackoff)
+		duration = ExpBackoff(duration, h.MaxBackoff)
 		log.Printf("Sleeping for %v...", duration)
 		time.Sleep(duration)
 	}
