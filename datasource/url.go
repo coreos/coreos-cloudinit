@@ -20,7 +20,7 @@ func (f *remoteFile) FetchMetadata() ([]byte, error) {
 
 func (f *remoteFile) FetchUserdata() ([]byte, error) {
 	client := pkg.NewHttpClient()
-	return client.Get(f.url)
+	return client.GetRetry(f.url)
 }
 
 func (f *remoteFile) Type() string {

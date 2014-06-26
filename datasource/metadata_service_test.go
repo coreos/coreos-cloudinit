@@ -14,7 +14,7 @@ type TestHttpClient struct {
 	err      error
 }
 
-func (t *TestHttpClient) Get(url string) ([]byte, error) {
+func (t *TestHttpClient) GetRetry(url string) ([]byte, error) {
 	if t.err != nil {
 		return nil, t.err
 	}

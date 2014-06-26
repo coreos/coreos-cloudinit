@@ -43,7 +43,7 @@ func (c *procCmdline) FetchUserdata() ([]byte, error) {
 	}
 
 	client := pkg.NewHttpClient()
-	cfg, err := client.Get(url)
+	cfg, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err
 	}

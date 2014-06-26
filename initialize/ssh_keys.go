@@ -25,7 +25,7 @@ func SSHImportKeysFromURL(system_user string, url string) error {
 
 func fetchUserKeys(url string) ([]string, error) {
 	client := pkg.NewHttpClient()
-	data, err := client.Get(url)
+	data, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err
 	}
