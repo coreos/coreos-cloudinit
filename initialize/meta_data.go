@@ -3,8 +3,8 @@ package initialize
 import "encoding/json"
 
 // ParseMetaData parses a JSON blob in the OpenStack metadata service format, and
-// converts it to a CloudConfig
-func ParseMetaData(contents string) (cfg CloudConfig, err error) {
+// converts it to a partially hydrated CloudConfig
+func ParseMetaData(contents string) (cfg *CloudConfig, err error) {
 	var metadata struct {
 		SSHAuthorizedKeyMap map[string]string `json:"public_keys"`
 		Hostname            string            `json:"hostname"`

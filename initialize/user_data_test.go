@@ -37,7 +37,7 @@ func TestParseConfigCRLF(t *testing.T) {
 		t.Fatalf("Failed parsing config: %v", err)
 	}
 
-	cfg := ud.(CloudConfig)
+	cfg := ud.(*CloudConfig)
 
 	if cfg.Hostname != "foo" {
 		t.Error("Failed parsing hostname from config")

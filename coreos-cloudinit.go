@@ -102,6 +102,7 @@ func main() {
 		die()
 	}
 
+	// Extract IPv4 addresses from metadata if possible
 	var subs map[string]string
 	if len(metadataBytes) > 0 {
 		subs, err = initialize.ExtractIPsFromMetadata(metadataBytes)
@@ -110,29 +111,86 @@ func main() {
 			die()
 		}
 	}
+
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName, subs)
 
-	if len(metadataBytes) > 0 {
-		if err := processMetadata(string(metadataBytes), env); err != nil {
-			fmt.Printf("Failed to process meta-data: %v\n", err)
-			die()
-		}
+	var ccm, ccu *initialize.CloudConfig
+	var script system.Script
+	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
+		fmt.Printf("Failed to parse meta-data: %v\n", err)
+		die()
+	}
+	if ud, err := initialize.ParseUserData(string(userdataBytes)); err != nil {
+		fmt.Printf("Failed to parse user-data: %v\n", err)
+		die()
 	} else {
-		fmt.Println("No meta-data to handle.")
+		switch t := ud.(type) {
+		case *initialize.CloudConfig:
+			ccu = t
+		case system.Script:
+			script = t
+		}
 	}
 
-	if len(userdataBytes) > 0 {
-		if err := processUserdata(string(userdataBytes), env); err != nil {
-			fmt.Printf("Failed to process user-data: %v\n", err)
-			if !ignoreFailure {
-				die()
-			}
-		}
+	var cc *initialize.CloudConfig
+	if ccm != nil && ccu != nil {
+		fmt.Println("Merging cloud-config from meta-data and user-data")
+		merged := mergeCloudConfig(*ccu, *ccm)
+		cc = &merged
+	} else if ccm != nil && ccu == nil {
+		fmt.Println("Processing cloud-config from meta-data")
+		cc = ccm
+	} else if ccm == nil && ccu != nil {
+		fmt.Println("Processing cloud-config from user-data")
+		cc = ccu
 	} else {
-		fmt.Println("No user-data to handle.")
+		fmt.Println("No cloud-config data to handle.")
+	}
+
+	if cc != nil {
+		if err = initialize.Apply(*cc, env); err != nil {
+			fmt.Printf("Failed to apply cloud-config: %v\n", err)
+			die()
+		}
+	}
+
+	if script != nil {
+		if err = runScript(script, env); err != nil {
+			fmt.Printf("Failed to run script: %v\n", err)
+			die()
+		}
 	}
 }
 
+// mergeCloudConfig merges certain options from mdcc (a CloudConfig derived from
+// meta-data) onto udcc (a CloudConfig derived from user-data), if they are
+// not already set on udcc (i.e. user-data always takes precedence)
+// NB: This needs to be kept in sync with ParseMetadata so that it tracks all
+// elements of a CloudConfig which that function can populate.
+func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudConfig) {
+	if mdcc.Hostname != "" {
+		if udcc.Hostname != "" {
+			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)", udcc.Hostname, mdcc.Hostname)
+		} else {
+			udcc.Hostname = mdcc.Hostname
+		}
+
+	}
+	for _, key := range mdcc.SSHAuthorizedKeys {
+		udcc.SSHAuthorizedKeys = append(udcc.SSHAuthorizedKeys, key)
+	}
+	if mdcc.NetworkConfigPath != "" {
+		if udcc.NetworkConfigPath != "" {
+			fmt.Printf("Warning: user-data NetworkConfigPath %s overrides metadata NetworkConfigPath %s", udcc.NetworkConfigPath, mdcc.NetworkConfigPath)
+		} else {
+			udcc.NetworkConfigPath = mdcc.NetworkConfigPath
+		}
+	}
+	return udcc
+}
+
+// getDatasources creates a slice of possible Datasources for cloudinit based
+// on the different source command-line flags.
 func getDatasources() []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 	if sources.file != "" {
@@ -153,6 +211,11 @@ func getDatasources() []datasource.Datasource {
 	return dss
 }
 
+// selectDatasource attempts to choose a valid Datasource to use based on its
+// current availability. The first Datasource to report to be available is
+// returned. Datasources will be retried if possible if they are not
+// immediately available. If all Datasources are permanently unavailable or
+// datasourceTimeout is reached before one becomes available, nil is returned.
 func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 	ds := make(chan datasource.Datasource)
 	stop := make(chan struct{})
@@ -199,48 +262,18 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 	return s
 }
 
-func processUserdata(userdata string, env *initialize.Environment) error {
-	userdata = env.Apply(userdata)
-
-	parsed, err := initialize.ParseUserData(userdata)
-	if err != nil {
-		fmt.Printf("Failed parsing user-data: %v\n", err)
-		return err
-	}
-
-	err = initialize.PrepWorkspace(env.Workspace())
+// TODO(jonboulle): this should probably be refactored and moved into a different module
+func runScript(script system.Script, env *initialize.Environment) error {
+	err := initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
 		fmt.Printf("Failed preparing workspace: %v\n", err)
 		return err
 	}
-
-	switch t := parsed.(type) {
-	case initialize.CloudConfig:
-		err = initialize.Apply(t, env)
-	case system.Script:
-		var path string
-		path, err = initialize.PersistScriptInWorkspace(t, env.Workspace())
-		if err == nil {
-			var name string
-			name, err = system.ExecuteScript(path)
-			initialize.PersistUnitNameInWorkspace(name, env.Workspace())
-		}
+	path, err := initialize.PersistScriptInWorkspace(script, env.Workspace())
+	if err == nil {
+		var name string
+		name, err = system.ExecuteScript(path)
+		initialize.PersistUnitNameInWorkspace(name, env.Workspace())
 	}
-
 	return err
-}
-
-func processMetadata(metadata string, env *initialize.Environment) error {
-	parsed, err := initialize.ParseMetaData(metadata)
-	if err != nil {
-		fmt.Printf("Failed parsing meta-data: %v\n", err)
-		return err
-	}
-	err = initialize.PrepWorkspace(env.Workspace())
-	if err != nil {
-		fmt.Printf("Failed preparing workspace: %v\n", err)
-		return err
-	}
-
-	return initialize.Apply(parsed, env)
 }
