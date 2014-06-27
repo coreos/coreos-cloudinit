@@ -1,7 +1,7 @@
 [Unit]
 Description=Load cloud-config from /media/configdrive
 Requires=coreos-setup-environment.service
-After=coreos-setup-environment.service
+After=coreos-setup-environment.service system-config.target
 Before=user-config.target
 
 # HACK: work around ordering between config drive and ec2 metadata It is
@@ -13,7 +13,6 @@ Before=user-config.target
 # systemd knows about the ordering as early as possible.
 # coreos-cloudinit could implement a simple lock but that cannot be used
 # until after the systemd dbus calls are made non-blocking.
-After=system-cloudinit@usr-share-oem-cloud\x2dconfig.yml.service
 After=ec2-cloudinit.service
 
 [Service]
