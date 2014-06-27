@@ -22,6 +22,21 @@ func NewProcCmdline() *procCmdline {
 	return &procCmdline{Location: ProcCmdlineLocation}
 }
 
+func (c *procCmdline) IsAvailable() bool {
+	contents, err := ioutil.ReadFile(c.Location)
+	if err != nil {
+		return false
+	}
+
+	cmdline := strings.TrimSpace(string(contents))
+	_, err = findCloudConfigURL(cmdline)
+	return (err == nil)
+}
+
+func (c *procCmdline) AvailabilityChanges() bool {
+	return false
+}
+
 func (c *procCmdline) ConfigRoot() string {
 	return ""
 }
@@ -43,7 +58,7 @@ func (c *procCmdline) FetchUserdata() ([]byte, error) {
 	}
 
 	client := pkg.NewHttpClient()
-	cfg, err := client.Get(url)
+	cfg, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err
 	}

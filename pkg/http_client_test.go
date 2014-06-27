@@ -14,7 +14,7 @@ func TestExpBackoff(t *testing.T) {
 	duration := time.Millisecond
 	max := time.Hour
 	for i := 0; i < math.MaxUint16; i++ {
-		duration = expBackoff(duration, max)
+		duration = ExpBackoff(duration, max)
 		if duration < 0 {
 			t.Fatalf("duration too small: %v %v", duration, i)
 		}
@@ -51,7 +51,7 @@ func TestGetURLExpBackOff(t *testing.T) {
 		ts := httptest.NewServer(mux)
 		defer ts.Close()
 
-		data, err := client.Get(ts.URL)
+		data, err := client.GetRetry(ts.URL)
 		if err != nil {
 			t.Errorf("Test case %d produced error: %v", i, err)
 		}
@@ -76,7 +76,7 @@ func TestGetURL4xx(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := client.Get(ts.URL)
+	_, err := client.GetRetry(ts.URL)
 	if err == nil {
 		t.Errorf("Incorrect result\ngot:  %s\nwant: %s", err.Error(), "Not found. HTTP status code: 404")
 	}
@@ -107,7 +107,7 @@ coreos:
 	}))
 	defer ts.Close()
 
-	data, err := client.Get(ts.URL)
+	data, err := client.GetRetry(ts.URL)
 	if err != nil {
 		t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, nil)
 	}
@@ -132,7 +132,7 @@ func TestGetMalformedURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := client.Get(test.url)
+		_, err := client.GetRetry(test.url)
 		if err == nil || err.Error() != test.want {
 			t.Errorf("Incorrect result\ngot:  %v\nwant: %v", err, test.want)
 		}

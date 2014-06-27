@@ -4,13 +4,21 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
-const version = "0.7.7+git"
+const (
+	version               = "0.7.7+git"
+	datasourceInterval    = 100 * time.Millisecond
+	datasourceMaxInterval = 30 * time.Second
+	datasourceTimeout     = 5 * time.Minute
+)
 
 var (
 	printVersion  bool
@@ -68,10 +76,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	ds := getDatasource()
-	if ds == nil {
-		fmt.Println("Provide exactly one of --from-file, --from-configdrive, --from-metadata-service, --from-url or --from-proc-cmdline")
+	dss := getDatasources()
+	if len(dss) == 0 {
+		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-metadata-service, --from-url or --from-proc-cmdline")
 		os.Exit(1)
+	}
+
+	ds := selectDatasource(dss)
+	if ds == nil {
+		fmt.Println("No datasources available in time")
+		die()
 	}
 
 	fmt.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
@@ -119,33 +133,70 @@ func main() {
 	}
 }
 
-func getDatasource() datasource.Datasource {
-	var ds datasource.Datasource
-	var n int
+func getDatasources() []datasource.Datasource {
+	dss := make([]datasource.Datasource, 0, 5)
 	if sources.file != "" {
-		ds = datasource.NewLocalFile(sources.file)
-		n++
+		dss = append(dss, datasource.NewLocalFile(sources.file))
 	}
 	if sources.url != "" {
-		ds = datasource.NewRemoteFile(sources.url)
-		n++
+		dss = append(dss, datasource.NewRemoteFile(sources.url))
 	}
 	if sources.configDrive != "" {
-		ds = datasource.NewConfigDrive(sources.configDrive)
-		n++
+		dss = append(dss, datasource.NewConfigDrive(sources.configDrive))
 	}
 	if sources.metadataService {
-		ds = datasource.NewMetadataService()
-		n++
+		dss = append(dss, datasource.NewMetadataService())
 	}
 	if sources.procCmdLine {
-		ds = datasource.NewProcCmdline()
-		n++
+		dss = append(dss, datasource.NewProcCmdline())
 	}
-	if n != 1 {
-		return nil
+	return dss
+}
+
+func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
+	ds := make(chan datasource.Datasource)
+	stop := make(chan struct{})
+	var wg sync.WaitGroup
+
+	for _, s := range sources {
+		wg.Add(1)
+		go func(s datasource.Datasource) {
+			defer wg.Done()
+
+			duration := datasourceInterval
+			for {
+				fmt.Printf("Checking availability of %q\n", s.Type())
+				if s.IsAvailable() {
+					ds <- s
+					return
+				} else if !s.AvailabilityChanges() {
+					return
+				}
+				select {
+				case <-stop:
+					return
+				case <-time.Tick(duration):
+					duration = pkg.ExpBackoff(duration, datasourceMaxInterval)
+				}
+			}
+		}(s)
 	}
-	return ds
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	var s datasource.Datasource
+	select {
+	case s = <-ds:
+	case <-done:
+	case <-time.Tick(datasourceTimeout):
+	}
+
+	close(stop)
+	return s
 }
 
 func processUserdata(userdata string, env *initialize.Environment) error {

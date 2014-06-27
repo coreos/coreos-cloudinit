@@ -32,11 +32,21 @@ const (
 type metadataService struct{}
 
 type getter interface {
-	Get(string) ([]byte, error)
+	GetRetry(string) ([]byte, error)
 }
 
 func NewMetadataService() *metadataService {
 	return &metadataService{}
+}
+
+func (ms *metadataService) IsAvailable() bool {
+	client := pkg.NewHttpClient()
+	_, err := client.Get(BaseUrl)
+	return (err == nil)
+}
+
+func (ms *metadataService) AvailabilityChanges() bool {
+	return true
 }
 
 func (ms *metadataService) ConfigRoot() string {
@@ -49,12 +59,12 @@ func (ms *metadataService) FetchMetadata() ([]byte, error) {
 
 func (ms *metadataService) FetchUserdata() ([]byte, error) {
 	client := pkg.NewHttpClient()
-	if data, err := client.Get(Ec2UserdataUrl); err == nil {
+	if data, err := client.GetRetry(Ec2UserdataUrl); err == nil {
 		return data, err
 	} else if _, ok := err.(pkg.ErrTimeout); ok {
 		return data, err
 	}
-	return client.Get(OpenstackUserdataUrl)
+	return client.GetRetry(OpenstackUserdataUrl)
 }
 
 func (ms *metadataService) Type() string {
@@ -62,7 +72,7 @@ func (ms *metadataService) Type() string {
 }
 
 func fetchMetadata(client getter) ([]byte, error) {
-	if metadata, err := client.Get(OpenstackMetadataUrl); err == nil {
+	if metadata, err := client.GetRetry(OpenstackMetadataUrl); err == nil {
 		return metadata, nil
 	} else if _, ok := err.(pkg.ErrTimeout); ok {
 		return nil, err
@@ -76,7 +86,7 @@ func fetchMetadata(client getter) ([]byte, error) {
 }
 
 func fetchAttributes(client getter, url string) ([]string, error) {
-	resp, err := client.Get(url)
+	resp, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err
 	}

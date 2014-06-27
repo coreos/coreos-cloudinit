@@ -10,6 +10,16 @@ func NewRemoteFile(url string) *remoteFile {
 	return &remoteFile{url}
 }
 
+func (f *remoteFile) IsAvailable() bool {
+	client := pkg.NewHttpClient()
+	_, err := client.Get(f.url)
+	return (err == nil)
+}
+
+func (f *remoteFile) AvailabilityChanges() bool {
+	return true
+}
+
 func (f *remoteFile) ConfigRoot() string {
 	return ""
 }
@@ -20,7 +30,7 @@ func (f *remoteFile) FetchMetadata() ([]byte, error) {
 
 func (f *remoteFile) FetchUserdata() ([]byte, error) {
 	client := pkg.NewHttpClient()
-	return client.Get(f.url)
+	return client.GetRetry(f.url)
 }
 
 func (f *remoteFile) Type() string {

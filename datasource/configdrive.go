@@ -14,6 +14,15 @@ func NewConfigDrive(root string) *configDrive {
 	return &configDrive{path.Join(root, "openstack")}
 }
 
+func (cd *configDrive) IsAvailable() bool {
+	_, err := os.Stat(cd.root)
+	return !os.IsNotExist(err)
+}
+
+func (cd *configDrive) AvailabilityChanges() bool {
+	return true
+}
+
 func (cd *configDrive) ConfigRoot() string {
 	return cd.root
 }

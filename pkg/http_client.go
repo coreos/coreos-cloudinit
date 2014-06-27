@@ -20,15 +20,23 @@ const (
 
 type Err error
 
-type ErrTimeout struct{
+type ErrTimeout struct {
 	Err
 }
 
-type ErrNotFound struct{
+type ErrNotFound struct {
 	Err
 }
 
-type ErrInvalid struct{
+type ErrInvalid struct {
+	Err
+}
+
+type ErrServer struct {
+	Err
+}
+
+type ErrNetwork struct {
 	Err
 }
 
@@ -45,18 +53,42 @@ type HttpClient struct {
 
 	// Whether or not to skip TLS verification. Defaults to false
 	SkipTLS bool
+
+	client *http.Client
 }
 
 func NewHttpClient() *HttpClient {
-	return &HttpClient{
+	hc := &HttpClient{
 		MaxBackoff: time.Second * 5,
 		MaxRetries: 15,
 		Timeout:    time.Duration(2) * time.Second,
 		SkipTLS:    false,
 	}
+
+	// We need to create our own client in order to add timeout support.
+	// TODO(c4milo) Replace it once Go 1.3 is officially used by CoreOS
+	// More info: https://code.google.com/p/go/source/detail?r=ada6f2d5f99f
+	hc.client = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: hc.SkipTLS,
+			},
+			Dial: func(network, addr string) (net.Conn, error) {
+				deadline := time.Now().Add(hc.Timeout)
+				c, err := net.DialTimeout(network, addr, hc.Timeout)
+				if err != nil {
+					return nil, err
+				}
+				c.SetDeadline(deadline)
+				return c, nil
+			},
+		},
+	}
+
+	return hc
 }
 
-func expBackoff(interval, max time.Duration) time.Duration {
+func ExpBackoff(interval, max time.Duration) time.Duration {
 	interval = interval * 2
 	if interval > max {
 		interval = max
@@ -64,8 +96,8 @@ func expBackoff(interval, max time.Duration) time.Duration {
 	return interval
 }
 
-// Fetches a given URL with support for exponential backoff and maximum retries
-func (h *HttpClient) Get(rawurl string) ([]byte, error) {
+// GetRetry fetches a given URL with support for exponential backoff and maximum retries
+func (h *HttpClient) GetRetry(rawurl string) ([]byte, error) {
 	if rawurl == "" {
 		return nil, ErrInvalid{errors.New("URL is empty. Skipping.")}
 	}
@@ -83,55 +115,42 @@ func (h *HttpClient) Get(rawurl string) ([]byte, error) {
 
 	dataURL := url.String()
 
-	// We need to create our own client in order to add timeout support.
-	// TODO(c4milo) Replace it once Go 1.3 is officially used by CoreOS
-	// More info: https://code.google.com/p/go/source/detail?r=ada6f2d5f99f
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: h.SkipTLS,
-		},
-		Dial: func(network, addr string) (net.Conn, error) {
-			deadline := time.Now().Add(h.Timeout)
-			c, err := net.DialTimeout(network, addr, h.Timeout)
-			if err != nil {
-				return nil, err
-			}
-			c.SetDeadline(deadline)
-			return c, nil
-		},
-	}
-
-	client := &http.Client{
-		Transport: transport,
-	}
-
 	duration := 50 * time.Millisecond
 	for retry := 1; retry <= h.MaxRetries; retry++ {
 		log.Printf("Fetching data from %s. Attempt #%d", dataURL, retry)
 
-		resp, err := client.Get(dataURL)
-
-		if err == nil {
-			defer resp.Body.Close()
-			status := resp.StatusCode / 100
-
-			if status == HTTP_2xx {
-				return ioutil.ReadAll(resp.Body)
-			}
-
-			if status == HTTP_4xx {
-				return nil, ErrNotFound{fmt.Errorf("Not found. HTTP status code: %d", resp.StatusCode)}
-			}
-
-			log.Printf("Server error. HTTP status code: %d", resp.StatusCode)
-		} else {
-			log.Printf("Unable to fetch data: %s", err.Error())
+		data, err := h.Get(dataURL)
+		switch err.(type) {
+		case ErrNetwork:
+			log.Printf(err.Error())
+		case ErrServer:
+			log.Printf(err.Error())
+		case ErrNotFound:
+			return data, err
+		default:
+			return data, err
 		}
 
-		duration = expBackoff(duration, h.MaxBackoff)
+		duration = ExpBackoff(duration, h.MaxBackoff)
 		log.Printf("Sleeping for %v...", duration)
 		time.Sleep(duration)
 	}
 
 	return nil, ErrTimeout{fmt.Errorf("Unable to fetch data. Maximum retries reached: %d", h.MaxRetries)}
+}
+
+func (h *HttpClient) Get(dataURL string) ([]byte, error) {
+	if resp, err := h.client.Get(dataURL); err == nil {
+		defer resp.Body.Close()
+		switch resp.StatusCode / 100 {
+		case HTTP_2xx:
+			return ioutil.ReadAll(resp.Body)
+		case HTTP_4xx:
+			return nil, ErrNotFound{fmt.Errorf("Not found. HTTP status code: %d", resp.StatusCode)}
+		default:
+			return nil, ErrServer{fmt.Errorf("Server error. HTTP status code: %d", resp.StatusCode)}
+		}
+	} else {
+		return nil, ErrNetwork{fmt.Errorf("Unable to fetch data: %s", err.Error())}
+	}
 }
