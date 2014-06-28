@@ -115,7 +115,7 @@ func main() {
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName, subs)
 
 	var ccm, ccu *initialize.CloudConfig
-	var script system.Script
+	var script *system.Script
 	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
 		die()
@@ -128,7 +128,7 @@ func main() {
 		case *initialize.CloudConfig:
 			ccu = t
 		case system.Script:
-			script = t
+			script = &t
 		}
 	}
 
@@ -155,7 +155,7 @@ func main() {
 	}
 
 	if script != nil {
-		if err = runScript(script, env); err != nil {
+		if err = runScript(*script, env); err != nil {
 			fmt.Printf("Failed to run script: %v\n", err)
 			die()
 		}

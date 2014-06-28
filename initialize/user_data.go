@@ -9,6 +9,9 @@ import (
 )
 
 func ParseUserData(contents string) (interface{}, error) {
+	if len(contents) == 0 {
+		return nil, nil
+	}
 	header := strings.SplitN(contents, "\n", 2)[0]
 
 	// Explicitly trim the header so we can handle user-data from

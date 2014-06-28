@@ -47,3 +47,12 @@ func TestParseConfigCRLF(t *testing.T) {
 		t.Error("Parsed incorrect number of SSH keys")
 	}
 }
+
+func TestParseConfigEmpty(t *testing.T) {
+	i, e := ParseUserData(``)
+	if i != nil {
+		t.Error("ParseUserData of empty string returned non-nil unexpectedly")
+	} else if e != nil {
+		t.Error("ParseUserData of empty string returned error unexpectedly")
+	}
+}
