@@ -3,8 +3,11 @@ package initialize
 import "encoding/json"
 
 // ParseMetaData parses a JSON blob in the OpenStack metadata service format, and
-// converts it to a CloudConfig
-func ParseMetaData(contents string) (cfg CloudConfig, err error) {
+// converts it to a partially hydrated CloudConfig
+func ParseMetaData(contents string) (*CloudConfig, error) {
+	if len(contents) == 0 {
+		return nil, nil
+	}
 	var metadata struct {
 		SSHAuthorizedKeyMap map[string]string `json:"public_keys"`
 		Hostname            string            `json:"hostname"`
@@ -12,17 +15,20 @@ func ParseMetaData(contents string) (cfg CloudConfig, err error) {
 			ContentPath string `json:"content_path"`
 		} `json:"network_config"`
 	}
-	if err = json.Unmarshal([]byte(contents), &metadata); err != nil {
-		return
+	if err := json.Unmarshal([]byte(contents), &metadata); err != nil {
+		return nil, err
 	}
 
-	cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHAuthorizedKeyMap))
-	for _, key := range metadata.SSHAuthorizedKeyMap {
-		cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, key)
+	var cfg CloudConfig
+	if len(metadata.SSHAuthorizedKeyMap) > 0 {
+		cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHAuthorizedKeyMap))
+		for _, key := range metadata.SSHAuthorizedKeyMap {
+			cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, key)
+		}
 	}
 	cfg.Hostname = metadata.Hostname
 	cfg.NetworkConfigPath = metadata.NetworkConfig.ContentPath
-	return
+	return &cfg, nil
 }
 
 // ExtractIPsFromMetaData parses a JSON blob in the OpenStack metadata service format,

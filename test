@@ -18,7 +18,7 @@ declare -a TESTPKGS=(initialize system datasource pkg network)
 if [ -z "$PKG" ]; then
 	GOFMTPATH="$TESTPKGS coreos-cloudinit.go"
 	# prepend repo path to each package
-	TESTPKGS=${TESTPKGS[@]/#/${REPO_PATH}/}
+	TESTPKGS="${TESTPKGS[@]/#/${REPO_PATH}/} ./"
 else
 	GOFMTPATH="$TESTPKGS"
 	# strip out slashes and dots from PKG=./foo/

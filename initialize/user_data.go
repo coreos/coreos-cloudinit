@@ -9,6 +9,9 @@ import (
 )
 
 func ParseUserData(contents string) (interface{}, error) {
+	if len(contents) == 0 {
+		return nil, nil
+	}
 	header := strings.SplitN(contents, "\n", 2)[0]
 
 	// Explicitly trim the header so we can handle user-data from
@@ -19,14 +22,9 @@ func ParseUserData(contents string) (interface{}, error) {
 	if strings.HasPrefix(header, "#!") {
 		log.Printf("Parsing user-data as script")
 		return system.Script(contents), nil
-
 	} else if header == "#cloud-config" {
 		log.Printf("Parsing user-data as cloud-config")
-		cfg, err := NewCloudConfig(contents)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		return *cfg, nil
+		return NewCloudConfig(contents)
 	} else {
 		return nil, fmt.Errorf("Unrecognized user-data header: %s", header)
 	}

@@ -37,7 +37,7 @@ func TestParseConfigCRLF(t *testing.T) {
 		t.Fatalf("Failed parsing config: %v", err)
 	}
 
-	cfg := ud.(CloudConfig)
+	cfg := ud.(*CloudConfig)
 
 	if cfg.Hostname != "foo" {
 		t.Error("Failed parsing hostname from config")
@@ -45,5 +45,14 @@ func TestParseConfigCRLF(t *testing.T) {
 
 	if len(cfg.SSHAuthorizedKeys) != 1 {
 		t.Error("Parsed incorrect number of SSH keys")
+	}
+}
+
+func TestParseConfigEmpty(t *testing.T) {
+	i, e := ParseUserData(``)
+	if i != nil {
+		t.Error("ParseUserData of empty string returned non-nil unexpectedly")
+	} else if e != nil {
+		t.Error("ParseUserData of empty string returned error unexpectedly")
 	}
 }
