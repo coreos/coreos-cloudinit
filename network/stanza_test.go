@@ -129,7 +129,7 @@ func TestParseBondStanzaNoSlaves(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	if bond.options["slaves"] != nil {
+	if bond.options["bond-slaves"] != nil {
 		t.FailNow()
 	}
 }
@@ -150,9 +150,6 @@ func TestParseBondStanza(t *testing.T) {
 		t.FailNow()
 	}
 	if bond.configMethod != conf {
-		t.FailNow()
-	}
-	if !reflect.DeepEqual(bond.options["slaves"], options["bond-slaves"]) {
 		t.FailNow()
 	}
 }

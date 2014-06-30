@@ -293,7 +293,6 @@ func parseHwaddress(options map[string][]string, iface string) (net.HardwareAddr
 }
 
 func parseBondStanza(iface string, conf configMethod, attributes []string, options map[string][]string) (*stanzaInterface, error) {
-	options["slaves"] = options["bond-slaves"]
 	return &stanzaInterface{name: iface, kind: interfaceBond, configMethod: conf, options: options}, nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"net"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/third_party/github.com/dotcloud/docker/pkg/netlink"
@@ -26,10 +27,10 @@ func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
 		return
 	}
 
-	if err = probe8012q(); err != nil {
+	if err = maybeProbe8012q(interfaces); err != nil {
 		return
 	}
-	return
+	return maybeProbeBonding(interfaces)
 }
 
 func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
@@ -55,8 +56,24 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 	return nil
 }
 
-func probe8012q() error {
-	return exec.Command("modprobe", "8021q").Run()
+func maybeProbe8012q(interfaces []network.InterfaceGenerator) error {
+	for _, iface := range interfaces {
+		if iface.Type() == "vlan" {
+			return exec.Command("modprobe", "8021q").Run()
+		}
+	}
+	return nil
+}
+
+func maybeProbeBonding(interfaces []network.InterfaceGenerator) error {
+	args := []string{"bonding"}
+	for _, iface := range interfaces {
+		if iface.Type() == "bond" {
+			args = append(args, strings.Split(iface.ModprobeParams(), " ")...)
+			break
+		}
+	}
+	return exec.Command("modprobe", args...).Run()
 }
 
 func restartNetworkd() error {

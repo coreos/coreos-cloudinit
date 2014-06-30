@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type InterfaceGenerator interface {
@@ -11,6 +12,8 @@ type InterfaceGenerator interface {
 	Netdev() string
 	Link() string
 	Network() string
+	Type() string
+	ModprobeParams() string
 }
 
 type networkInterface interface {
@@ -68,6 +71,10 @@ func (i *logicalInterface) Children() []networkInterface {
 	return i.children
 }
 
+func (i *logicalInterface) ModprobeParams() string {
+	return ""
+}
+
 func (i *logicalInterface) setConfigDepth(depth int) {
 	i.configDepth = depth
 }
@@ -84,9 +91,14 @@ func (p *physicalInterface) Netdev() string {
 	return ""
 }
 
+func (p *physicalInterface) Type() string {
+	return "physical"
+}
+
 type bondInterface struct {
 	logicalInterface
-	slaves []string
+	slaves  []string
+	options map[string]string
 }
 
 func (b *bondInterface) Name() string {
@@ -95,6 +107,19 @@ func (b *bondInterface) Name() string {
 
 func (b *bondInterface) Netdev() string {
 	return fmt.Sprintf("[NetDev]\nKind=bond\nName=%s\n", b.name)
+}
+
+func (b *bondInterface) Type() string {
+	return "bond"
+}
+
+func (b *bondInterface) ModprobeParams() string {
+	params := ""
+	for name, val := range b.options {
+		params += fmt.Sprintf("%s=%s ", name, val)
+	}
+	params = strings.TrimSuffix(params, " ")
+	return params
 }
 
 type vlanInterface struct {
@@ -123,6 +148,10 @@ func (v *vlanInterface) Netdev() string {
 	return config
 }
 
+func (v *vlanInterface) Type() string {
+	return "vlan"
+}
+
 func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 	interfaceMap := createInterfaces(stanzas)
 	linkAncestors(interfaceMap)
@@ -141,15 +170,22 @@ func createInterfaces(stanzas []*stanzaInterface) map[string]networkInterface {
 	for _, iface := range stanzas {
 		switch iface.kind {
 		case interfaceBond:
+			bondOptions := make(map[string]string)
+			for _, k := range []string{"mode", "miimon", "lacp-rate"} {
+				if v, ok := iface.options["bond-"+k]; ok && len(v) > 0 {
+					bondOptions[k] = v[0]
+				}
+			}
 			interfaceMap[iface.name] = &bondInterface{
 				logicalInterface{
 					name:     iface.name,
 					config:   iface.configMethod,
 					children: []networkInterface{},
 				},
-				iface.options["slaves"],
+				iface.options["bond-slaves"],
+				bondOptions,
 			}
-			for _, slave := range iface.options["slaves"] {
+			for _, slave := range iface.options["bond-slaves"] {
 				if _, ok := interfaceMap[slave]; !ok {
 					interfaceMap[slave] = &physicalInterface{
 						logicalInterface{
