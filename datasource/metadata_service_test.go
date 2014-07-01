@@ -137,15 +137,13 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			metadata: map[string]string{
-				"http://169.254.169.254/2009-04-04/meta-data/":      "a\nb\nc/",
-				"http://169.254.169.254/2009-04-04/meta-data/c/":    "d\ne/",
-				"http://169.254.169.254/2009-04-04/meta-data/c/e/":  "f",
-				"http://169.254.169.254/2009-04-04/meta-data/a":     "1",
-				"http://169.254.169.254/2009-04-04/meta-data/b":     "2",
-				"http://169.254.169.254/2009-04-04/meta-data/c/d":   "3",
-				"http://169.254.169.254/2009-04-04/meta-data/c/e/f": "4",
+				"http://169.254.169.254/2009-04-04/meta-data/hostname":                    "host",
+				"http://169.254.169.254/2009-04-04/meta-data/public-keys":                 "0=test1\n",
+				"http://169.254.169.254/2009-04-04/meta-data/public-keys/0":               "openssh-key",
+				"http://169.254.169.254/2009-04-04/meta-data/public-keys/0/openssh-key":   "key",
+				"http://169.254.169.254/2009-04-04/meta-data/network_config/content_path": "path",
 			},
-			expect: []byte(`{"a":"1","b":"2","c":{"d":"3","e":{"f":"4"}}}`),
+			expect: []byte(`{"hostname":"host","network_config":{"content_path":"path"},"public_keys":{"test1":"key"}}`),
 		},
 		{
 			metadata: map[string]string{
@@ -154,7 +152,6 @@ func TestFetchMetadata(t *testing.T) {
 			expect: []byte("test"),
 		},
 		{err: pkg.ErrTimeout{fmt.Errorf("test error")}},
-		{err: pkg.ErrNotFound{fmt.Errorf("test error")}},
 	} {
 		client := &TestHttpClient{tt.metadata, tt.err}
 		metadata, err := fetchMetadata(client)
