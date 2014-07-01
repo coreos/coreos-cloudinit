@@ -65,7 +65,14 @@ func (ms *metadataService) FetchUserdata() ([]byte, error) {
 	} else if _, ok := err.(pkg.ErrTimeout); ok {
 		return data, err
 	}
-	return client.GetRetry(OpenstackUserdataUrl)
+
+	if data, err := client.GetRetry(OpenstackUserdataUrl); err == nil {
+		return data, err
+	} else if _, ok := err.(pkg.ErrNotFound); ok {
+		return []byte{}, nil
+	} else {
+		return data, err
+	}
 }
 
 func (ms *metadataService) Type() string {
