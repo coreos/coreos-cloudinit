@@ -112,7 +112,9 @@ func main() {
 		}
 	}
 
+	// Apply environment to user-data
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName, subs)
+	userdata := env.Apply(string(userdataBytes))
 
 	var ccm, ccu *initialize.CloudConfig
 	var script *system.Script
@@ -120,7 +122,7 @@ func main() {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
 		die()
 	}
-	if ud, err := initialize.ParseUserData(string(userdataBytes)); err != nil {
+	if ud, err := initialize.ParseUserData(userdata); err != nil {
 		fmt.Printf("Failed to parse user-data: %v\n", err)
 		die()
 	} else {
