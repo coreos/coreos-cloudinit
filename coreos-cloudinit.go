@@ -135,7 +135,7 @@ func main() {
 	var cc *initialize.CloudConfig
 	if ccm != nil && ccu != nil {
 		fmt.Println("Merging cloud-config from meta-data and user-data")
-		merged := mergeCloudConfig(*ccu, *ccm)
+		merged := mergeCloudConfig(*ccm, *ccu)
 		cc = &merged
 	} else if ccm != nil && ccu == nil {
 		fmt.Println("Processing cloud-config from meta-data")
