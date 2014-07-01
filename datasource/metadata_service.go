@@ -110,6 +110,18 @@ func fetchMetadata(client getter) ([]byte, error) {
 		return nil, err
 	}
 
+	if localAddr, err := fetchAttribute(client, fmt.Sprintf("%s/local-ipv4", Ec2MetadataUrl)); err == nil {
+		attrs["local-ipv4"] = localAddr
+	} else if _, ok := err.(pkg.ErrNotFound); !ok {
+		return nil, err
+	}
+
+	if publicAddr, err := fetchAttribute(client, fmt.Sprintf("%s/public-ipv4", Ec2MetadataUrl)); err == nil {
+		attrs["public-ipv4"] = publicAddr
+	} else if _, ok := err.(pkg.ErrNotFound); !ok {
+		return nil, err
+	}
+
 	if content_path, err := fetchAttribute(client, fmt.Sprintf("%s/network_config/content_path", Ec2MetadataUrl)); err == nil {
 		attrs["network_config"] = map[string]string{
 			"content_path": content_path,
