@@ -145,12 +145,6 @@ func TestFetchMetadata(t *testing.T) {
 			},
 			expect: []byte(`{"hostname":"host","network_config":{"content_path":"path"},"public_keys":{"test1":"key"}}`),
 		},
-		{
-			metadata: map[string]string{
-				"http://169.254.169.254/openstack/2012-08-10/meta_data.json": "test",
-			},
-			expect: []byte("test"),
-		},
 		{err: pkg.ErrTimeout{fmt.Errorf("test error")}},
 	} {
 		client := &TestHttpClient{tt.metadata, tt.err}
