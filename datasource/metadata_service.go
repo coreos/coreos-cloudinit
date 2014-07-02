@@ -27,7 +27,6 @@ const (
 	Ec2MetadataUrl       = BaseUrl + Ec2ApiVersion + "/meta-data"
 	OpenstackApiVersion  = "openstack/2012-08-10"
 	OpenstackUserdataUrl = BaseUrl + OpenstackApiVersion + "/user_data"
-	OpenstackMetadataUrl = BaseUrl + OpenstackApiVersion + "/meta_data.json"
 )
 
 type metadataService struct{}
@@ -80,12 +79,6 @@ func (ms *metadataService) Type() string {
 }
 
 func fetchMetadata(client getter) ([]byte, error) {
-	if metadata, err := client.GetRetry(OpenstackMetadataUrl); err == nil {
-		return metadata, nil
-	} else if _, ok := err.(pkg.ErrTimeout); ok {
-		return nil, err
-	}
-
 	attrs := make(map[string]interface{})
 	if keynames, err := fetchAttributes(client, fmt.Sprintf("%s/public-keys", Ec2MetadataUrl)); err == nil {
 		keyIDs := make(map[string]string)
