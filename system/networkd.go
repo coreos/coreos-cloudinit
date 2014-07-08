@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -103,6 +104,8 @@ func writeConfig(filename string, config string) error {
 	if config == "" {
 		return nil
 	}
-
+	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
+		return err
+	}
 	return ioutil.WriteFile(filename, []byte(config), 0444)
 }
