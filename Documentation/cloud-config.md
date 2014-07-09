@@ -16,7 +16,7 @@ We've designed our implementation to allow the same cloud-config file to work ac
 
 The cloud-config file uses the [YAML][yaml] file format, which uses whitespace and new-lines to delimit lists, associative arrays, and values.
 
-A cloud-config file should contain an associative array which has zero or more of the following keys:
+A cloud-config file should contain `#cloud-config`, followed by an associative array which has zero or more of the following keys:
 
 - `coreos`
 - `ssh_authorized_keys`
