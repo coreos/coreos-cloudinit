@@ -22,7 +22,10 @@ var validKey = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 // match each line, optionally capturing valid identifiers, discarding dos line endings
 var lineLexer = regexp.MustCompile(`(?m)^((?:([a-zA-Z0-9_]+)=)?.*?)\r?\n`)
 
-func updateEnv(old []byte, pending map[string]string) []byte {
+// mergeEnvContents: Update the existing file contents with new values,
+// preserving variable ordering and all content this code doesn't understand.
+// All new values are appended to the bottom of the old.
+func mergeEnvContents(old []byte, pending map[string]string) []byte {
 	var buf bytes.Buffer
 	var match [][]byte
 
@@ -53,7 +56,7 @@ func updateEnv(old []byte, pending map[string]string) []byte {
 // Existing ordering and any unknown formatting such as comments are
 // preserved. If no changes are required the file is untouched.
 func WriteEnvFile(ef *EnvFile, root string) error {
-	// validate new keys, updateEnv uses pending to track writes
+	// validate new keys, mergeEnvContents uses pending to track writes
 	pending := make(map[string]string, len(ef.Vars))
 	for key, value := range ef.Vars {
 		if !validKey.MatchString(key) {
@@ -75,7 +78,7 @@ func WriteEnvFile(ef *EnvFile, root string) error {
 		}
 	}
 
-	newContent := updateEnv(oldContent, pending)
+	newContent := mergeEnvContents(oldContent, pending)
 	if bytes.Equal(oldContent, newContent) {
 		return nil
 	}

@@ -223,12 +223,27 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		cfg.Coreos.Units = append(cfg.Coreos.Units, u...)
 	}
 
+	wroteEnvironment := false
 	for _, file := range cfg.WriteFiles {
-		path, err := system.WriteFile(&file, env.Root())
+		fullPath, err := system.WriteFile(&file, env.Root())
 		if err != nil {
 			return err
 		}
-		log.Printf("Wrote file %s to filesystem", path)
+		if path.Clean(file.Path) == "/etc/environment" {
+			wroteEnvironment = true
+		}
+		log.Printf("Wrote file %s to filesystem", fullPath)
+	}
+
+	if !wroteEnvironment {
+		ef := env.DefaultEnvironmentFile()
+		if ef != nil {
+			err := system.WriteEnvFile(ef, env.Root())
+			if err != nil {
+				return err
+			}
+			log.Printf("Updated /etc/environment")
+		}
 	}
 
 	if env.NetconfType() != "" {
