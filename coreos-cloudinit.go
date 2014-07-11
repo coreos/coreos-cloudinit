@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version               = "0.8.8"
+	version               = "0.8.8+git"
 	datasourceInterval    = 100 * time.Millisecond
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
