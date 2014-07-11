@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -41,6 +42,11 @@ func TestWriteEnvFileUpdate(t *testing.T) {
 	fullPath := path.Join(dir, name)
 	ioutil.WriteFile(fullPath, []byte(base), 0644)
 
+	oldStat, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatal("Unable to stat file: %v", err)
+	}
+
 	ef := EnvFile{
 		File: &File{
 			Path: name,
@@ -60,6 +66,15 @@ func TestWriteEnvFileUpdate(t *testing.T) {
 
 	if string(contents) != expectUpdate {
 		t.Fatalf("File has incorrect contents: %q", contents)
+	}
+
+	newStat, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatal("Unable to stat file: %v", err)
+	}
+
+	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
+		t.Fatal("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -74,6 +89,11 @@ func TestWriteEnvFileUpdateNoNewline(t *testing.T) {
 	fullPath := path.Join(dir, name)
 	ioutil.WriteFile(fullPath, []byte(baseNoNewline), 0644)
 
+	oldStat, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatal("Unable to stat file: %v", err)
+	}
+
 	ef := EnvFile{
 		File: &File{
 			Path: name,
@@ -93,6 +113,15 @@ func TestWriteEnvFileUpdateNoNewline(t *testing.T) {
 
 	if string(contents) != expectUpdate {
 		t.Fatalf("File has incorrect contents: %q", contents)
+	}
+
+	newStat, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatal("Unable to stat file: %v", err)
+	}
+
+	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
+		t.Fatal("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -170,8 +199,8 @@ func TestWriteEnvFileNoop(t *testing.T) {
 		t.Fatal("Unable to stat file: %v", err)
 	}
 
-	if oldStat.ModTime() != newStat.ModTime() {
-		t.Fatal("File mtime changed.")
+	if oldStat.Sys().(*syscall.Stat_t).Ino != newStat.Sys().(*syscall.Stat_t).Ino {
+		t.Fatal("File was replaced: %s", fullPath)
 	}
 }
 
@@ -185,6 +214,11 @@ func TestWriteEnvFileUpdateDos(t *testing.T) {
 	name := "foo.conf"
 	fullPath := path.Join(dir, name)
 	ioutil.WriteFile(fullPath, []byte(baseDos), 0644)
+
+	oldStat, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatal("Unable to stat file: %v", err)
+	}
 
 	ef := EnvFile{
 		File: &File{
@@ -205,6 +239,15 @@ func TestWriteEnvFileUpdateDos(t *testing.T) {
 
 	if string(contents) != expectUpdate {
 		t.Fatalf("File has incorrect contents: %q", contents)
+	}
+
+	newStat, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatal("Unable to stat file: %v", err)
+	}
+
+	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
+		t.Fatal("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -252,8 +295,8 @@ func TestWriteEnvFileDos2Unix(t *testing.T) {
 		t.Fatal("Unable to stat file: %v", err)
 	}
 
-	if oldStat.ModTime() != newStat.ModTime() {
-		t.Fatal("File mtime changed.")
+	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
+		t.Fatal("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -300,8 +343,8 @@ func TestWriteEnvFileEmpty(t *testing.T) {
 		t.Fatal("Unable to stat file: %v", err)
 	}
 
-	if oldStat.ModTime() != newStat.ModTime() {
-		t.Fatal("File mtime changed.")
+	if oldStat.Sys().(*syscall.Stat_t).Ino != newStat.Sys().(*syscall.Stat_t).Ino {
+		t.Fatal("File was replaced: %s", fullPath)
 	}
 }
 
@@ -368,8 +411,6 @@ func TestWriteEnvFileNameFailure(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	name := "foo.conf"
-	fullPath := path.Join(dir, name)
-	ioutil.WriteFile(fullPath, []byte(base), 0000)
 
 	ef := EnvFile{
 		File: &File{
