@@ -44,7 +44,7 @@ func TestWriteEnvFileUpdate(t *testing.T) {
 
 	oldStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	ef := EnvFile{
@@ -70,11 +70,11 @@ func TestWriteEnvFileUpdate(t *testing.T) {
 
 	newStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
-		t.Fatal("File was not replaced: %s", fullPath)
+		t.Fatalf("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -91,7 +91,7 @@ func TestWriteEnvFileUpdateNoNewline(t *testing.T) {
 
 	oldStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	ef := EnvFile{
@@ -117,11 +117,11 @@ func TestWriteEnvFileUpdateNoNewline(t *testing.T) {
 
 	newStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
-		t.Fatal("File was not replaced: %s", fullPath)
+		t.Fatalf("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -170,7 +170,7 @@ func TestWriteEnvFileNoop(t *testing.T) {
 
 	oldStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	ef := EnvFile{
@@ -196,11 +196,11 @@ func TestWriteEnvFileNoop(t *testing.T) {
 
 	newStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	if oldStat.Sys().(*syscall.Stat_t).Ino != newStat.Sys().(*syscall.Stat_t).Ino {
-		t.Fatal("File was replaced: %s", fullPath)
+		t.Fatalf("File was replaced: %s", fullPath)
 	}
 }
 
@@ -217,7 +217,7 @@ func TestWriteEnvFileUpdateDos(t *testing.T) {
 
 	oldStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	ef := EnvFile{
@@ -243,11 +243,11 @@ func TestWriteEnvFileUpdateDos(t *testing.T) {
 
 	newStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
-		t.Fatal("File was not replaced: %s", fullPath)
+		t.Fatalf("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -266,7 +266,7 @@ func TestWriteEnvFileDos2Unix(t *testing.T) {
 
 	oldStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	ef := EnvFile{
@@ -292,11 +292,11 @@ func TestWriteEnvFileDos2Unix(t *testing.T) {
 
 	newStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	if oldStat.Sys().(*syscall.Stat_t).Ino == newStat.Sys().(*syscall.Stat_t).Ino {
-		t.Fatal("File was not replaced: %s", fullPath)
+		t.Fatalf("File was not replaced: %s", fullPath)
 	}
 }
 
@@ -314,7 +314,7 @@ func TestWriteEnvFileEmpty(t *testing.T) {
 
 	oldStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	ef := EnvFile{
@@ -340,11 +340,11 @@ func TestWriteEnvFileEmpty(t *testing.T) {
 
 	newStat, err := os.Stat(fullPath)
 	if err != nil {
-		t.Fatal("Unable to stat file: %v", err)
+		t.Fatalf("Unable to stat file: %v", err)
 	}
 
 	if oldStat.Sys().(*syscall.Stat_t).Ino != newStat.Sys().(*syscall.Stat_t).Ino {
-		t.Fatal("File was replaced: %s", fullPath)
+		t.Fatalf("File was replaced: %s", fullPath)
 	}
 }
 
