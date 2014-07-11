@@ -60,7 +60,7 @@ func probe8012q() error {
 }
 
 func restartNetworkd() error {
-	_, err := RunUnitCommand("restart", "systemd-networkd.service")
+	_, err := NewUnitManager("").RunUnitCommand("restart", "systemd-networkd.service")
 	return err
 }
 
