@@ -4,6 +4,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 const DefaultSSHKeyName = "coreos-cloudinit"
@@ -63,6 +65,26 @@ func (e *Environment) Apply(data string) string {
 		data = strings.Replace(data, key, val, -1)
 	}
 	return data
+}
+
+func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
+	ef := system.EnvFile{
+		File: &system.File{
+			Path: "/etc/environment",
+		},
+		Vars: map[string]string{},
+	}
+	if ip, ok := e.substitutions["$public_ipv4"]; ok && len(ip) > 0 {
+		ef.Vars["COREOS_PUBLIC_IPV4"] = ip
+	}
+	if ip, ok := e.substitutions["$private_ipv4"]; ok && len(ip) > 0 {
+		ef.Vars["COREOS_PRIVATE_IPV4"] = ip
+	}
+	if len(ef.Vars) == 0 {
+		return nil
+	} else {
+		return &ef
+	}
 }
 
 // normalizeSvcEnv standardizes the keys of the map (environment variables for a service)
