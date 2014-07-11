@@ -36,6 +36,7 @@ func TestPhysicalInterfaceNetwork(t *testing.T) {
 					name: "testbond1",
 				},
 				nil,
+				nil,
 			},
 			&vlanInterface{
 				logicalInterface{
@@ -67,14 +68,14 @@ VLAN=testvlan2
 }
 
 func TestBondInterfaceName(t *testing.T) {
-	b := bondInterface{logicalInterface{name: "testname"}, nil}
+	b := bondInterface{logicalInterface{name: "testname"}, nil, nil}
 	if b.Name() != "testname" {
 		t.FailNow()
 	}
 }
 
 func TestBondInterfaceNetdev(t *testing.T) {
-	b := bondInterface{logicalInterface{name: "testname"}, nil}
+	b := bondInterface{logicalInterface{name: "testname"}, nil, nil}
 	netdev := `[NetDev]
 Kind=bond
 Name=testname
@@ -102,6 +103,7 @@ func TestBondInterfaceNetwork(t *testing.T) {
 						name: "testbond1",
 					},
 					nil,
+					nil,
 				},
 				&vlanInterface{
 					logicalInterface{
@@ -119,6 +121,7 @@ func TestBondInterfaceNetwork(t *testing.T) {
 				},
 			},
 		},
+		nil,
 		nil,
 	}
 	network := `[Match]
@@ -218,6 +221,61 @@ Gateway=1.2.3.4
 	}
 }
 
+func TestType(t *testing.T) {
+	for _, tt := range []struct {
+		i InterfaceGenerator
+		t string
+	}{
+		{
+			i: &physicalInterface{},
+			t: "physical",
+		},
+		{
+			i: &vlanInterface{},
+			t: "vlan",
+		},
+		{
+			i: &bondInterface{},
+			t: "bond",
+		},
+	} {
+		if tp := tt.i.Type(); tp != tt.t {
+			t.Fatalf("bad type (%q): got %s, want %s", tt.i, tp, tt.t)
+		}
+	}
+}
+
+func TestModprobeParams(t *testing.T) {
+	for _, tt := range []struct {
+		i InterfaceGenerator
+		p string
+	}{
+		{
+			i: &physicalInterface{},
+			p: "",
+		},
+		{
+			i: &vlanInterface{},
+			p: "",
+		},
+		{
+			i: &bondInterface{
+				logicalInterface{},
+				nil,
+				map[string]string{
+					"a": "1",
+					"b": "2",
+				},
+			},
+			p: "a=1 b=2",
+		},
+	} {
+		if p := tt.i.ModprobeParams(); p != tt.p {
+			t.Fatalf("bad params (%q): got %s, want %s", tt.i, p, tt.p)
+		}
+	}
+}
+
 func TestBuildInterfacesLo(t *testing.T) {
 	stanzas := []*stanzaInterface{
 		&stanzaInterface{
@@ -242,7 +300,7 @@ func TestBuildInterfacesBlindBond(t *testing.T) {
 			auto:         false,
 			configMethod: configMethodManual{},
 			options: map[string][]string{
-				"slaves": []string{"eth0"},
+				"bond-slaves": []string{"eth0"},
 			},
 		},
 	}
@@ -255,6 +313,7 @@ func TestBuildInterfacesBlindBond(t *testing.T) {
 			configDepth: 1,
 		},
 		[]string{"eth0"},
+		map[string]string{},
 	}
 	eth0 := &physicalInterface{
 		logicalInterface{
@@ -323,7 +382,9 @@ func TestBuildInterfaces(t *testing.T) {
 			auto:         false,
 			configMethod: configMethodManual{},
 			options: map[string][]string{
-				"slaves": []string{"eth0"},
+				"bond-slaves": []string{"eth0"},
+				"bond-mode":   []string{"4"},
+				"bond-miimon": []string{"100"},
 			},
 		},
 		&stanzaInterface{
@@ -332,7 +393,7 @@ func TestBuildInterfaces(t *testing.T) {
 			auto:         false,
 			configMethod: configMethodManual{},
 			options: map[string][]string{
-				"slaves": []string{"bond0"},
+				"bond-slaves": []string{"bond0"},
 			},
 		},
 		&stanzaInterface{
@@ -385,6 +446,7 @@ func TestBuildInterfaces(t *testing.T) {
 			configDepth: 2,
 		},
 		[]string{"bond0"},
+		map[string]string{},
 	}
 	bond0 := &bondInterface{
 		logicalInterface{
@@ -394,6 +456,10 @@ func TestBuildInterfaces(t *testing.T) {
 			configDepth: 1,
 		},
 		[]string{"eth0"},
+		map[string]string{
+			"mode":   "4",
+			"miimon": "100",
+		},
 	}
 	eth0 := &physicalInterface{
 		logicalInterface{

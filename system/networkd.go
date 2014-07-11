@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"os/exec"
 	"path"
+	"strings"
+	"time"
 
 	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/third_party/github.com/dotcloud/docker/pkg/netlink"
@@ -19,6 +22,13 @@ func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
 	defer func() {
 		if e := restartNetworkd(); e != nil {
 			err = e
+			return
+		}
+		// TODO(crawford): Get rid of this once networkd fixes the race
+		// https://bugs.freedesktop.org/show_bug.cgi?id=76077
+		time.Sleep(5 * time.Second)
+		if e := restartNetworkd(); e != nil {
+			err = e
 		}
 	}()
 
@@ -26,10 +36,10 @@ func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
 		return
 	}
 
-	if err = probe8012q(); err != nil {
+	if err = maybeProbe8012q(interfaces); err != nil {
 		return
 	}
-	return
+	return maybeProbeBonding(interfaces)
 }
 
 func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
@@ -55,8 +65,24 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 	return nil
 }
 
-func probe8012q() error {
-	return exec.Command("modprobe", "8021q").Run()
+func maybeProbe8012q(interfaces []network.InterfaceGenerator) error {
+	for _, iface := range interfaces {
+		if iface.Type() == "vlan" {
+			return exec.Command("modprobe", "8021q").Run()
+		}
+	}
+	return nil
+}
+
+func maybeProbeBonding(interfaces []network.InterfaceGenerator) error {
+	args := []string{"bonding"}
+	for _, iface := range interfaces {
+		if iface.Type() == "bond" {
+			args = append(args, strings.Split(iface.ModprobeParams(), " ")...)
+			break
+		}
+	}
+	return exec.Command("modprobe", args...).Run()
 }
 
 func restartNetworkd() error {
@@ -86,6 +112,8 @@ func writeConfig(filename string, config string) error {
 	if config == "" {
 		return nil
 	}
-
+	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
+		return err
+	}
 	return ioutil.WriteFile(filename, []byte(config), 0444)
 }
