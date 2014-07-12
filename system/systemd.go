@@ -13,63 +13,21 @@ import (
 	"github.com/coreos/coreos-cloudinit/third_party/github.com/coreos/go-systemd/dbus"
 )
 
+func NewUnitManager(root string) UnitManager {
+	return &systemd{root}
+}
+
+type systemd struct {
+	root string
+}
+
 // fakeMachineID is placed on non-usr CoreOS images and should
 // never be used as a true MachineID
 const fakeMachineID = "42000000000000000000000000000042"
 
-// Name for drop-in service configuration files created by cloudconfig
-const cloudConfigDropIn = "20-cloudinit.conf"
-
-type Unit struct {
-	Name    string
-	Mask    bool
-	Enable  bool
-	Runtime bool
-	Content string
-	Command string
-
-	// For drop-in units, a cloudinit.conf is generated.
-	// This is currently unbound in YAML (and hence unsettable in cloud-config files)
-	// until the correct behaviour for multiple drop-in units is determined.
-	DropIn bool `yaml:"-"`
-}
-
-func (u *Unit) Type() string {
-	ext := filepath.Ext(u.Name)
-	return strings.TrimLeft(ext, ".")
-}
-
-func (u *Unit) Group() (group string) {
-	t := u.Type()
-	if t == "network" || t == "netdev" || t == "link" {
-		group = "network"
-	} else {
-		group = "system"
-	}
-	return
-}
-
-type Script []byte
-
-// Destination builds the appropriate absolute file path for
-// the Unit. The root argument indicates the effective base
-// directory of the system (similar to a chroot).
-func (u *Unit) Destination(root string) string {
-	dir := "etc"
-	if u.Runtime {
-		dir = "run"
-	}
-
-	if u.DropIn {
-		return path.Join(root, dir, "systemd", u.Group(), fmt.Sprintf("%s.d", u.Name), cloudConfigDropIn)
-	} else {
-		return path.Join(root, dir, "systemd", u.Group(), u.Name)
-	}
-}
-
 // PlaceUnit writes a unit file at the provided destination, creating
 // parent directories as necessary.
-func PlaceUnit(u *Unit, dst string) error {
+func (s *systemd) PlaceUnit(u *Unit, dst string) error {
 	dir := filepath.Dir(dst)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, os.FileMode(0755)); err != nil {
@@ -91,7 +49,7 @@ func PlaceUnit(u *Unit, dst string) error {
 	return nil
 }
 
-func EnableUnitFile(unit string, runtime bool) error {
+func (s *systemd) EnableUnitFile(unit string, runtime bool) error {
 	conn, err := dbus.New()
 	if err != nil {
 		return err
@@ -102,7 +60,7 @@ func EnableUnitFile(unit string, runtime bool) error {
 	return err
 }
 
-func RunUnitCommand(command, unit string) (string, error) {
+func (s *systemd) RunUnitCommand(command, unit string) (string, error) {
 	conn, err := dbus.New()
 	if err != nil {
 		return "", err
@@ -131,13 +89,64 @@ func RunUnitCommand(command, unit string) (string, error) {
 	return fn(unit, "replace")
 }
 
-func DaemonReload() error {
+func (s *systemd) DaemonReload() error {
 	conn, err := dbus.New()
 	if err != nil {
 		return err
 	}
 
 	return conn.Reload()
+}
+
+// MaskUnit masks the given Unit by symlinking its unit file to
+// /dev/null, analogous to `systemctl mask`.
+// N.B.: Unlike `systemctl mask`, this function will *remove any existing unit
+// file at the location*, to ensure that the mask will succeed.
+func (s *systemd) MaskUnit(unit *Unit) error {
+	masked := unit.Destination(s.root)
+	if _, err := os.Stat(masked); os.IsNotExist(err) {
+		if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
+			return err
+		}
+	} else if err := os.Remove(masked); err != nil {
+		return err
+	}
+	return os.Symlink("/dev/null", masked)
+}
+
+// UnmaskUnit is analogous to systemd's unit_file_unmask. If the file
+// associated with the given Unit is empty or appears to be a symlink to
+// /dev/null, it is removed.
+func (s *systemd) UnmaskUnit(unit *Unit) error {
+	masked := unit.Destination(s.root)
+	ne, err := nullOrEmpty(masked)
+	if os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if !ne {
+		log.Printf("%s is not null or empty, refusing to unmask", masked)
+		return nil
+	}
+	return os.Remove(masked)
+}
+
+// nullOrEmpty checks whether a given path appears to be an empty regular file
+// or a symlink to /dev/null
+func nullOrEmpty(path string) (bool, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	m := fi.Mode()
+	if m.IsRegular() && fi.Size() <= 0 {
+		return true, nil
+	}
+	if m&os.ModeCharDevice > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func ExecuteScript(scriptPath string) (string, error) {
@@ -177,55 +186,4 @@ func MachineID(root string) string {
 	}
 
 	return id
-}
-
-// MaskUnit masks the given Unit by symlinking its unit file to
-// /dev/null, analogous to `systemctl mask`.
-// N.B.: Unlike `systemctl mask`, this function will *remove any existing unit
-// file at the location*, to ensure that the mask will succeed.
-func MaskUnit(unit *Unit, root string) error {
-	masked := unit.Destination(root)
-	if _, err := os.Stat(masked); os.IsNotExist(err) {
-		if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
-			return err
-		}
-	} else if err := os.Remove(masked); err != nil {
-		return err
-	}
-	return os.Symlink("/dev/null", masked)
-}
-
-// UnmaskUnit is analogous to systemd's unit_file_unmask. If the file
-// associated with the given Unit is empty or appears to be a symlink to
-// /dev/null, it is removed.
-func UnmaskUnit(unit *Unit, root string) error {
-	masked := unit.Destination(root)
-	ne, err := nullOrEmpty(masked)
-	if os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-	if !ne {
-		log.Printf("%s is not null or empty, refusing to unmask", masked)
-		return nil
-	}
-	return os.Remove(masked)
-}
-
-// nullOrEmpty checks whether a given path appears to be an empty regular file
-// or a symlink to /dev/null
-func nullOrEmpty(path string) (bool, error) {
-	fi, err := os.Stat(path)
-	if err != nil {
-		return false, err
-	}
-	m := fi.Mode()
-	if m.IsRegular() && fi.Size() <= 0 {
-		return true, nil
-	}
-	if m&os.ModeCharDevice > 0 {
-		return true, nil
-	}
-	return false, nil
 }
