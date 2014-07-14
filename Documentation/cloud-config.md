@@ -42,7 +42,7 @@ CoreOS tries to conform to each platform's native method to provide user data. E
 The `coreos.etcd.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
 We can use the templating feature of coreos-cloudinit to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. For example, the following cloud-config document...
 
-```
+```yaml
 #cloud-config
 
 coreos:
@@ -57,7 +57,7 @@ coreos:
 
 ...will generate a systemd unit drop-in like this:
 
-```
+```yaml
 [Service]
 Environment="ETCD_NAME=node001"
 Environment="ETCD_DISCOVERY=https://discovery.etcd.io/<token>"
@@ -74,7 +74,7 @@ Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 The `coreos.fleet.*` parameters work very similarly to `coreos.etcd.*`, and allow for the configuration of fleet through environment variables. For example, the following cloud-config document...
 
-```
+```yaml
 #cloud-config
 
 coreos:
@@ -85,7 +85,7 @@ coreos:
 
 ...will generate a systemd unit drop-in like this:
 
-```
+```yaml
 [Service]
 Environment="FLEET_PUBLIC_IP=203.0.113.29"
 Environment="FLEET_METADATA=region=us-west"
@@ -114,7 +114,7 @@ The `reboot-strategy` parameter also affects the behaviour of [locksmith](https:
 
 ##### Example
 
-```
+```yaml
 #cloud-config
 coreos:
   update:
@@ -138,7 +138,7 @@ The `coreos.units.*` parameters define a list of arbitrary systemd units to star
 
 Write a unit to disk, automatically starting it.
 
-```
+```yaml
 #cloud-config
 
 coreos:
@@ -159,7 +159,7 @@ coreos:
 
 Start the built-in `etcd` and `fleet` services:
 
-```
+```yaml
 #cloud-config
 
 coreos:
@@ -177,7 +177,7 @@ The `ssh_authorized_keys` parameter adds public SSH keys which will be authorize
 The keys will be named "coreos-cloudinit" by default.
 Override this by using the `--ssh-key-name` flag when calling `coreos-cloudinit`.
 
-```
+```yaml
 #cloud-config
 
 ssh_authorized_keys:
@@ -189,7 +189,7 @@ ssh_authorized_keys:
 The `hostname` parameter defines the system's hostname.
 This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.example.com`).
 
-```
+```yaml
 #cloud-config
 
 hostname: coreos1
@@ -222,7 +222,7 @@ The following fields are not yet implemented:
 - **selinux-user**: Corresponding SELinux user
 - **ssh-import-id**: Import SSH keys by ID from Launchpad.
 
-```
+```yaml
 #cloud-config
 
 users:
@@ -261,7 +261,7 @@ Using a higher number of rounds will help create more secure passwords, but give
 
 Using the `coreos-ssh-import-github` field, we can import public SSH keys from a GitHub user to use as authorized keys to a server.
 
-```
+```yaml
 #cloud-config
 
 users:
@@ -274,7 +274,7 @@ users:
 We can also pull public SSH keys from any HTTP endpoint which matches [GitHub's API response format](https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user).
 For example, if you have an installation of GitHub Enterprise, you can provide a complete URL with an authentication token:
 
-```
+```yaml
 #cloud-config
 
 users:
@@ -284,7 +284,7 @@ users:
 
 You can also specify any URL whose response matches the JSON format for public keys:
 
-```
+```yaml
 #cloud-config
 
 users:
@@ -304,7 +304,7 @@ The `write-file` parameter defines a list of files to create on the local filesy
 Explicitly not implemented is the **encoding** attribute.
 The **content** field must represent exactly what should be written to disk.
 
-```
+```yaml
 #cloud-config
 write_files:
   - path: /etc/fleet/fleet.conf
@@ -321,7 +321,7 @@ Currently, the only supported value is "localhost" which will cause your system'
 to resolve to "127.0.0.1".  This is helpful when the host does not have DNS
 infrastructure in place to resolve its own hostname, for example, when using Vagrant.
 
-```
+```yaml
 #cloud-config
 
 manage_etc_hosts: localhost
