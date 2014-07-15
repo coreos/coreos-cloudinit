@@ -14,17 +14,21 @@ The image should be a single FAT or ISO9660 file system with the label
 
 For example, to wrap up a config named `user_data` in a config drive image:
 
-    mkdir -p /tmp/new-drive/openstack/latest
-    cp user_data /tmp/new-drive/openstack/latest/user_data
-    mkisofs -R -V config-2 -o configdrive.iso /tmp/new-drive
-    rm -r /tmp/new-drive
+```sh
+mkdir -p /tmp/new-drive/openstack/latest
+cp user_data /tmp/new-drive/openstack/latest/user_data
+mkisofs -R -V config-2 -o configdrive.iso /tmp/new-drive
+rm -r /tmp/new-drive
+```
 
 ## QEMU virtfs
 
 One exception to the above, when using QEMU it is possible to skip creating an
 image and use a plain directory containing the same contents:
 
-    qemu-system-x86_64 \
-        -fsdev local,id=conf,security_model=none,readonly,path=/tmp/new-drive \
-        -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
-        [usual qemu options here...]
+```sh
+qemu-system-x86_64 \
+    -fsdev local,id=conf,security_model=none,readonly,path=/tmp/new-drive \
+    -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+    [usual qemu options here...]
+```

@@ -13,7 +13,7 @@ If no **id** field is provided, coreos-cloudinit will ignore this section.
 
 For example, the following cloud-config document...
 
-```
+```yaml
 #cloud-config
 coreos:
   oem:
@@ -26,7 +26,7 @@ coreos:
 
 ...would be rendered to the following `/etc/oem-release`:
 
-```
+```yaml
 ID=rackspace
 NAME="Rackspace Cloud Servers"
 VERSION_ID=168.0.0
