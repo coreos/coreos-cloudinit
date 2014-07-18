@@ -277,13 +277,17 @@ func markConfigDepths(interfaceMap map[string]networkInterface) {
 		}
 	}
 	for _, iface := range rootInterfaceMap {
-		setDepth(iface, 0)
+		setDepth(iface)
 	}
 }
 
-func setDepth(iface networkInterface, depth int) {
-	iface.setConfigDepth(depth)
+func setDepth(iface networkInterface) int {
+	maxDepth := 0
 	for _, child := range iface.Children() {
-		setDepth(child, depth+1)
+		if depth := setDepth(child); depth > maxDepth {
+			maxDepth = depth
+		}
 	}
+	iface.setConfigDepth(maxDepth)
+	return (maxDepth + 1)
 }

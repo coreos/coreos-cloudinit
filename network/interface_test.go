@@ -310,7 +310,7 @@ func TestBuildInterfacesBlindBond(t *testing.T) {
 			name:        "bond0",
 			config:      configMethodManual{},
 			children:    []networkInterface{},
-			configDepth: 1,
+			configDepth: 0,
 		},
 		[]string{"eth0"},
 		map[string]string{},
@@ -320,7 +320,7 @@ func TestBuildInterfacesBlindBond(t *testing.T) {
 			name:        "eth0",
 			config:      configMethodManual{},
 			children:    []networkInterface{bond0},
-			configDepth: 0,
+			configDepth: 1,
 		},
 	}
 	expect := []InterfaceGenerator{bond0, eth0}
@@ -348,7 +348,7 @@ func TestBuildInterfacesBlindVLAN(t *testing.T) {
 			name:        "vlan0",
 			config:      configMethodManual{},
 			children:    []networkInterface{},
-			configDepth: 1,
+			configDepth: 0,
 		},
 		0,
 		"eth0",
@@ -358,7 +358,7 @@ func TestBuildInterfacesBlindVLAN(t *testing.T) {
 			name:        "eth0",
 			config:      configMethodManual{},
 			children:    []networkInterface{vlan0},
-			configDepth: 0,
+			configDepth: 1,
 		},
 	}
 	expect := []InterfaceGenerator{eth0, vlan0}
@@ -423,7 +423,7 @@ func TestBuildInterfaces(t *testing.T) {
 			name:        "vlan1",
 			config:      configMethodManual{},
 			children:    []networkInterface{},
-			configDepth: 2,
+			configDepth: 0,
 		},
 		1,
 		"bond0",
@@ -433,7 +433,7 @@ func TestBuildInterfaces(t *testing.T) {
 			name:        "vlan0",
 			config:      configMethodManual{},
 			children:    []networkInterface{},
-			configDepth: 1,
+			configDepth: 0,
 		},
 		0,
 		"eth0",
@@ -443,7 +443,7 @@ func TestBuildInterfaces(t *testing.T) {
 			name:        "bond1",
 			config:      configMethodManual{},
 			children:    []networkInterface{},
-			configDepth: 2,
+			configDepth: 0,
 		},
 		[]string{"bond0"},
 		map[string]string{},
@@ -466,7 +466,7 @@ func TestBuildInterfaces(t *testing.T) {
 			name:        "eth0",
 			config:      configMethodManual{},
 			children:    []networkInterface{bond0, vlan0},
-			configDepth: 0,
+			configDepth: 2,
 		},
 	}
 	expect := []InterfaceGenerator{eth0, bond0, bond1, vlan0, vlan1}
