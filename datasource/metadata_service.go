@@ -22,11 +22,9 @@ import (
 
 const (
 	BaseUrl              = "http://169.254.169.254/"
-	Ec2ApiVersion        = "2009-04-04"
 	Ec2UserdataUrl       = BaseUrl + Ec2ApiVersion + "/user-data"
 	Ec2MetadataUrl       = BaseUrl + Ec2ApiVersion + "/meta-data"
-	OpenstackApiVersion  = "openstack/2012-08-10"
-	OpenstackUserdataUrl = BaseUrl + OpenstackApiVersion + "/user_data"
+	OpenstackUserdataUrl = BaseUrl + "openstack/" + OpenstackApiVersion + "/user_data"
 )
 
 type metadataService struct{}

@@ -7,11 +7,12 @@ import (
 )
 
 type configDrive struct {
-	root string
+	root     string
+	readFile func(filename string) ([]byte, error)
 }
 
 func NewConfigDrive(root string) *configDrive {
-	return &configDrive{path.Join(root, "openstack")}
+	return &configDrive{root, ioutil.ReadFile}
 }
 
 func (cd *configDrive) IsAvailable() bool {
@@ -24,23 +25,38 @@ func (cd *configDrive) AvailabilityChanges() bool {
 }
 
 func (cd *configDrive) ConfigRoot() string {
-	return cd.root
+	return cd.openstackRoot()
 }
 
+// FetchMetadata attempts to retrieve metadata from ec2/2009-04-04/meta_data.json.
 func (cd *configDrive) FetchMetadata() ([]byte, error) {
-	return cd.readFile("meta_data.json")
+	return cd.tryReadFile(path.Join(cd.ec2Root(), "meta_data.json"))
 }
 
+// FetchUserdata attempts to retrieve the userdata from ec2/2009-04-04/user_data.
+// If no data is found, it will attempt to read from openstack/latest/user_data.
 func (cd *configDrive) FetchUserdata() ([]byte, error) {
-	return cd.readFile("user_data")
+	bytes, err := cd.tryReadFile(path.Join(cd.ec2Root(), "user_data"))
+	if bytes == nil && err == nil {
+		bytes, err = cd.tryReadFile(path.Join(cd.openstackRoot(), "user_data"))
+	}
+	return bytes, err
 }
 
 func (cd *configDrive) Type() string {
 	return "cloud-drive"
 }
 
-func (cd *configDrive) readFile(filename string) ([]byte, error) {
-	data, err := ioutil.ReadFile(path.Join(cd.root, "latest", filename))
+func (cd *configDrive) ec2Root() string {
+	return path.Join(cd.root, "ec2", Ec2ApiVersion)
+}
+
+func (cd *configDrive) openstackRoot() string {
+	return path.Join(cd.root, "openstack", "latest")
+}
+
+func (cd *configDrive) tryReadFile(filename string) ([]byte, error) {
+	data, err := cd.readFile(filename)
 	if os.IsNotExist(err) {
 		err = nil
 	}
