@@ -2,11 +2,9 @@ package system
 
 import (
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net"
-	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"time"
 
@@ -46,9 +44,8 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 	sysInterfaceMap := make(map[string]*net.Interface)
 	if systemInterfaces, err := net.Interfaces(); err == nil {
 		for _, iface := range systemInterfaces {
-			// Need a copy of the interface so we can take the address
-			temp := iface
-			sysInterfaceMap[temp.Name] = &temp
+			iface := iface
+			sysInterfaceMap[iface.Name] = &iface
 		}
 	} else {
 		return err
@@ -56,6 +53,7 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 
 	for _, iface := range interfaces {
 		if systemInterface, ok := sysInterfaceMap[iface.Name()]; ok {
+			log.Printf("Taking down interface %q\n", systemInterface.Name)
 			if err := netlink.NetworkLinkDown(systemInterface); err != nil {
 				fmt.Printf("Error while downing interface %q (%s). Continuing...\n", systemInterface.Name, err)
 			}
@@ -68,6 +66,7 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 func maybeProbe8012q(interfaces []network.InterfaceGenerator) error {
 	for _, iface := range interfaces {
 		if iface.Type() == "vlan" {
+			log.Printf("Probing LKM %q (%q)\n", "8021q", "8021q")
 			return exec.Command("modprobe", "8021q").Run()
 		}
 	}
@@ -82,25 +81,27 @@ func maybeProbeBonding(interfaces []network.InterfaceGenerator) error {
 			break
 		}
 	}
+	log.Printf("Probing LKM %q (%q)\n", "bonding", args)
 	return exec.Command("modprobe", args...).Run()
 }
 
 func restartNetworkd() error {
+	log.Printf("Restarting networkd.service\n")
 	_, err := NewUnitManager("").RunUnitCommand("restart", "systemd-networkd.service")
 	return err
 }
 
 func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
 	for _, iface := range interfaces {
-		filename := path.Join(runtimeNetworkPath, fmt.Sprintf("%s.netdev", iface.Filename()))
+		filename := fmt.Sprintf("%s.netdev", iface.Filename())
 		if err := writeConfig(filename, iface.Netdev()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.link", iface.Filename()))
+		filename = fmt.Sprintf("%s.link", iface.Filename())
 		if err := writeConfig(filename, iface.Link()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.network", iface.Filename()))
+		filename = fmt.Sprintf("%s.network", iface.Filename())
 		if err := writeConfig(filename, iface.Network()); err != nil {
 			return err
 		}
@@ -112,8 +113,7 @@ func writeConfig(filename string, config string) error {
 	if config == "" {
 		return nil
 	}
-	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
-		return err
-	}
-	return ioutil.WriteFile(filename, []byte(config), 0444)
+	log.Printf("Writing networkd unit %q\n", filename)
+	_, err := WriteFile(&File{Content: config, Path: filename}, runtimeNetworkPath)
+	return err
 }
