@@ -2,11 +2,8 @@ package system
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
-	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"time"
 
@@ -46,9 +43,8 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 	sysInterfaceMap := make(map[string]*net.Interface)
 	if systemInterfaces, err := net.Interfaces(); err == nil {
 		for _, iface := range systemInterfaces {
-			// Need a copy of the interface so we can take the address
-			temp := iface
-			sysInterfaceMap[temp.Name] = &temp
+			iface := iface
+			sysInterfaceMap[iface.Name] = &iface
 		}
 	} else {
 		return err
@@ -92,15 +88,15 @@ func restartNetworkd() error {
 
 func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
 	for _, iface := range interfaces {
-		filename := path.Join(runtimeNetworkPath, fmt.Sprintf("%s.netdev", iface.Filename()))
+		filename := fmt.Sprintf("%s.netdev", iface.Filename())
 		if err := writeConfig(filename, iface.Netdev()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.link", iface.Filename()))
+		filename = fmt.Sprintf("%s.link", iface.Filename())
 		if err := writeConfig(filename, iface.Link()); err != nil {
 			return err
 		}
-		filename = path.Join(runtimeNetworkPath, fmt.Sprintf("%s.network", iface.Filename()))
+		filename = fmt.Sprintf("%s.network", iface.Filename())
 		if err := writeConfig(filename, iface.Network()); err != nil {
 			return err
 		}
@@ -112,8 +108,6 @@ func writeConfig(filename string, config string) error {
 	if config == "" {
 		return nil
 	}
-	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
-		return err
-	}
-	return ioutil.WriteFile(filename, []byte(config), 0444)
+	_, err := WriteFile(&File{Content: config, Path: filename}, runtimeNetworkPath)
+	return err
 }
