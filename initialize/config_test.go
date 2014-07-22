@@ -8,6 +8,34 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
+func TestCloudConfigInvalidKeys(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("panic while instantiating CloudConfig with nil keys: %v", r)
+		}
+	}()
+
+	for _, tt := range []struct {
+		contents string
+	}{
+		{"coreos:"},
+		{"ssh_authorized_keys:"},
+		{"ssh_authorized_keys:\n  -"},
+		{"ssh_authorized_keys:\n  - 0:"},
+		{"write_files:"},
+		{"write_files:\n  -"},
+		{"write_files:\n  - 0:"},
+		{"users:"},
+		{"users:\n  -"},
+		{"users:\n  - 0:"},
+	} {
+		_, err := NewCloudConfig(tt.contents)
+		if err != nil {
+			t.Fatalf("error instantiating CloudConfig with invalid keys: %v", err)
+		}
+	}
+}
+
 func TestCloudConfigUnknownKeys(t *testing.T) {
 	contents := `
 coreos: 
