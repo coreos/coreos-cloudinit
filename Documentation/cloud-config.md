@@ -1,6 +1,6 @@
 # Using Cloud-Config
 
-CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. 
+CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. Your cloud-config is processed during each boot.
 
 ## Configuration File
 
@@ -123,7 +123,9 @@ coreos:
 
 #### units
 
-The `coreos.units.*` parameters define a list of arbitrary systemd units to start. Each item is an object with the following fields:
+The `coreos.units.*` parameters define a list of arbitrary systemd units to start after booting. This feature is intended to help you start essential services required to mount storage and configure networking in order to join the CoreOS cluster. It is not intended to be a Chef/Puppet replacement.
+
+Each item is an object with the following fields:
 
 - **name**: String representing unit's name. Required.
 - **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analogous to the `--runtime` argument to `systemctl enable`. Default value is false.
