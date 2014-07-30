@@ -57,6 +57,10 @@ type HttpClient struct {
 	client *http.Client
 }
 
+type Getter interface {
+	GetRetry(string) ([]byte, error)
+}
+
 func NewHttpClient() *HttpClient {
 	hc := &HttpClient{
 		MaxBackoff: time.Second * 5,

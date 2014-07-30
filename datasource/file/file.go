@@ -1,4 +1,4 @@
-package datasource
+package file
 
 import (
 	"io/ioutil"
@@ -9,7 +9,7 @@ type localFile struct {
 	path string
 }
 
-func NewLocalFile(path string) *localFile {
+func NewDatasource(path string) *localFile {
 	return &localFile{path}
 }
 

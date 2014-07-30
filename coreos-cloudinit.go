@@ -8,6 +8,11 @@ import (
 	"time"
 
 	"github.com/coreos/coreos-cloudinit/datasource"
+	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
+	"github.com/coreos/coreos-cloudinit/datasource/file"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata"
+	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
+	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
@@ -42,7 +47,7 @@ func init() {
 	flag.StringVar(&sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
 	flag.BoolVar(&sources.metadataService, "from-metadata-service", false, "Download data from metadata service")
 	flag.StringVar(&sources.url, "from-url", "", "Download user-data from provided url")
-	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", datasource.ProcCmdlineLocation, datasource.ProcCmdlineCloudConfigFlag))
+	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
 	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files (requires the -from-configdrive flag)")
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
@@ -172,7 +177,7 @@ func main() {
 func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudConfig) {
 	if mdcc.Hostname != "" {
 		if udcc.Hostname != "" {
-			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)", udcc.Hostname, mdcc.Hostname)
+			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", udcc.Hostname, mdcc.Hostname)
 		} else {
 			udcc.Hostname = mdcc.Hostname
 		}
@@ -183,7 +188,7 @@ func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudCon
 	}
 	if mdcc.NetworkConfigPath != "" {
 		if udcc.NetworkConfigPath != "" {
-			fmt.Printf("Warning: user-data NetworkConfigPath %s overrides metadata NetworkConfigPath %s", udcc.NetworkConfigPath, mdcc.NetworkConfigPath)
+			fmt.Printf("Warning: user-data NetworkConfigPath %s overrides metadata NetworkConfigPath %s\n", udcc.NetworkConfigPath, mdcc.NetworkConfigPath)
 		} else {
 			udcc.NetworkConfigPath = mdcc.NetworkConfigPath
 		}
@@ -196,19 +201,19 @@ func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudCon
 func getDatasources() []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 	if sources.file != "" {
-		dss = append(dss, datasource.NewLocalFile(sources.file))
+		dss = append(dss, file.NewDatasource(sources.file))
 	}
 	if sources.url != "" {
-		dss = append(dss, datasource.NewRemoteFile(sources.url))
+		dss = append(dss, url.NewDatasource(sources.url))
 	}
 	if sources.configDrive != "" {
-		dss = append(dss, datasource.NewConfigDrive(sources.configDrive))
+		dss = append(dss, configdrive.NewDatasource(sources.configDrive))
 	}
 	if sources.metadataService {
-		dss = append(dss, datasource.NewMetadataService())
+		dss = append(dss, metadata.NewDatasource())
 	}
 	if sources.procCmdLine {
-		dss = append(dss, datasource.NewProcCmdline())
+		dss = append(dss, proc_cmdline.NewDatasource())
 	}
 	return dss
 }

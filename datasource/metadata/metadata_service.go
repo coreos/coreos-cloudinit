@@ -1,4 +1,4 @@
-package datasource
+package metadata
 
 import (
 	"bufio"
@@ -21,6 +21,8 @@ import (
 // [2] http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html#instancedata-data-categories
 
 const (
+	Ec2ApiVersion        = "2009-04-04"
+	OpenstackApiVersion  = "2012-08-10"
 	BaseUrl              = "http://169.254.169.254/"
 	Ec2UserdataUrl       = BaseUrl + Ec2ApiVersion + "/user-data"
 	Ec2MetadataUrl       = BaseUrl + Ec2ApiVersion + "/meta-data"
@@ -29,11 +31,7 @@ const (
 
 type metadataService struct{}
 
-type getter interface {
-	GetRetry(string) ([]byte, error)
-}
-
-func NewMetadataService() *metadataService {
+func NewDatasource() *metadataService {
 	return &metadataService{}
 }
 
@@ -76,7 +74,7 @@ func (ms *metadataService) Type() string {
 	return "metadata-service"
 }
 
-func fetchMetadata(client getter) ([]byte, error) {
+func fetchMetadata(client pkg.Getter) ([]byte, error) {
 	attrs := make(map[string]interface{})
 	if keynames, err := fetchAttributes(client, fmt.Sprintf("%s/public-keys", Ec2MetadataUrl)); err == nil {
 		keyIDs := make(map[string]string)
@@ -131,7 +129,7 @@ func fetchMetadata(client getter) ([]byte, error) {
 	return json.Marshal(attrs)
 }
 
-func fetchAttributes(client getter, url string) ([]string, error) {
+func fetchAttributes(client pkg.Getter, url string) ([]string, error) {
 	resp, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err
@@ -144,7 +142,7 @@ func fetchAttributes(client getter, url string) ([]string, error) {
 	return data, scanner.Err()
 }
 
-func fetchAttribute(client getter, url string) (string, error) {
+func fetchAttribute(client pkg.Getter, url string) (string, error) {
 	if attrs, err := fetchAttributes(client, url); err == nil && len(attrs) > 0 {
 		return attrs[0], nil
 	} else {

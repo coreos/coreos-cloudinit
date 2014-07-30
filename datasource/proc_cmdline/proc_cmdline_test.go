@@ -1,4 +1,4 @@
-package datasource
+package proc_cmdline
 
 import (
 	"fmt"
@@ -75,7 +75,7 @@ func TestProcCmdlineAndFetchConfig(t *testing.T) {
 		t.Errorf("Test produced error: %v", err)
 	}
 
-	p := NewProcCmdline()
+	p := NewDatasource()
 	p.Location = file.Name()
 	cfg, err := p.FetchUserdata()
 	if err != nil {

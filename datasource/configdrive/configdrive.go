@@ -1,4 +1,4 @@
-package datasource
+package configdrive
 
 import (
 	"io/ioutil"
@@ -6,13 +6,18 @@ import (
 	"path"
 )
 
+const (
+	ec2ApiVersion       = "2009-04-04"
+	openstackApiVersion = "latest"
+)
+
 type configDrive struct {
 	root     string
 	readFile func(filename string) ([]byte, error)
 }
 
-func NewConfigDrive(root string) *configDrive {
-	return &configDrive{root, ioutil.ReadFile}
+func NewDatasource(root string) *configDrive {
+	return &configDrive{path.Join(root, "openstack"), ioutil.ReadFile}
 }
 
 func (cd *configDrive) IsAvailable() bool {
@@ -48,11 +53,11 @@ func (cd *configDrive) Type() string {
 }
 
 func (cd *configDrive) ec2Root() string {
-	return path.Join(cd.root, "ec2", Ec2ApiVersion)
+	return path.Join(cd.root, "ec2", ec2ApiVersion)
 }
 
 func (cd *configDrive) openstackRoot() string {
-	return path.Join(cd.root, "openstack", "latest")
+	return path.Join(cd.root, "openstack", openstackApiVersion)
 }
 
 func (cd *configDrive) tryReadFile(filename string) ([]byte, error) {
