@@ -58,6 +58,7 @@ type HttpClient struct {
 }
 
 type Getter interface {
+	Get(string) ([]byte, error)
 	GetRetry(string) ([]byte, error)
 }
 

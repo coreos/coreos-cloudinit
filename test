@@ -18,7 +18,7 @@ declare -a TESTPKGS=(initialize
                      datasource
                      datasource/configdrive
                      datasource/file
-                     datasource/metadata
+                     datasource/metadata/ec2
                      datasource/proc_cmdline
                      datasource/url
                      pkg
