@@ -207,7 +207,7 @@ All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the use
 - **name**: Required. Login name of user
 - **gecos**: GECOS comment of user
 - **passwd**: Hash of the password to use for this user
-- **homedir**: User's home directory. Defaults to /home/<name>
+- **homedir**: User's home directory. Defaults to /home/\<name\>
 - **no-create-home**: Boolean. Skip home directory creation.
 - **primary-group**: Default group for the user. Defaults to a new group created named after the user.
 - **groups**: Add user to these additional groups
