@@ -25,7 +25,7 @@ func (t *TestHttpClient) GetRetry(url string) ([]byte, error) {
 	}
 }
 
-func TestFetchAttributes(t *testing.T) {
+func TestMSFetchAttributes(t *testing.T) {
 	for _, s := range []struct {
 		metadata map[string]string
 		err      error
@@ -77,7 +77,7 @@ func TestFetchAttributes(t *testing.T) {
 	}
 }
 
-func TestFetchAttribute(t *testing.T) {
+func TestMSFetchAttribute(t *testing.T) {
 	for _, s := range []struct {
 		metadata map[string]string
 		err      error
@@ -129,7 +129,7 @@ func TestFetchAttribute(t *testing.T) {
 	}
 }
 
-func TestFetchMetadata(t *testing.T) {
+func TestMSFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		metadata map[string]string
 		err      error
