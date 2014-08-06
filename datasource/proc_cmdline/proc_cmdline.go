@@ -1,4 +1,4 @@
-package datasource
+package proc_cmdline
 
 import (
 	"errors"
@@ -18,7 +18,7 @@ type procCmdline struct {
 	Location string
 }
 
-func NewProcCmdline() *procCmdline {
+func NewDatasource() *procCmdline {
 	return &procCmdline{Location: ProcCmdlineLocation}
 }
 

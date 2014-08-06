@@ -1,4 +1,4 @@
-package datasource
+package url
 
 import "github.com/coreos/coreos-cloudinit/pkg"
 
@@ -6,7 +6,7 @@ type remoteFile struct {
 	url string
 }
 
-func NewRemoteFile(url string) *remoteFile {
+func NewDatasource(url string) *remoteFile {
 	return &remoteFile{url}
 }
 
