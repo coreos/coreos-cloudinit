@@ -33,15 +33,15 @@ func (cd *configDrive) ConfigRoot() string {
 	return cd.openstackRoot()
 }
 
-// FetchMetadata attempts to retrieve metadata from ec2/2009-04-04/meta_data.json.
+// FetchMetadata attempts to retrieve metadata from ec2/2009-04-04/meta-data.json.
 func (cd *configDrive) FetchMetadata() ([]byte, error) {
-	return cd.tryReadFile(path.Join(cd.ec2Root(), "meta_data.json"))
+	return cd.tryReadFile(path.Join(cd.ec2Root(), "meta-data.json"))
 }
 
-// FetchUserdata attempts to retrieve the userdata from ec2/2009-04-04/user_data.
+// FetchUserdata attempts to retrieve the userdata from ec2/2009-04-04/user-data.
 // If no data is found, it will attempt to read from openstack/latest/user_data.
 func (cd *configDrive) FetchUserdata() ([]byte, error) {
-	bytes, err := cd.tryReadFile(path.Join(cd.ec2Root(), "user_data"))
+	bytes, err := cd.tryReadFile(path.Join(cd.ec2Root(), "user-data"))
 	if bytes == nil && err == nil {
 		bytes, err = cd.tryReadFile(path.Join(cd.openstackRoot(), "user_data"))
 	}
