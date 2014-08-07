@@ -29,13 +29,13 @@ func TestCDFetchMetadata(t *testing.T) {
 		},
 		{
 			"/",
-			"/ec2/2009-04-04/meta_data.json",
-			mockFilesystem([]string{"/ec2/2009-04-04/meta_data.json"}),
+			"/ec2/2009-04-04/meta-data.json",
+			mockFilesystem([]string{"/ec2/2009-04-04/meta-data.json"}),
 		},
 		{
 			"/media/configdrive",
-			"/media/configdrive/ec2/2009-04-04/meta_data.json",
-			mockFilesystem([]string{"/media/configdrive/ec2/2009-04-04/meta_data.json"}),
+			"/media/configdrive/ec2/2009-04-04/meta-data.json",
+			mockFilesystem([]string{"/media/configdrive/ec2/2009-04-04/meta-data.json"}),
 		},
 	} {
 		cd := configDrive{tt.root, tt.files.readFile}
@@ -62,8 +62,8 @@ func TestCDFetchUserdata(t *testing.T) {
 		},
 		{
 			"/",
-			"/ec2/2009-04-04/user_data",
-			mockFilesystem([]string{"/ec2/2009-04-04/user_data"}),
+			"/ec2/2009-04-04/user-data",
+			mockFilesystem([]string{"/ec2/2009-04-04/user-data"}),
 		},
 		{
 			"/",
@@ -72,13 +72,13 @@ func TestCDFetchUserdata(t *testing.T) {
 		},
 		{
 			"/",
-			"/ec2/2009-04-04/user_data",
-			mockFilesystem([]string{"/openstack/latest/user_data", "/ec2/2009-04-04/user_data"}),
+			"/ec2/2009-04-04/user-data",
+			mockFilesystem([]string{"/openstack/latest/user_data", "/ec2/2009-04-04/user-data"}),
 		},
 		{
 			"/media/configdrive",
-			"/media/configdrive/ec2/2009-04-04/user_data",
-			mockFilesystem([]string{"/media/configdrive/ec2/2009-04-04/user_data"}),
+			"/media/configdrive/ec2/2009-04-04/user-data",
+			mockFilesystem([]string{"/media/configdrive/ec2/2009-04-04/user-data"}),
 		},
 	} {
 		cd := configDrive{tt.root, tt.files.readFile}
