@@ -66,7 +66,7 @@ func TestEnvironmentFile(t *testing.T) {
 		"$public_ipv4":  "1.2.3.4",
 		"$private_ipv4": "5.6.7.8",
 	}
-	expect := "COREOS_PUBLIC_IPV4=1.2.3.4\nCOREOS_PRIVATE_IPV4=5.6.7.8\n"
+	expect := "COREOS_PRIVATE_IPV4=5.6.7.8\nCOREOS_PUBLIC_IPV4=1.2.3.4\n"
 
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {

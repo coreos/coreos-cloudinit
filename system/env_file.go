@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sort"
 )
 
 type EnvFile struct {
@@ -24,7 +25,7 @@ var lineLexer = regexp.MustCompile(`(?m)^((?:([a-zA-Z0-9_]+)=)?.*?)\r?\n`)
 
 // mergeEnvContents: Update the existing file contents with new values,
 // preserving variable ordering and all content this code doesn't understand.
-// All new values are appended to the bottom of the old.
+// All new values are appended to the bottom of the old, sorted by key.
 func mergeEnvContents(old []byte, pending map[string]string) []byte {
 	var buf bytes.Buffer
 	var match [][]byte
@@ -44,7 +45,8 @@ func mergeEnvContents(old []byte, pending map[string]string) []byte {
 		}
 	}
 
-	for key, value := range pending {
+	for _, key := range keys(pending) {
+		value := pending[key]
 		fmt.Fprintf(&buf, "%s=%s\n", key, value)
 	}
 
@@ -86,4 +88,13 @@ func WriteEnvFile(ef *EnvFile, root string) error {
 	ef.File.Content = string(newContent)
 	_, err = WriteFile(ef.File, root)
 	return err
+}
+
+// keys returns the keys of a map in sorted order
+func keys(m map[string]string) (s []string) {
+	for k, _ := range m {
+		s = append(s, k)
+	}
+	sort.Strings(s)
+	return
 }
