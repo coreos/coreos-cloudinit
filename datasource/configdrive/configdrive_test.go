@@ -112,3 +112,24 @@ func TestCDConfigRoot(t *testing.T) {
 		}
 	}
 }
+
+func TestNewDatasource(t *testing.T) {
+	for _, tt := range []struct {
+		root       string
+		expectRoot string
+	}{
+		{
+			root:       "",
+			expectRoot: "",
+		},
+		{
+			root:       "/media/configdrive",
+			expectRoot: "/media/configdrive",
+		},
+	} {
+		service := NewDatasource(tt.root)
+		if service.root != tt.expectRoot {
+			t.Fatalf("bad root (%q): want %q, got %q", tt.root, tt.expectRoot, service.root)
+		}
+	}
+}

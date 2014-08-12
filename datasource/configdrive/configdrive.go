@@ -17,7 +17,7 @@ type configDrive struct {
 }
 
 func NewDatasource(root string) *configDrive {
-	return &configDrive{path.Join(root, "openstack"), ioutil.ReadFile}
+	return &configDrive{root, ioutil.ReadFile}
 }
 
 func (cd *configDrive) IsAvailable() bool {
