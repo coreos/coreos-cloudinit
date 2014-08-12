@@ -113,8 +113,19 @@ Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 	}
 }
 
-func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
+func TestEtcdEnvironmentEmptyNoOp(t *testing.T) {
 	ee := EtcdEnvironment{}
+	uu, err := ee.Units("")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(uu) > 0 {
+		t.Fatalf("Generated etcd units unexpectedly: %v")
+	}
+}
+
+func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
+	ee := EtcdEnvironment{"foo": "bar"}
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
 		t.Fatalf("Unable to create tempdir: %v", err)
@@ -152,6 +163,7 @@ func TestEtcdEnvironmentWrittenToDiskDefaultToMachineID(t *testing.T) {
 	}
 
 	expect := `[Service]
+Environment="ETCD_FOO=bar"
 Environment="ETCD_NAME=node007"
 `
 	if string(contents) != expect {
