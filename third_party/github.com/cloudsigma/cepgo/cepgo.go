@@ -48,7 +48,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/tarm/goserial"
+	"github.com/coreos/coreos-cloudinit/third_party/github.com/tarm/goserial"
 )
 
 const (
