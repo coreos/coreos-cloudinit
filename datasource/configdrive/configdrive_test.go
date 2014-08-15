@@ -16,7 +16,7 @@ func (m mockFilesystem) readFile(filename string) ([]byte, error) {
 	return nil, os.ErrNotExist
 }
 
-func TestCDFetchMetadata(t *testing.T) {
+func TestFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		root     string
 		filename string
@@ -29,13 +29,13 @@ func TestCDFetchMetadata(t *testing.T) {
 		},
 		{
 			"/",
-			"/ec2/2009-04-04/meta-data.json",
-			mockFilesystem([]string{"/ec2/2009-04-04/meta-data.json"}),
+			"/openstack/latest/meta_data.json",
+			mockFilesystem([]string{"/openstack/latest/meta_data.json"}),
 		},
 		{
 			"/media/configdrive",
-			"/media/configdrive/ec2/2009-04-04/meta-data.json",
-			mockFilesystem([]string{"/media/configdrive/ec2/2009-04-04/meta-data.json"}),
+			"/media/configdrive/openstack/latest/meta_data.json",
+			mockFilesystem([]string{"/media/configdrive/openstack/latest/meta_data.json"}),
 		},
 	} {
 		cd := configDrive{tt.root, tt.files.readFile}
@@ -49,7 +49,7 @@ func TestCDFetchMetadata(t *testing.T) {
 	}
 }
 
-func TestCDFetchUserdata(t *testing.T) {
+func TestFetchUserdata(t *testing.T) {
 	for _, tt := range []struct {
 		root     string
 		filename string
@@ -62,23 +62,13 @@ func TestCDFetchUserdata(t *testing.T) {
 		},
 		{
 			"/",
-			"/ec2/2009-04-04/user-data",
-			mockFilesystem([]string{"/ec2/2009-04-04/user-data"}),
-		},
-		{
-			"/",
 			"/openstack/latest/user_data",
 			mockFilesystem([]string{"/openstack/latest/user_data"}),
 		},
 		{
-			"/",
-			"/ec2/2009-04-04/user-data",
-			mockFilesystem([]string{"/openstack/latest/user_data", "/ec2/2009-04-04/user-data"}),
-		},
-		{
 			"/media/configdrive",
-			"/media/configdrive/ec2/2009-04-04/user-data",
-			mockFilesystem([]string{"/media/configdrive/ec2/2009-04-04/user-data"}),
+			"/media/configdrive/openstack/latest/user_data",
+			mockFilesystem([]string{"/media/configdrive/openstack/latest/user_data"}),
 		},
 	} {
 		cd := configDrive{tt.root, tt.files.readFile}
@@ -92,18 +82,18 @@ func TestCDFetchUserdata(t *testing.T) {
 	}
 }
 
-func TestCDConfigRoot(t *testing.T) {
+func TestConfigRoot(t *testing.T) {
 	for _, tt := range []struct {
 		root       string
 		configRoot string
 	}{
 		{
 			"/",
-			"/openstack/latest",
+			"/openstack",
 		},
 		{
 			"/media/configdrive",
-			"/media/configdrive/openstack/latest",
+			"/media/configdrive/openstack",
 		},
 	} {
 		cd := configDrive{tt.root, nil}

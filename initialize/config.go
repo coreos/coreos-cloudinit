@@ -258,7 +258,9 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	if env.NetconfType() != "" {
-		netconfBytes, err := ioutil.ReadFile(path.Join(env.ConfigRoot(), cfg.NetworkConfigPath))
+		filename := path.Join(env.ConfigRoot(), cfg.NetworkConfigPath)
+		log.Printf("Attempting to read config from %q\n", filename)
+		netconfBytes, err := ioutil.ReadFile(filename)
 		if err != nil {
 			return err
 		}
