@@ -1,10 +1,12 @@
 package network
 
 import (
+	"log"
 	"strings"
 )
 
 func ProcessDebianNetconf(config string) ([]InterfaceGenerator, error) {
+	log.Println("Processing Debian network config")
 	lines := formatConfig(config)
 	stanzas, err := parseStanzas(lines)
 	if err != nil {
@@ -18,7 +20,9 @@ func ProcessDebianNetconf(config string) ([]InterfaceGenerator, error) {
 			interfaces = append(interfaces, s)
 		}
 	}
+	log.Printf("Parsed %d network interfaces\n", len(interfaces))
 
+	log.Println("Processed Debian network config")
 	return buildInterfaces(interfaces), nil
 }
 

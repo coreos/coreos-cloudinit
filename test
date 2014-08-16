@@ -20,6 +20,7 @@ declare -a TESTPKGS=(initialize
                      datasource/file
                      datasource/metadata
                      datasource/metadata/cloudsigma
+                     datasource/metadata/digitalocean
                      datasource/metadata/ec2
                      datasource/proc_cmdline
                      datasource/url
