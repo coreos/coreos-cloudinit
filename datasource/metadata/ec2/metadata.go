@@ -7,44 +7,28 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/datasource/metadata"
 	"github.com/coreos/coreos-cloudinit/pkg"
 )
 
 const (
 	DefaultAddress = "http://169.254.169.254/"
 	apiVersion     = "2009-04-04"
-	userdataUrl    = apiVersion + "/user-data"
-	metadataUrl    = apiVersion + "/meta-data"
+	userdataPath   = apiVersion + "/user-data"
+	metadataPath   = apiVersion + "/meta-data"
 )
 
 type metadataService struct {
-	root   string
-	client pkg.Getter
+	metadata.MetadataService
 }
 
 func NewDatasource(root string) *metadataService {
-	if !strings.HasSuffix(root, "/") {
-		root += "/"
-	}
-	return &metadataService{root, pkg.NewHttpClient()}
-}
-
-func (ms metadataService) IsAvailable() bool {
-	_, err := ms.client.Get(ms.root + apiVersion)
-	return (err == nil)
-}
-
-func (ms metadataService) AvailabilityChanges() bool {
-	return true
-}
-
-func (ms metadataService) ConfigRoot() string {
-	return ms.root
+	return &metadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath)}
 }
 
 func (ms metadataService) FetchMetadata() ([]byte, error) {
 	attrs := make(map[string]interface{})
-	if keynames, err := fetchAttributes(ms.client, fmt.Sprintf("%s/public-keys", ms.metadataUrl())); err == nil {
+	if keynames, err := ms.fetchAttributes(fmt.Sprintf("%s/public-keys", ms.MetadataUrl())); err == nil {
 		keyIDs := make(map[string]string)
 		for _, keyname := range keynames {
 			tokens := strings.SplitN(keyname, "=", 2)
@@ -56,7 +40,7 @@ func (ms metadataService) FetchMetadata() ([]byte, error) {
 
 		keys := make(map[string]string)
 		for name, id := range keyIDs {
-			sshkey, err := fetchAttribute(ms.client, fmt.Sprintf("%s/public-keys/%s/openssh-key", ms.metadataUrl(), id))
+			sshkey, err := ms.fetchAttribute(fmt.Sprintf("%s/public-keys/%s/openssh-key", ms.MetadataUrl(), id))
 			if err != nil {
 				return nil, err
 			}
@@ -68,25 +52,25 @@ func (ms metadataService) FetchMetadata() ([]byte, error) {
 		return nil, err
 	}
 
-	if hostname, err := fetchAttribute(ms.client, fmt.Sprintf("%s/hostname", ms.metadataUrl())); err == nil {
+	if hostname, err := ms.fetchAttribute(fmt.Sprintf("%s/hostname", ms.MetadataUrl())); err == nil {
 		attrs["hostname"] = hostname
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return nil, err
 	}
 
-	if localAddr, err := fetchAttribute(ms.client, fmt.Sprintf("%s/local-ipv4", ms.metadataUrl())); err == nil {
+	if localAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/local-ipv4", ms.MetadataUrl())); err == nil {
 		attrs["local-ipv4"] = localAddr
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return nil, err
 	}
 
-	if publicAddr, err := fetchAttribute(ms.client, fmt.Sprintf("%s/public-ipv4", ms.metadataUrl())); err == nil {
+	if publicAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/public-ipv4", ms.MetadataUrl())); err == nil {
 		attrs["public-ipv4"] = publicAddr
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return nil, err
 	}
 
-	if content_path, err := fetchAttribute(ms.client, fmt.Sprintf("%s/network_config/content_path", ms.metadataUrl())); err == nil {
+	if content_path, err := ms.fetchAttribute(fmt.Sprintf("%s/network_config/content_path", ms.MetadataUrl())); err == nil {
 		attrs["network_config"] = map[string]string{
 			"content_path": content_path,
 		}
@@ -97,30 +81,12 @@ func (ms metadataService) FetchMetadata() ([]byte, error) {
 	return json.Marshal(attrs)
 }
 
-func (ms metadataService) FetchUserdata() ([]byte, error) {
-	if data, err := ms.client.GetRetry(ms.userdataUrl()); err == nil {
-		return data, err
-	} else if _, ok := err.(pkg.ErrNotFound); ok {
-		return []byte{}, nil
-	} else {
-		return data, err
-	}
-}
-
 func (ms metadataService) Type() string {
 	return "ec2-metadata-service"
 }
 
-func (ms metadataService) metadataUrl() string {
-	return (ms.root + metadataUrl)
-}
-
-func (ms metadataService) userdataUrl() string {
-	return (ms.root + userdataUrl)
-}
-
-func fetchAttributes(client pkg.Getter, url string) ([]string, error) {
-	resp, err := client.GetRetry(url)
+func (ms metadataService) fetchAttributes(url string) ([]string, error) {
+	resp, err := ms.FetchData(url)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +98,8 @@ func fetchAttributes(client pkg.Getter, url string) ([]string, error) {
 	return data, scanner.Err()
 }
 
-func fetchAttribute(client pkg.Getter, url string) (string, error) {
-	if attrs, err := fetchAttributes(client, url); err == nil && len(attrs) > 0 {
+func (ms metadataService) fetchAttribute(url string) (string, error) {
+	if attrs, err := ms.fetchAttributes(url); err == nil && len(attrs) > 0 {
 		return attrs[0], nil
 	} else {
 		return "", err
