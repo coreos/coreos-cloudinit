@@ -66,6 +66,10 @@ func (c *procCmdline) FetchUserdata() ([]byte, error) {
 	return cfg, nil
 }
 
+func (c *procCmdline) FetchNetworkConfig(filename string) ([]byte, error) {
+	return nil, nil
+}
+
 func (c *procCmdline) Type() string {
 	return "proc-cmdline"
 }

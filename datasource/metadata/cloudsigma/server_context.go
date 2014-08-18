@@ -126,6 +126,10 @@ func (scs *serverContextService) FetchUserdata() ([]byte, error) {
 	return []byte(userData), nil
 }
 
+func (scs *serverContextService) FetchNetworkConfig(a string) ([]byte, error) {
+	return nil, nil
+}
+
 func isBase64Encoded(field string, userdata map[string]string) bool {
 	base64Fields, ok := userdata["base64_fields"]
 	if !ok {

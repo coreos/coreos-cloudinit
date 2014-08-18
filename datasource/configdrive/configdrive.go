@@ -41,6 +41,10 @@ func (cd *configDrive) FetchUserdata() ([]byte, error) {
 	return cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "user_data"))
 }
 
+func (cd *configDrive) FetchNetworkConfig(filename string) ([]byte, error) {
+	return cd.tryReadFile(path.Join(cd.openstackRoot(), filename))
+}
+
 func (cd *configDrive) Type() string {
 	return "cloud-drive"
 }
