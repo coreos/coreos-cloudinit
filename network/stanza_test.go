@@ -194,9 +194,11 @@ func TestParseVLANStanzas(t *testing.T) {
 
 func TestParseInterfaceStanzaStaticAddress(t *testing.T) {
 	options := []string{"address 192.168.1.100", "netmask 255.255.255.0"}
-	expect := net.IPNet{
-		IP:   net.IPv4(192, 168, 1, 100),
-		Mask: net.IPv4Mask(255, 255, 255, 0),
+	expect := []net.IPNet{
+		{
+			IP:   net.IPv4(192, 168, 1, 100),
+			Mask: net.IPv4Mask(255, 255, 255, 0),
+		},
 	}
 
 	iface, err := parseInterfaceStanza([]string{"eth", "inet", "static"}, options)
@@ -207,7 +209,7 @@ func TestParseInterfaceStanzaStaticAddress(t *testing.T) {
 	if !ok {
 		t.FailNow()
 	}
-	if !reflect.DeepEqual(static.address, expect) {
+	if !reflect.DeepEqual(static.addresses, expect) {
 		t.FailNow()
 	}
 }

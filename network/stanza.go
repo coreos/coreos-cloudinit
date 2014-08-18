@@ -37,7 +37,7 @@ type route struct {
 type configMethod interface{}
 
 type configMethodStatic struct {
-	address     net.IPNet
+	addresses   []net.IPNet
 	nameservers []net.IP
 	routes      []route
 	hwaddress   net.HardwareAddr
@@ -193,20 +193,21 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 	switch confMethod {
 	case "static":
 		config := configMethodStatic{
+			addresses:   make([]net.IPNet, 1),
 			routes:      make([]route, 0),
 			nameservers: make([]net.IP, 0),
 		}
 		if addresses, ok := optionMap["address"]; ok {
 			if len(addresses) == 1 {
-				config.address.IP = net.ParseIP(addresses[0])
+				config.addresses[0].IP = net.ParseIP(addresses[0])
 			}
 		}
 		if netmasks, ok := optionMap["netmask"]; ok {
 			if len(netmasks) == 1 {
-				config.address.Mask = net.IPMask(net.ParseIP(netmasks[0]).To4())
+				config.addresses[0].Mask = net.IPMask(net.ParseIP(netmasks[0]).To4())
 			}
 		}
-		if config.address.IP == nil || config.address.Mask == nil {
+		if config.addresses[0].IP == nil || config.addresses[0].Mask == nil {
 			return nil, fmt.Errorf("malformed static network config for %q", iface)
 		}
 		if gateways, ok := optionMap["gateway"]; ok {

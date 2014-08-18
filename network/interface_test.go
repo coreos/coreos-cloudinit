@@ -181,9 +181,11 @@ func TestVLANInterfaceNetwork(t *testing.T) {
 		logicalInterface{
 			name: "testname",
 			config: configMethodStatic{
-				address: net.IPNet{
-					IP:   []byte{192, 168, 1, 100},
-					Mask: []byte{255, 255, 255, 0},
+				addresses: []net.IPNet{
+					{
+						IP:   []byte{192, 168, 1, 100},
+						Mask: []byte{255, 255, 255, 0},
+					},
 				},
 				nameservers: []net.IP{
 					[]byte{8, 8, 8, 8},
