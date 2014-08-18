@@ -6,243 +6,101 @@ import (
 	"testing"
 )
 
-func TestPhysicalInterfaceName(t *testing.T) {
-	p := physicalInterface{logicalInterface{name: "testname"}}
-	if p.Name() != "testname" {
-		t.FailNow()
-	}
-}
-
-func TestPhysicalInterfaceNetdev(t *testing.T) {
-	p := physicalInterface{}
-	if p.Netdev() != "" {
-		t.FailNow()
-	}
-}
-
-func TestPhysicalInterfaceLink(t *testing.T) {
-	p := physicalInterface{}
-	if p.Link() != "" {
-		t.FailNow()
-	}
-}
-
-func TestPhysicalInterfaceNetwork(t *testing.T) {
-	p := physicalInterface{logicalInterface{
-		name: "testname",
-		children: []networkInterface{
-			&bondInterface{
-				logicalInterface{
-					name: "testbond1",
-				},
-				nil,
-				nil,
-			},
-			&vlanInterface{
-				logicalInterface{
-					name: "testvlan1",
-				},
-				1,
-				"",
-			},
-			&vlanInterface{
-				logicalInterface{
-					name: "testvlan2",
-				},
-				1,
-				"",
-			},
-		},
-	}}
-	network := `[Match]
-Name=testname
-
-[Network]
-Bond=testbond1
-VLAN=testvlan1
-VLAN=testvlan2
-`
-	if p.Network() != network {
-		t.FailNow()
-	}
-}
-
-func TestBondInterfaceName(t *testing.T) {
-	b := bondInterface{logicalInterface{name: "testname"}, nil, nil}
-	if b.Name() != "testname" {
-		t.FailNow()
-	}
-}
-
-func TestBondInterfaceNetdev(t *testing.T) {
-	b := bondInterface{logicalInterface{name: "testname"}, nil, nil}
-	netdev := `[NetDev]
-Kind=bond
-Name=testname
-`
-	if b.Netdev() != netdev {
-		t.FailNow()
-	}
-}
-
-func TestBondInterfaceLink(t *testing.T) {
-	b := bondInterface{}
-	if b.Link() != "" {
-		t.FailNow()
-	}
-}
-
-func TestBondInterfaceNetwork(t *testing.T) {
-	b := bondInterface{
-		logicalInterface{
-			name:   "testname",
-			config: configMethodDHCP{},
-			children: []networkInterface{
-				&bondInterface{
-					logicalInterface{
-						name: "testbond1",
-					},
-					nil,
-					nil,
-				},
-				&vlanInterface{
-					logicalInterface{
-						name: "testvlan1",
-					},
-					1,
-					"",
-				},
-				&vlanInterface{
-					logicalInterface{
-						name: "testvlan2",
-					},
-					1,
-					"",
-				},
-			},
-		},
-		nil,
-		nil,
-	}
-	network := `[Match]
-Name=testname
-
-[Network]
-Bond=testbond1
-VLAN=testvlan1
-VLAN=testvlan2
-DHCP=true
-`
-	if b.Network() != network {
-		t.FailNow()
-	}
-}
-
-func TestVLANInterfaceName(t *testing.T) {
-	v := vlanInterface{logicalInterface{name: "testname"}, 1, ""}
-	if v.Name() != "testname" {
-		t.FailNow()
-	}
-}
-
-func TestVLANInterfaceNetdev(t *testing.T) {
+func TestInterfaceGenerators(t *testing.T) {
 	for _, tt := range []struct {
-		i vlanInterface
-		l string
+		name    string
+		netdev  string
+		link    string
+		network string
+		kind    string
+		iface   InterfaceGenerator
 	}{
 		{
-			vlanInterface{logicalInterface{name: "testname"}, 1, ""},
-			"[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=1\n",
+			name:    "",
+			network: "[Match]\nMACAddress=00:01:02:03:04:05\n\n[Network]\n",
+			kind:    "physical",
+			iface: &physicalInterface{logicalInterface{
+				hwaddr: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5}),
+			}},
 		},
 		{
-			vlanInterface{logicalInterface{name: "testname", config: configMethodStatic{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
-			"[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+			name:    "testname",
+			network: "[Match]\nName=testname\n\n[Network]\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\n",
+			kind:    "physical",
+			iface: &physicalInterface{logicalInterface{
+				name: "testname",
+				children: []networkInterface{
+					&bondInterface{logicalInterface: logicalInterface{name: "testbond1"}},
+					&vlanInterface{logicalInterface: logicalInterface{name: "testvlan1"}, id: 1},
+					&vlanInterface{logicalInterface: logicalInterface{name: "testvlan2"}, id: 1},
+				},
+			}},
 		},
 		{
-			vlanInterface{logicalInterface{name: "testname", config: configMethodDHCP{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
-			"[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+			name:    "testname",
+			netdev:  "[NetDev]\nKind=bond\nName=testname\n",
+			network: "[Match]\nName=testname\n\n[Network]\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\nDHCP=true\n",
+			kind:    "bond",
+			iface: &bondInterface{logicalInterface: logicalInterface{
+				name:   "testname",
+				config: configMethodDHCP{},
+				children: []networkInterface{
+					&bondInterface{logicalInterface: logicalInterface{name: "testbond1"}},
+					&vlanInterface{logicalInterface: logicalInterface{name: "testvlan1"}, id: 1},
+					&vlanInterface{logicalInterface: logicalInterface{name: "testvlan2"}, id: 1},
+				},
+			}},
+		},
+		{
+			name:    "testname",
+			netdev:  "[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=1\n",
+			network: "[Match]\nName=testname\n\n[Network]\n",
+			kind:    "vlan",
+			iface:   &vlanInterface{logicalInterface{name: "testname"}, 1, ""},
+		},
+		{
+			name:    "testname",
+			netdev:  "[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+			network: "[Match]\nName=testname\n\n[Network]\n",
+			kind:    "vlan",
+			iface:   &vlanInterface{logicalInterface{name: "testname", config: configMethodStatic{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
+		},
+		{
+			name:    "testname",
+			netdev:  "[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
+			network: "[Match]\nName=testname\n\n[Network]\nDHCP=true\n",
+			kind:    "vlan",
+			iface:   &vlanInterface{logicalInterface{name: "testname", config: configMethodDHCP{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
+		},
+		{
+			name:    "testname",
+			netdev:  "[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=0\n",
+			network: "[Match]\nName=testname\n\n[Network]\nDNS=8.8.8.8\n\n[Address]\nAddress=192.168.1.100/24\n\n[Route]\nDestination=0.0.0.0/0\nGateway=1.2.3.4\n",
+			kind:    "vlan",
+			iface: &vlanInterface{logicalInterface: logicalInterface{
+				name: "testname",
+				config: configMethodStatic{
+					addresses:   []net.IPNet{{IP: []byte{192, 168, 1, 100}, Mask: []byte{255, 255, 255, 0}}},
+					nameservers: []net.IP{[]byte{8, 8, 8, 8}},
+					routes:      []route{route{destination: net.IPNet{IP: []byte{0, 0, 0, 0}, Mask: []byte{0, 0, 0, 0}}, gateway: []byte{1, 2, 3, 4}}},
+				},
+			}},
 		},
 	} {
-		if tt.i.Netdev() != tt.l {
-			t.Fatalf("bad netdev config (%q): got %q, want %q", tt.i, tt.i.Netdev(), tt.l)
+		if name := tt.iface.Name(); name != tt.name {
+			t.Fatalf("bad name (%q): want %q, got %q", tt.iface, tt.name, name)
 		}
-	}
-}
-
-func TestVLANInterfaceLink(t *testing.T) {
-	v := vlanInterface{}
-	if v.Link() != "" {
-		t.FailNow()
-	}
-}
-
-func TestVLANInterfaceNetwork(t *testing.T) {
-	v := vlanInterface{
-		logicalInterface{
-			name: "testname",
-			config: configMethodStatic{
-				addresses: []net.IPNet{
-					{
-						IP:   []byte{192, 168, 1, 100},
-						Mask: []byte{255, 255, 255, 0},
-					},
-				},
-				nameservers: []net.IP{
-					[]byte{8, 8, 8, 8},
-				},
-				routes: []route{
-					route{
-						destination: net.IPNet{
-							IP:   []byte{0, 0, 0, 0},
-							Mask: []byte{0, 0, 0, 0},
-						},
-						gateway: []byte{1, 2, 3, 4},
-					},
-				},
-			},
-		},
-		0,
-		"",
-	}
-	network := `[Match]
-Name=testname
-
-[Network]
-DNS=8.8.8.8
-
-[Address]
-Address=192.168.1.100/24
-
-[Route]
-Destination=0.0.0.0/0
-Gateway=1.2.3.4
-`
-	if v.Network() != network {
-		t.Log(v.Network())
-		t.FailNow()
-	}
-}
-
-func TestType(t *testing.T) {
-	for _, tt := range []struct {
-		i InterfaceGenerator
-		t string
-	}{
-		{
-			i: &physicalInterface{},
-			t: "physical",
-		},
-		{
-			i: &vlanInterface{},
-			t: "vlan",
-		},
-		{
-			i: &bondInterface{},
-			t: "bond",
-		},
-	} {
-		if tp := tt.i.Type(); tp != tt.t {
-			t.Fatalf("bad type (%q): got %s, want %s", tt.i, tp, tt.t)
+		if netdev := tt.iface.Netdev(); netdev != tt.netdev {
+			t.Fatalf("bad netdev (%q): want %q, got %q", tt.iface, tt.netdev, netdev)
+		}
+		if link := tt.iface.Link(); link != tt.link {
+			t.Fatalf("bad link (%q): want %q, got %q", tt.iface, tt.link, link)
+		}
+		if network := tt.iface.Network(); network != tt.network {
+			t.Fatalf("bad network (%q): want %q, got %q", tt.iface, tt.network, network)
+		}
+		if kind := tt.iface.Type(); kind != tt.kind {
+			t.Fatalf("bad type (%q): want %q, got %q", tt.iface, tt.kind, kind)
 		}
 	}
 }

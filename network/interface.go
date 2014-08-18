@@ -32,6 +32,10 @@ type logicalInterface struct {
 	configDepth int
 }
 
+func (i *logicalInterface) Name() string {
+	return i.name
+}
+
 func (i *logicalInterface) Network() string {
 	config := fmt.Sprintln("[Match]")
 	if i.name != "" {
@@ -73,6 +77,10 @@ func (i *logicalInterface) Link() string {
 	return ""
 }
 
+func (i *logicalInterface) Netdev() string {
+	return ""
+}
+
 func (i *logicalInterface) Filename() string {
 	return fmt.Sprintf("%02x-%s", i.configDepth, i.name)
 }
@@ -93,14 +101,6 @@ type physicalInterface struct {
 	logicalInterface
 }
 
-func (p *physicalInterface) Name() string {
-	return p.name
-}
-
-func (p *physicalInterface) Netdev() string {
-	return ""
-}
-
 func (p *physicalInterface) Type() string {
 	return "physical"
 }
@@ -109,10 +109,6 @@ type bondInterface struct {
 	logicalInterface
 	slaves  []string
 	options map[string]string
-}
-
-func (b *bondInterface) Name() string {
-	return b.name
 }
 
 func (b *bondInterface) Netdev() string {
@@ -136,10 +132,6 @@ type vlanInterface struct {
 	logicalInterface
 	id        int
 	rawDevice string
-}
-
-func (v *vlanInterface) Name() string {
-	return v.name
 }
 
 func (v *vlanInterface) Netdev() string {
