@@ -1,6 +1,9 @@
 package initialize
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 // ParseMetaData parses a JSON blob in the OpenStack metadata service format, and
 // converts it to a partially hydrated CloudConfig
@@ -22,8 +25,8 @@ func ParseMetaData(contents string) (*CloudConfig, error) {
 	var cfg CloudConfig
 	if len(metadata.SSHAuthorizedKeyMap) > 0 {
 		cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHAuthorizedKeyMap))
-		for _, key := range metadata.SSHAuthorizedKeyMap {
-			cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, key)
+		for _, name := range sortedKeys(metadata.SSHAuthorizedKeyMap) {
+			cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, metadata.SSHAuthorizedKeyMap[name])
 		}
 	}
 	cfg.Hostname = metadata.Hostname
@@ -49,4 +52,12 @@ func ExtractIPsFromMetadata(contents []byte) (map[string]string, error) {
 		m["$public_ipv4"] = ips.Public
 	}
 	return m, nil
+}
+
+func sortedKeys(m map[string]string) (keys []string) {
+	for key := range m {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return
 }

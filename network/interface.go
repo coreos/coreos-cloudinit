@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sort"
 )
 
 type InterfaceGenerator interface {
@@ -115,8 +116,8 @@ func (b *bondInterface) Type() string {
 
 func (b *bondInterface) ModprobeParams() string {
 	params := ""
-	for name, val := range b.options {
-		params += fmt.Sprintf("%s=%s ", name, val)
+	for _, name := range sortedKeys(b.options) {
+		params += fmt.Sprintf("%s=%s ", name, b.options[name])
 	}
 	params = strings.TrimSuffix(params, " ")
 	return params
@@ -158,8 +159,8 @@ func buildInterfaces(stanzas []*stanzaInterface) []InterfaceGenerator {
 	markConfigDepths(interfaceMap)
 
 	interfaces := make([]InterfaceGenerator, 0, len(interfaceMap))
-	for _, iface := range interfaceMap {
-		interfaces = append(interfaces, iface)
+	for _, name := range sortedInterfaces(interfaceMap) {
+		interfaces = append(interfaces, interfaceMap[name])
 	}
 
 	return interfaces
@@ -239,7 +240,8 @@ func createInterfaces(stanzas []*stanzaInterface) map[string]networkInterface {
 }
 
 func linkAncestors(interfaceMap map[string]networkInterface) {
-	for _, iface := range interfaceMap {
+	for _, name := range sortedInterfaces(interfaceMap) {
+		iface := interfaceMap[name]
 		switch i := iface.(type) {
 		case *vlanInterface:
 			if parent, ok := interfaceMap[i.rawDevice]; ok {
@@ -290,4 +292,20 @@ func setDepth(iface networkInterface) int {
 	}
 	iface.setConfigDepth(maxDepth)
 	return (maxDepth + 1)
+}
+
+func sortedKeys(m map[string]string) (keys []string) {
+	for key := range m {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return
+}
+
+func sortedInterfaces(m map[string]networkInterface) (keys []string) {
+	for key := range m {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return
 }
