@@ -2,9 +2,9 @@ package network
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 type InterfaceGenerator interface {
