@@ -469,7 +469,7 @@ func TestBuildInterfaces(t *testing.T) {
 			configDepth: 2,
 		},
 	}
-	expect := []InterfaceGenerator{eth0, bond0, bond1, vlan0, vlan1}
+	expect := []InterfaceGenerator{bond0, bond1, eth0, vlan0, vlan1}
 	if !reflect.DeepEqual(interfaces, expect) {
 		t.FailNow()
 	}

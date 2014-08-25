@@ -14,7 +14,7 @@ func TestParseMetadata(t *testing.T) {
 		{`{"foo": "bar"}`, &CloudConfig{}, false},
 		{`{"network_config": {"content_path": "asdf"}}`, &CloudConfig{NetworkConfigPath: "asdf"}, false},
 		{`{"hostname": "turkleton"}`, &CloudConfig{Hostname: "turkleton"}, false},
-		{`{"public_keys": {"jack": "jill", "bob": "alice"}}`, &CloudConfig{SSHAuthorizedKeys: []string{"jill", "alice"}}, false},
+		{`{"public_keys": {"jack": "jill", "bob": "alice"}}`, &CloudConfig{SSHAuthorizedKeys: []string{"alice", "jill"}}, false},
 		{`{"unknown": "thing", "hostname": "my_host", "public_keys": {"do": "re", "mi": "fa"}, "network_config": {"content_path": "/root", "blah": "zzz"}}`, &CloudConfig{SSHAuthorizedKeys: []string{"re", "fa"}, Hostname: "my_host", NetworkConfigPath: "/root"}, false},
 	} {
 		got, err := ParseMetaData(tt.in)
