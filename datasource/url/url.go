@@ -1,6 +1,8 @@
 package url
 
-import "github.com/coreos/coreos-cloudinit/pkg"
+import (
+	"github.com/coreos/coreos-cloudinit/pkg"
+)
 
 type remoteFile struct {
 	url string
@@ -31,6 +33,10 @@ func (f *remoteFile) FetchMetadata() ([]byte, error) {
 func (f *remoteFile) FetchUserdata() ([]byte, error) {
 	client := pkg.NewHttpClient()
 	return client.GetRetry(f.url)
+}
+
+func (f *remoteFile) FetchNetworkConfig(filename string) ([]byte, error) {
+	return nil, nil
 }
 
 func (f *remoteFile) Type() string {

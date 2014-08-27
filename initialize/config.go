@@ -3,7 +3,6 @@ package initialize
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"path"
 
@@ -42,6 +41,7 @@ type CloudConfig struct {
 	Users             []system.User
 	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
 	NetworkConfigPath string
+	NetworkConfig     string
 }
 
 type warner func(format string, v ...interface{})
@@ -258,17 +258,11 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	if env.NetconfType() != "" {
-		filename := path.Join(env.ConfigRoot(), cfg.NetworkConfigPath)
-		log.Printf("Attempting to read config from %q\n", filename)
-		netconfBytes, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return err
-		}
-
 		var interfaces []network.InterfaceGenerator
+		var err error
 		switch env.NetconfType() {
 		case "debian":
-			interfaces, err = network.ProcessDebianNetconf(string(netconfBytes))
+			interfaces, err = network.ProcessDebianNetconf(cfg.NetworkConfig)
 		default:
 			return fmt.Errorf("Unsupported network config format %q", env.NetconfType())
 		}

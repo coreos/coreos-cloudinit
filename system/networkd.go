@@ -74,15 +74,14 @@ func maybeProbe8012q(interfaces []network.InterfaceGenerator) error {
 }
 
 func maybeProbeBonding(interfaces []network.InterfaceGenerator) error {
-	args := []string{"bonding"}
 	for _, iface := range interfaces {
 		if iface.Type() == "bond" {
-			args = append(args, strings.Split(iface.ModprobeParams(), " ")...)
-			break
+			args := append([]string{"bonding"}, strings.Split(iface.ModprobeParams(), " ")...)
+			log.Printf("Probing LKM %q (%q)\n", "bonding", args)
+			return exec.Command("modprobe", args...).Run()
 		}
 	}
-	log.Printf("Probing LKM %q (%q)\n", "bonding", args)
-	return exec.Command("modprobe", args...).Run()
+	return nil
 }
 
 func restartNetworkd() error {

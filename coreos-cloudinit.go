@@ -132,6 +132,17 @@ func main() {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
 		die()
 	}
+
+	if ccm != nil {
+		fmt.Printf("Fetching network config from datasource of type %q\n", ds.Type())
+		netconfBytes, err := ds.FetchNetworkConfig(ccm.NetworkConfigPath)
+		if err != nil {
+			fmt.Printf("Failed fetching network config from datasource: %v\n", err)
+			die()
+		}
+		ccm.NetworkConfig = string(netconfBytes)
+	}
+
 	if ud, err := initialize.ParseUserData(userdata); err != nil {
 		fmt.Printf("Failed to parse user-data: %v\n", err)
 		die()

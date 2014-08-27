@@ -34,6 +34,10 @@ func (f *localFile) FetchUserdata() ([]byte, error) {
 	return ioutil.ReadFile(f.path)
 }
 
+func (f *localFile) FetchNetworkConfig(filename string) ([]byte, error) {
+	return nil, nil
+}
+
 func (f *localFile) Type() string {
 	return "local-file"
 }

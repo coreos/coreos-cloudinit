@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -25,13 +26,25 @@ type networkInterface interface {
 
 type logicalInterface struct {
 	name        string
+	hwaddr      net.HardwareAddr
 	config      configMethod
 	children    []networkInterface
 	configDepth int
 }
 
+func (i *logicalInterface) Name() string {
+	return i.name
+}
+
 func (i *logicalInterface) Network() string {
-	config := fmt.Sprintf("[Match]\nName=%s\n\n[Network]\n", i.name)
+	config := fmt.Sprintln("[Match]")
+	if i.name != "" {
+		config += fmt.Sprintf("Name=%s\n", i.name)
+	}
+	if i.hwaddr != nil {
+		config += fmt.Sprintf("MACAddress=%s\n", i.hwaddr)
+	}
+	config += "\n[Network]\n"
 
 	for _, child := range i.children {
 		switch iface := child.(type) {
@@ -47,8 +60,8 @@ func (i *logicalInterface) Network() string {
 		for _, nameserver := range conf.nameservers {
 			config += fmt.Sprintf("DNS=%s\n", nameserver)
 		}
-		if conf.address.IP != nil {
-			config += fmt.Sprintf("\n[Address]\nAddress=%s\n", conf.address.String())
+		for _, addr := range conf.addresses {
+			config += fmt.Sprintf("\n[Address]\nAddress=%s\n", addr.String())
 		}
 		for _, route := range conf.routes {
 			config += fmt.Sprintf("\n[Route]\nDestination=%s\nGateway=%s\n", route.destination.String(), route.gateway)
@@ -61,6 +74,10 @@ func (i *logicalInterface) Network() string {
 }
 
 func (i *logicalInterface) Link() string {
+	return ""
+}
+
+func (i *logicalInterface) Netdev() string {
 	return ""
 }
 
@@ -84,14 +101,6 @@ type physicalInterface struct {
 	logicalInterface
 }
 
-func (p *physicalInterface) Name() string {
-	return p.name
-}
-
-func (p *physicalInterface) Netdev() string {
-	return ""
-}
-
 func (p *physicalInterface) Type() string {
 	return "physical"
 }
@@ -100,10 +109,6 @@ type bondInterface struct {
 	logicalInterface
 	slaves  []string
 	options map[string]string
-}
-
-func (b *bondInterface) Name() string {
-	return b.name
 }
 
 func (b *bondInterface) Netdev() string {
@@ -127,10 +132,6 @@ type vlanInterface struct {
 	logicalInterface
 	id        int
 	rawDevice string
-}
-
-func (v *vlanInterface) Name() string {
-	return v.name
 }
 
 func (v *vlanInterface) Netdev() string {
