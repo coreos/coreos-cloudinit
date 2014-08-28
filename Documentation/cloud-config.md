@@ -314,12 +314,12 @@ The **content** field must represent exactly what should be written to disk.
 write_files:
   - path: /etc/resolv.conf
     permissions: 0644
-	owner: root
+    owner: root
     content: |
       nameserver 8.8.8.8
   - path: /etc/motd
     permissions: 0644
-	owner: root
+    owner: root
     content: |
       Good news, everyone!
 ```
