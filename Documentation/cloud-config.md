@@ -95,7 +95,7 @@ Environment="FLEET_METADATA=region=us-west"
 
 For more information on fleet configuration, see the [fleet documentation][fleet-config].
 
-[fleet-config]: https://github.com/coreos/fleet/blob/master/Documentation/deployment-and-configuration.md
+[fleet-config]: https://github.com/coreos/fleet/blob/master/Documentation/deployment-and-configuration.md#configuration
 
 #### update
 
