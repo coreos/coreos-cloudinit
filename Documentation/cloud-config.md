@@ -298,7 +298,8 @@ users:
 
 ### write_files
 
-The `write-file` parameter defines a list of files to create on the local filesystem. Each file is represented as an associative array which has the following keys:
+The `write_files` directive defines a set of files to create on the local filesystem.
+Each item in the list may have the following keys:
 
 - **path**: Absolute location on disk where contents should be written
 - **content**: Data to write at the provided `path`
@@ -311,11 +312,16 @@ The **content** field must represent exactly what should be written to disk.
 ```yaml
 #cloud-config
 write_files:
-  - path: /etc/fleet/fleet.conf
+  - path: /etc/resolv.conf
     permissions: 0644
+    owner: root
     content: |
-      verbosity=1
-      metadata="region=us-west,type=ssd"
+      nameserver 8.8.8.8
+  - path: /etc/motd
+    permissions: 0644
+    owner: root
+    content: |
+      Good news, everyone!
 ```
 
 ### manage_etc_hosts
