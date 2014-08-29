@@ -209,6 +209,13 @@ func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudCon
 			udcc.NetworkConfigPath = mdcc.NetworkConfigPath
 		}
 	}
+	if mdcc.NetworkConfig != "" {
+		if udcc.NetworkConfig != "" {
+			fmt.Printf("Warning: user-data NetworkConfig %s overrides metadata NetworkConfig %s\n", udcc.NetworkConfig, mdcc.NetworkConfig)
+		} else {
+			udcc.NetworkConfig = mdcc.NetworkConfig
+		}
+	}
 	return udcc
 }
 
