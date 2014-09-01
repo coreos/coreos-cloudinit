@@ -11,6 +11,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/cloudsigma"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
@@ -30,13 +31,14 @@ var (
 	printVersion  bool
 	ignoreFailure bool
 	sources       struct {
-		file                      string
-		configDrive               string
-		metadataService           bool
-		ec2MetadataService        string
-		cloudSigmaMetadataService bool
-		url                       string
-		procCmdLine               bool
+		file                        string
+		configDrive                 string
+		metadataService             bool
+		ec2MetadataService          string
+		cloudSigmaMetadataService   bool
+		digitalOceanMetadataService string
+		url                         string
+		procCmdLine                 bool
 	}
 	convertNetconf string
 	workspace      string
@@ -49,11 +51,12 @@ func init() {
 	flag.StringVar(&sources.file, "from-file", "", "Read user-data from provided file")
 	flag.StringVar(&sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
 	flag.BoolVar(&sources.metadataService, "from-metadata-service", false, "[DEPRECATED - Use -from-ec2-metadata] Download data from metadata service")
-	flag.StringVar(&sources.ec2MetadataService, "from-ec2-metadata", "", "Download data from the provided metadata service")
+	flag.StringVar(&sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
 	flag.BoolVar(&sources.cloudSigmaMetadataService, "from-cloudsigma-metadata", false, "Download data from CloudSigma server context")
+	flag.StringVar(&sources.digitalOceanMetadataService, "from-digitalocean-metadata", "", "Download DigitalOcean data from the provided url")
 	flag.StringVar(&sources.url, "from-url", "", "Download user-data from provided url")
 	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
-	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files (requires the -from-configdrive flag)")
+	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files")
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
 }
@@ -73,16 +76,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	if convertNetconf != "" && sources.configDrive == "" {
-		fmt.Println("-convert-netconf flag requires -from-configdrive")
-		os.Exit(1)
-	}
-
 	switch convertNetconf {
 	case "":
 	case "debian":
+	case "digitalocean":
 	default:
-		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian'\n", convertNetconf)
+		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean'\n", convertNetconf)
 		os.Exit(1)
 	}
 
@@ -209,6 +208,13 @@ func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudCon
 			udcc.NetworkConfigPath = mdcc.NetworkConfigPath
 		}
 	}
+	if mdcc.NetworkConfig != "" {
+		if udcc.NetworkConfig != "" {
+			fmt.Printf("Warning: user-data NetworkConfig %s overrides metadata NetworkConfig %s\n", udcc.NetworkConfig, mdcc.NetworkConfig)
+		} else {
+			udcc.NetworkConfig = mdcc.NetworkConfig
+		}
+	}
 	return udcc
 }
 
@@ -233,6 +239,9 @@ func getDatasources() []datasource.Datasource {
 	}
 	if sources.cloudSigmaMetadataService {
 		dss = append(dss, cloudsigma.NewServerContextService())
+	}
+	if sources.digitalOceanMetadataService != "" {
+		dss = append(dss, digitalocean.NewDatasource(sources.digitalOceanMetadataService))
 	}
 	if sources.procCmdLine {
 		dss = append(dss, proc_cmdline.NewDatasource())

@@ -263,6 +263,8 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		switch env.NetconfType() {
 		case "debian":
 			interfaces, err = network.ProcessDebianNetconf(cfg.NetworkConfig)
+		case "digitalocean":
+			interfaces, err = network.ProcessDigitalOceanNetconf(cfg.NetworkConfig)
 		default:
 			return fmt.Errorf("Unsupported network config format %q", env.NetconfType())
 		}

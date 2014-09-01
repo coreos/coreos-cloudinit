@@ -344,6 +344,8 @@ func TestFilename(t *testing.T) {
 		{logicalInterface{name: "iface", configDepth: 9}, "09-iface"},
 		{logicalInterface{name: "iface", configDepth: 10}, "0a-iface"},
 		{logicalInterface{name: "iface", configDepth: 53}, "35-iface"},
+		{logicalInterface{hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}), configDepth: 1}, "01-01:23:45:67:89:ab"},
+		{logicalInterface{name: "iface", hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}), configDepth: 1}, "01-iface"},
 	} {
 		if tt.i.Filename() != tt.f {
 			t.Fatalf("bad filename (%q): got %q, want %q", tt.i, tt.i.Filename(), tt.f)

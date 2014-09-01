@@ -12,6 +12,7 @@ func TestMergeCloudConfig(t *testing.T) {
 		SSHAuthorizedKeys: []string{"abc", "def"},
 		Hostname:          "foobar",
 		NetworkConfigPath: "/path/somewhere",
+		NetworkConfig:     `{}`,
 	}
 	for i, tt := range []struct {
 		udcc initialize.CloudConfig
@@ -36,6 +37,7 @@ func TestMergeCloudConfig(t *testing.T) {
 			initialize.CloudConfig{
 				Hostname:          "meta-hostname",
 				NetworkConfigPath: "/path/meta",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 			simplecc,
 		},
@@ -45,6 +47,7 @@ func TestMergeCloudConfig(t *testing.T) {
 				SSHAuthorizedKeys: []string{"abc", "def"},
 				Hostname:          "user-hostname",
 				NetworkConfigPath: "/path/somewhere",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 			initialize.CloudConfig{
 				SSHAuthorizedKeys: []string{"woof", "qux"},
@@ -54,6 +57,7 @@ func TestMergeCloudConfig(t *testing.T) {
 				SSHAuthorizedKeys: []string{"abc", "def", "woof", "qux"},
 				Hostname:          "user-hostname",
 				NetworkConfigPath: "/path/somewhere",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 		},
 		{
@@ -64,11 +68,13 @@ func TestMergeCloudConfig(t *testing.T) {
 			initialize.CloudConfig{
 				SSHAuthorizedKeys: []string{"zaphod", "beeblebrox"},
 				NetworkConfigPath: "/dev/fun",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 			initialize.CloudConfig{
 				Hostname:          "supercool",
 				SSHAuthorizedKeys: []string{"zaphod", "beeblebrox"},
 				NetworkConfigPath: "/dev/fun",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 		},
 		{
@@ -80,11 +86,13 @@ func TestMergeCloudConfig(t *testing.T) {
 			initialize.CloudConfig{
 				Hostname:          "youyouyou",
 				NetworkConfigPath: "meta-meta-yo",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 			initialize.CloudConfig{
 				Hostname:          "mememe",
 				ManageEtcHosts:    initialize.EtcHosts("lolz"),
 				NetworkConfigPath: "meta-meta-yo",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 		},
 		{
@@ -95,10 +103,12 @@ func TestMergeCloudConfig(t *testing.T) {
 			initialize.CloudConfig{
 				ManageEtcHosts:    initialize.EtcHosts("lolz"),
 				NetworkConfigPath: "meta-meta-yo",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 			initialize.CloudConfig{
 				Hostname:          "mememe",
 				NetworkConfigPath: "meta-meta-yo",
+				NetworkConfig:     `{"hostname":"test"}`,
 			},
 		},
 	} {

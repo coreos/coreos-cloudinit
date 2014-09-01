@@ -82,7 +82,11 @@ func (i *logicalInterface) Netdev() string {
 }
 
 func (i *logicalInterface) Filename() string {
-	return fmt.Sprintf("%02x-%s", i.configDepth, i.name)
+	name := i.name
+	if name == "" {
+		name = i.hwaddr.String()
+	}
+	return fmt.Sprintf("%02x-%s", i.configDepth, name)
 }
 
 func (i *logicalInterface) Children() []networkInterface {
