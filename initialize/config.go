@@ -291,7 +291,11 @@ func Apply(cfg CloudConfig, env *Environment) error {
 // disk, masking/unmasking units, or invoking systemd
 // commands against units. It returns any error encountered.
 func processUnits(units []system.Unit, root string, um system.UnitManager) error {
-	commands := make(map[string]string, 0)
+	type action struct {
+		unit    string
+		command string
+	}
+	actions := make([]action, 0, len(units))
 	reload := false
 	for _, unit := range units {
 		dst := unit.Destination(root)
@@ -329,9 +333,9 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 		}
 
 		if unit.Group() == "network" {
-			commands["systemd-networkd.service"] = "restart"
+			actions = append(actions, action{"systemd-networkd.service", "restart"})
 		} else if unit.Command != "" {
-			commands[unit.Name] = unit.Command
+			actions = append(actions, action{unit.Name, unit.Command})
 		}
 	}
 
@@ -341,13 +345,13 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 		}
 	}
 
-	for unit, command := range commands {
-		log.Printf("Calling unit command '%s %s'", command, unit)
-		res, err := um.RunUnitCommand(command, unit)
+	for _, action := range actions {
+		log.Printf("Calling unit command '%s %s'", action.command, action.unit)
+		res, err := um.RunUnitCommand(action.command, action.unit)
 		if err != nil {
 			return err
 		}
-		log.Printf("Result of '%s %s': %s", command, unit, res)
+		log.Printf("Result of '%s %s': %s", action.command, action.unit, res)
 	}
 
 	return nil
