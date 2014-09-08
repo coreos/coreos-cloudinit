@@ -6,7 +6,7 @@ import (
 	"log"
 	"path"
 
-	"github.com/coreos/coreos-cloudinit/third_party/launchpad.net/goyaml"
+	"github.com/coreos/coreos-cloudinit/third_party/gopkg.in/yaml.v1"
 
 	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
@@ -51,12 +51,12 @@ type warner func(format string, v ...interface{})
 func warnOnUnrecognizedKeys(contents string, warn warner) {
 	// Generate a map of all understood cloud config options
 	var cc map[string]interface{}
-	b, _ := goyaml.Marshal(&CloudConfig{})
-	goyaml.Unmarshal(b, &cc)
+	b, _ := yaml.Marshal(&CloudConfig{})
+	yaml.Unmarshal(b, &cc)
 
 	// Now unmarshal the entire provided contents
 	var c map[string]interface{}
-	goyaml.Unmarshal([]byte(contents), &c)
+	yaml.Unmarshal([]byte(contents), &c)
 
 	// Check that every key in the contents exists in the cloud config
 	for k, _ := range c {
@@ -84,8 +84,8 @@ func warnOnUnrecognizedKeys(contents string, warn warner) {
 	// Check for any badly-specified users, if any are set
 	if users, ok := c["users"]; ok {
 		var known map[string]interface{}
-		b, _ := goyaml.Marshal(&system.User{})
-		goyaml.Unmarshal(b, &known)
+		b, _ := yaml.Marshal(&system.User{})
+		yaml.Unmarshal(b, &known)
 
 		if set, ok := users.([]interface{}); ok {
 			for _, u := range set {
@@ -107,8 +107,8 @@ func warnOnUnrecognizedKeys(contents string, warn warner) {
 	// Check for any badly-specified files, if any are set
 	if files, ok := c["write_files"]; ok {
 		var known map[string]interface{}
-		b, _ := goyaml.Marshal(&system.File{})
-		goyaml.Unmarshal(b, &known)
+		b, _ := yaml.Marshal(&system.File{})
+		yaml.Unmarshal(b, &known)
 
 		if set, ok := files.([]interface{}); ok {
 			for _, f := range set {
@@ -133,7 +133,7 @@ func warnOnUnrecognizedKeys(contents string, warn warner) {
 // fields but log encountering them.
 func NewCloudConfig(contents string) (*CloudConfig, error) {
 	var cfg CloudConfig
-	err := goyaml.Unmarshal([]byte(contents), &cfg)
+	err := yaml.Unmarshal([]byte(contents), &cfg)
 	if err != nil {
 		return &cfg, err
 	}
@@ -142,7 +142,7 @@ func NewCloudConfig(contents string) (*CloudConfig, error) {
 }
 
 func (cc CloudConfig) String() string {
-	bytes, err := goyaml.Marshal(cc)
+	bytes, err := yaml.Marshal(cc)
 	if err != nil {
 		return ""
 	}

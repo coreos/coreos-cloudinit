@@ -16,7 +16,7 @@ func ParseUserData(contents string) (interface{}, error) {
 
 	// Explicitly trim the header so we can handle user-data from
 	// non-unix operating systems. The rest of the file is parsed
-	// by goyaml, which correctly handles CRLF.
+	// by yaml, which correctly handles CRLF.
 	header = strings.TrimSpace(header)
 
 	if strings.HasPrefix(header, "#!") {
