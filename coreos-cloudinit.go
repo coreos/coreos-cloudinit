@@ -62,14 +62,9 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
+	failure := false
 
-	die := func() {
-		if ignoreFailure {
-			os.Exit(0)
-		}
-		os.Exit(1)
-	}
+	flag.Parse()
 
 	if printVersion == true {
 		fmt.Printf("coreos-cloudinit version %s\n", version)
@@ -82,33 +77,33 @@ func main() {
 	case "digitalocean":
 	default:
 		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean'\n", convertNetconf)
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	dss := getDatasources()
 	if len(dss) == 0 {
 		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-url or --from-proc-cmdline")
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	ds := selectDatasource(dss)
 	if ds == nil {
 		fmt.Println("No datasources available in time")
-		die()
+		os.Exit(1)
 	}
 
 	fmt.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
 	userdataBytes, err := ds.FetchUserdata()
 	if err != nil {
-		fmt.Printf("Failed fetching user-data from datasource: %v\n", err)
-		die()
+		fmt.Printf("Failed fetching user-data from datasource: %v\nContinuing...\n", err)
+		failure = true
 	}
 
 	fmt.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
 	metadataBytes, err := ds.FetchMetadata()
 	if err != nil {
 		fmt.Printf("Failed fetching meta-data from datasource: %v\n", err)
-		die()
+		os.Exit(1)
 	}
 
 	// Extract IPv4 addresses from metadata if possible
@@ -117,7 +112,7 @@ func main() {
 		subs, err = initialize.ExtractIPsFromMetadata(metadataBytes)
 		if err != nil {
 			fmt.Printf("Failed extracting IPs from meta-data: %v\n", err)
-			die()
+			os.Exit(1)
 		}
 	}
 
@@ -129,7 +124,7 @@ func main() {
 	var script *system.Script
 	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
-		die()
+		os.Exit(1)
 	}
 
 	if ccm != nil {
@@ -137,14 +132,14 @@ func main() {
 		netconfBytes, err := ds.FetchNetworkConfig(ccm.NetworkConfigPath)
 		if err != nil {
 			fmt.Printf("Failed fetching network config from datasource: %v\n", err)
-			die()
+			os.Exit(1)
 		}
 		ccm.NetworkConfig = string(netconfBytes)
 	}
 
 	if ud, err := initialize.ParseUserData(userdata); err != nil {
-		fmt.Printf("Failed to parse user-data: %v\n", err)
-		die()
+		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
+		failure = true
 	} else {
 		switch t := ud.(type) {
 		case *initialize.CloudConfig:
@@ -172,15 +167,19 @@ func main() {
 	if cc != nil {
 		if err = initialize.Apply(*cc, env); err != nil {
 			fmt.Printf("Failed to apply cloud-config: %v\n", err)
-			die()
+			os.Exit(1)
 		}
 	}
 
 	if script != nil {
 		if err = runScript(*script, env); err != nil {
 			fmt.Printf("Failed to run script: %v\n", err)
-			die()
+			os.Exit(1)
 		}
+	}
+
+	if failure && !ignoreFailure {
+		os.Exit(1)
 	}
 }
 
