@@ -43,6 +43,7 @@ var (
 	convertNetconf string
 	workspace      string
 	sshKeyName     string
+	oem            string
 )
 
 func init() {
@@ -56,15 +57,48 @@ func init() {
 	flag.StringVar(&sources.digitalOceanMetadataService, "from-digitalocean-metadata", "", "Download DigitalOcean data from the provided url")
 	flag.StringVar(&sources.url, "from-url", "", "Download user-data from provided url")
 	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
+	flag.StringVar(&oem, "oem", "", "Use the settings specific to the provided OEM")
 	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files")
 	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
 }
 
+type oemConfig map[string]string
+
+var (
+	oemConfigs = map[string]oemConfig{
+		"digitalocean": oemConfig{
+			"from-digitalocean-metadata": "http://169.254.169.254/",
+			"convert-netconf":            "digitalocean",
+		},
+		"ec2-compat": oemConfig{
+			"from-ec2-metadata": "http://169.254.169.254/",
+			"from-configdrive":  "/media/configdrive",
+		},
+		"rackspace-onmetal": oemConfig{
+			"from-configdrive": "/media/configdrive",
+			"convert-netconf":  "debian",
+		},
+	}
+)
+
 func main() {
 	failure := false
 
 	flag.Parse()
+
+	if c, ok := oemConfigs[oem]; ok {
+		for k, v := range c {
+			flag.Set(k, v)
+		}
+	} else if flags.oem != "" {
+		oems := make([]string, 0, len(oemConfigs))
+		for k := range oemConfigs {
+			oems = append(oems, k)
+		}
+		fmt.Printf("Invalid option to --oem: %q. Supported options: %q\n", flags.oem, oems)
+		os.Exit(2)
+	}
 
 	if printVersion == true {
 		fmt.Printf("coreos-cloudinit version %s\n", version)
