@@ -28,39 +28,41 @@ const (
 )
 
 var (
-	printVersion  bool
-	ignoreFailure bool
-	sources       struct {
-		file                        string
-		configDrive                 string
-		metadataService             bool
-		ec2MetadataService          string
-		cloudSigmaMetadataService   bool
-		digitalOceanMetadataService string
-		url                         string
-		procCmdLine                 bool
-	}
-	convertNetconf string
-	workspace      string
-	sshKeyName     string
-	oem            string
+	flags = struct {
+		printVersion  bool
+		ignoreFailure bool
+		sources       struct {
+			file                        string
+			configDrive                 string
+			metadataService             bool
+			ec2MetadataService          string
+			cloudSigmaMetadataService   bool
+			digitalOceanMetadataService string
+			url                         string
+			procCmdLine                 bool
+		}
+		convertNetconf string
+		workspace      string
+		sshKeyName     string
+		oem            string
+	}{}
 )
 
 func init() {
-	flag.BoolVar(&printVersion, "version", false, "Print the version and exit")
-	flag.BoolVar(&ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
-	flag.StringVar(&sources.file, "from-file", "", "Read user-data from provided file")
-	flag.StringVar(&sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
-	flag.BoolVar(&sources.metadataService, "from-metadata-service", false, "[DEPRECATED - Use -from-ec2-metadata] Download data from metadata service")
-	flag.StringVar(&sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
-	flag.BoolVar(&sources.cloudSigmaMetadataService, "from-cloudsigma-metadata", false, "Download data from CloudSigma server context")
-	flag.StringVar(&sources.digitalOceanMetadataService, "from-digitalocean-metadata", "", "Download DigitalOcean data from the provided url")
-	flag.StringVar(&sources.url, "from-url", "", "Download user-data from provided url")
-	flag.BoolVar(&sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
-	flag.StringVar(&oem, "oem", "", "Use the settings specific to the provided OEM")
-	flag.StringVar(&convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files")
-	flag.StringVar(&workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
-	flag.StringVar(&sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
+	flag.BoolVar(&flags.printVersion, "version", false, "Print the version and exit")
+	flag.BoolVar(&flags.ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
+	flag.StringVar(&flags.sources.file, "from-file", "", "Read user-data from provided file")
+	flag.StringVar(&flags.sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
+	flag.BoolVar(&flags.sources.metadataService, "from-metadata-service", false, "[DEPRECATED - Use -from-ec2-metadata] Download data from metadata service")
+	flag.StringVar(&flags.sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
+	flag.BoolVar(&flags.sources.cloudSigmaMetadataService, "from-cloudsigma-metadata", false, "Download data from CloudSigma server context")
+	flag.StringVar(&flags.sources.digitalOceanMetadataService, "from-digitalocean-metadata", "", "Download DigitalOcean data from the provided url")
+	flag.StringVar(&flags.sources.url, "from-url", "", "Download user-data from provided url")
+	flag.BoolVar(&flags.sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
+	flag.StringVar(&flags.oem, "oem", "", "Use the settings specific to the provided OEM")
+	flag.StringVar(&flags.convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files")
+	flag.StringVar(&flags.workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
+	flag.StringVar(&flags.sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
 }
 
 type oemConfig map[string]string
@@ -87,7 +89,7 @@ func main() {
 
 	flag.Parse()
 
-	if c, ok := oemConfigs[oem]; ok {
+	if c, ok := oemConfigs[flags.oem]; ok {
 		for k, v := range c {
 			flag.Set(k, v)
 		}
@@ -100,17 +102,17 @@ func main() {
 		os.Exit(2)
 	}
 
-	if printVersion == true {
+	if flags.printVersion == true {
 		fmt.Printf("coreos-cloudinit version %s\n", version)
 		os.Exit(0)
 	}
 
-	switch convertNetconf {
+	switch flags.convertNetconf {
 	case "":
 	case "debian":
 	case "digitalocean":
 	default:
-		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean'\n", convertNetconf)
+		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean'\n", flags.convertNetconf)
 		os.Exit(2)
 	}
 
@@ -151,7 +153,7 @@ func main() {
 	}
 
 	// Apply environment to user-data
-	env := initialize.NewEnvironment("/", ds.ConfigRoot(), workspace, convertNetconf, sshKeyName, subs)
+	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, subs)
 	userdata := env.Apply(string(userdataBytes))
 
 	var ccm, ccu *initialize.CloudConfig
@@ -212,7 +214,7 @@ func main() {
 		}
 	}
 
-	if failure && !ignoreFailure {
+	if failure && !flags.ignoreFailure {
 		os.Exit(1)
 	}
 }
@@ -255,28 +257,28 @@ func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudCon
 // on the different source command-line flags.
 func getDatasources() []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
-	if sources.file != "" {
-		dss = append(dss, file.NewDatasource(sources.file))
+	if flags.sources.file != "" {
+		dss = append(dss, file.NewDatasource(flags.sources.file))
 	}
-	if sources.url != "" {
-		dss = append(dss, url.NewDatasource(sources.url))
+	if flags.sources.url != "" {
+		dss = append(dss, url.NewDatasource(flags.sources.url))
 	}
-	if sources.configDrive != "" {
-		dss = append(dss, configdrive.NewDatasource(sources.configDrive))
+	if flags.sources.configDrive != "" {
+		dss = append(dss, configdrive.NewDatasource(flags.sources.configDrive))
 	}
-	if sources.metadataService {
+	if flags.sources.metadataService {
 		dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))
 	}
-	if sources.ec2MetadataService != "" {
-		dss = append(dss, ec2.NewDatasource(sources.ec2MetadataService))
+	if flags.sources.ec2MetadataService != "" {
+		dss = append(dss, ec2.NewDatasource(flags.sources.ec2MetadataService))
 	}
-	if sources.cloudSigmaMetadataService {
+	if flags.sources.cloudSigmaMetadataService {
 		dss = append(dss, cloudsigma.NewServerContextService())
 	}
-	if sources.digitalOceanMetadataService != "" {
-		dss = append(dss, digitalocean.NewDatasource(sources.digitalOceanMetadataService))
+	if flags.sources.digitalOceanMetadataService != "" {
+		dss = append(dss, digitalocean.NewDatasource(flags.sources.digitalOceanMetadataService))
 	}
-	if sources.procCmdLine {
+	if flags.sources.procCmdLine {
 		dss = append(dss, proc_cmdline.NewDatasource())
 	}
 	return dss
