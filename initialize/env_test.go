@@ -55,6 +55,24 @@ ExecStop=/usr/bin/echo $unknown`,
 			"$private_ipv4\nfoobar",
 			"5.6.7.8\nfoobar",
 		},
+		{
+			// Escaping substitutions
+			map[string]string{"$private_ipv4": "127.0.0.1"},
+			`\$private_ipv4
+$private_ipv4
+addr: \$private_ipv4
+\\$private_ipv4`,
+			`$private_ipv4
+127.0.0.1
+addr: $private_ipv4
+\$private_ipv4`,
+		},
+		{
+			// No substitutions with escaping
+			nil,
+			"\\$test\n$test",
+			"\\$test\n$test",
+		},
 	} {
 
 		env := NewEnvironment("./", "./", "./", "", "", tt.subs)

@@ -3,6 +3,7 @@ package initialize
 import (
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/coreos/coreos-cloudinit/system"
@@ -62,9 +63,18 @@ func (e *Environment) SetSSHKeyName(name string) {
 	e.sshKeyName = name
 }
 
+// Apply goes through the map of substitutions and replaces all instances of
+// the keys with their respective values. It supports escaping substitutions
+// with a leading '\'.
 func (e *Environment) Apply(data string) string {
 	for key, val := range e.substitutions {
-		data = strings.Replace(data, key, val, -1)
+		matchKey := strings.Replace(key, `$`, `\$`, -1)
+		replKey := strings.Replace(key, `$`, `$$`, -1)
+
+		// "key" -> "val"
+		data = regexp.MustCompile(`([^\\]|^)`+matchKey).ReplaceAllString(data, `${1}`+val)
+		// "\key" -> "key"
+		data = regexp.MustCompile(`\\`+matchKey).ReplaceAllString(data, replKey)
 	}
 	return data
 }
