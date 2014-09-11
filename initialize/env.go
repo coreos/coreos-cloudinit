@@ -28,6 +28,8 @@ func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string,
 	for k, v := range map[string]string{
 		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
 		"$private_ipv4": os.Getenv("COREOS_PRIVATE_IPV4"),
+		"$public_ipv6":  os.Getenv("COREOS_PUBLIC_IPV6"),
+		"$private_ipv6": os.Getenv("COREOS_PRIVATE_IPV6"),
 	} {
 		if _, ok := substitutions[k]; !ok {
 			substitutions[k] = v
@@ -79,6 +81,12 @@ func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 	}
 	if ip, ok := e.substitutions["$private_ipv4"]; ok && len(ip) > 0 {
 		ef.Vars["COREOS_PRIVATE_IPV4"] = ip
+	}
+	if ip, ok := e.substitutions["$public_ipv6"]; ok && len(ip) > 0 {
+		ef.Vars["COREOS_PUBLIC_IPV6"] = ip
+	}
+	if ip, ok := e.substitutions["$private_ipv6"]; ok && len(ip) > 0 {
+		ef.Vars["COREOS_PRIVATE_IPV6"] = ip
 	}
 	if len(ef.Vars) == 0 {
 		return nil
