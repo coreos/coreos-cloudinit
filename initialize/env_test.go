@@ -12,6 +12,8 @@ import (
 func TestEnvironmentApply(t *testing.T) {
 	os.Setenv("COREOS_PUBLIC_IPV4", "1.2.3.4")
 	os.Setenv("COREOS_PRIVATE_IPV4", "5.6.7.8")
+	os.Setenv("COREOS_PUBLIC_IPV6", "1234::")
+	os.Setenv("COREOS_PRIVATE_IPV6", "5678::")
 	for _, tt := range []struct {
 		subs  map[string]string
 		input string
@@ -23,14 +25,16 @@ func TestEnvironmentApply(t *testing.T) {
 			map[string]string{
 				"$public_ipv4":  "192.0.2.3",
 				"$private_ipv4": "192.0.2.203",
+				"$public_ipv6":  "fe00:1234::",
+				"$private_ipv6": "fe00:5678::",
 			},
 			`[Service]
-ExecStart=/usr/bin/echo "$public_ipv4"
-ExecStop=/usr/bin/echo $private_ipv4
+ExecStart=/usr/bin/echo "$public_ipv4 $public_ipv6"
+ExecStop=/usr/bin/echo $private_ipv4 $private_ipv6
 ExecStop=/usr/bin/echo $unknown`,
 			`[Service]
-ExecStart=/usr/bin/echo "192.0.2.3"
-ExecStop=/usr/bin/echo 192.0.2.203
+ExecStart=/usr/bin/echo "192.0.2.3 fe00:1234::"
+ExecStop=/usr/bin/echo 192.0.2.203 fe00:5678::
 ExecStop=/usr/bin/echo $unknown`,
 		},
 		{
@@ -65,8 +69,10 @@ func TestEnvironmentFile(t *testing.T) {
 	subs := map[string]string{
 		"$public_ipv4":  "1.2.3.4",
 		"$private_ipv4": "5.6.7.8",
+		"$public_ipv6":  "1234::",
+		"$private_ipv6": "5678::",
 	}
-	expect := "COREOS_PRIVATE_IPV4=5.6.7.8\nCOREOS_PUBLIC_IPV4=1.2.3.4\n"
+	expect := "COREOS_PRIVATE_IPV4=5.6.7.8\nCOREOS_PRIVATE_IPV6=5678::\nCOREOS_PUBLIC_IPV4=1.2.3.4\nCOREOS_PUBLIC_IPV6=1234::\n"
 
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
@@ -96,6 +102,8 @@ func TestEnvironmentFileNil(t *testing.T) {
 	subs := map[string]string{
 		"$public_ipv4":  "",
 		"$private_ipv4": "",
+		"$public_ipv6":  "",
+		"$private_ipv6": "",
 	}
 
 	env := NewEnvironment("./", "./", "./", "", "", subs)

@@ -43,9 +43,9 @@ func TestExtractIPsFromMetadata(t *testing.T) {
 		out map[string]string
 	}{
 		{
-			[]byte(`{"public-ipv4": "12.34.56.78", "local-ipv4": "1.2.3.4"}`),
+			[]byte(`{"public-ipv4": "12.34.56.78", "local-ipv4": "1.2.3.4", "public-ipv6": "1234::", "local-ipv6": "5678::"}`),
 			false,
-			map[string]string{"$public_ipv4": "12.34.56.78", "$private_ipv4": "1.2.3.4"},
+			map[string]string{"$public_ipv4": "12.34.56.78", "$private_ipv4": "1.2.3.4", "$public_ipv6": "1234::", "$private_ipv6": "5678::"},
 		},
 		{
 			[]byte(`{"local-ipv4": "127.0.0.1", "something_else": "don't care"}`),

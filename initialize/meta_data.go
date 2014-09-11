@@ -5,8 +5,8 @@ import (
 	"sort"
 )
 
-// ParseMetaData parses a JSON blob in the OpenStack metadata service format, and
-// converts it to a partially hydrated CloudConfig
+// ParseMetaData parses a JSON blob in the OpenStack metadata service format,
+// and converts it to a partially hydrated CloudConfig.
 func ParseMetaData(contents string) (*CloudConfig, error) {
 	if len(contents) == 0 {
 		return nil, nil
@@ -34,22 +34,31 @@ func ParseMetaData(contents string) (*CloudConfig, error) {
 	return &cfg, nil
 }
 
-// ExtractIPsFromMetaData parses a JSON blob in the OpenStack metadata service format,
-// and returns a substitution map possibly containing private_ipv4 and public_ipv4 addresses
+// ExtractIPsFromMetaData parses a JSON blob in the OpenStack metadata service
+// format and returns a substitution map possibly containing private_ipv4,
+// public_ipv4, private_ipv6, and public_ipv6 addresses.
 func ExtractIPsFromMetadata(contents []byte) (map[string]string, error) {
 	var ips struct {
-		Public  string `json:"public-ipv4"`
-		Private string `json:"local-ipv4"`
+		PublicIPv4  string `json:"public-ipv4"`
+		PrivateIPv4 string `json:"local-ipv4"`
+		PublicIPv6  string `json:"public-ipv6"`
+		PrivateIPv6 string `json:"local-ipv6"`
 	}
 	if err := json.Unmarshal(contents, &ips); err != nil {
 		return nil, err
 	}
 	m := make(map[string]string)
-	if ips.Private != "" {
-		m["$private_ipv4"] = ips.Private
+	if ips.PrivateIPv4 != "" {
+		m["$private_ipv4"] = ips.PrivateIPv4
 	}
-	if ips.Public != "" {
-		m["$public_ipv4"] = ips.Public
+	if ips.PublicIPv4 != "" {
+		m["$public_ipv4"] = ips.PublicIPv4
+	}
+	if ips.PrivateIPv6 != "" {
+		m["$private_ipv6"] = ips.PrivateIPv6
+	}
+	if ips.PublicIPv6 != "" {
+		m["$public_ipv6"] = ips.PublicIPv6
 	}
 	return m, nil
 }
