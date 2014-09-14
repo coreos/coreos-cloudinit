@@ -42,6 +42,9 @@ func (cd *configDrive) FetchUserdata() ([]byte, error) {
 }
 
 func (cd *configDrive) FetchNetworkConfig(filename string) ([]byte, error) {
+	if filename == "" {
+		return []byte{}, nil
+	}
 	return cd.tryReadFile(path.Join(cd.openstackRoot(), filename))
 }
 

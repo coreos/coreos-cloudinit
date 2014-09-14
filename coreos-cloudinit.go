@@ -163,7 +163,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if ccm != nil {
+	if ccm != nil && flags.convertNetconf != "" {
 		fmt.Printf("Fetching network config from datasource of type %q\n", ds.Type())
 		netconfBytes, err := ds.FetchNetworkConfig(ccm.NetworkConfigPath)
 		if err != nil {
