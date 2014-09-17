@@ -236,7 +236,11 @@ func parseInterfaceStanza(attributes []string, options []string) (*stanzaInterfa
 				for i, field := range fields[:len(fields)-1] {
 					switch field {
 					case "-net":
-						route.destination.IP = net.ParseIP(fields[i+1])
+						if _, dst, err := net.ParseCIDR(fields[i+1]); err == nil {
+							route.destination = *dst
+						} else {
+							route.destination.IP = net.ParseIP(fields[i+1])
+						}
 					case "netmask":
 						route.destination.Mask = net.IPMask(net.ParseIP(fields[i+1]).To4())
 					case "gw":

@@ -285,31 +285,57 @@ func TestBadParseInterfaceStanzasStaticPostUp(t *testing.T) {
 }
 
 func TestParseInterfaceStanzaStaticPostUp(t *testing.T) {
-	options := []string{
-		"address 192.168.1.100",
-		"netmask 255.255.255.0",
-		"post-up route add gw 192.168.1.1 -net 192.168.1.0 netmask 255.255.255.0",
-	}
-	expect := []route{
+	for _, tt := range []struct {
+		options []string
+		expect  []route
+	}{
 		{
-			destination: net.IPNet{
-				IP:   net.IPv4(192, 168, 1, 0),
-				Mask: net.IPv4Mask(255, 255, 255, 0),
+			options: []string{
+				"address 192.168.1.100",
+				"netmask 255.255.255.0",
+				"post-up route add gw 192.168.1.1 -net 192.168.1.0 netmask 255.255.255.0",
 			},
-			gateway: net.IPv4(192, 168, 1, 1),
+			expect: []route{
+				{
+					destination: net.IPNet{
+						IP:   net.IPv4(192, 168, 1, 0),
+						Mask: net.IPv4Mask(255, 255, 255, 0),
+					},
+					gateway: net.IPv4(192, 168, 1, 1),
+				},
+			},
 		},
-	}
-
-	iface, err := parseInterfaceStanza([]string{"eth", "inet", "static"}, options)
-	if err != nil {
-		t.FailNow()
-	}
-	static, ok := iface.configMethod.(configMethodStatic)
-	if !ok {
-		t.FailNow()
-	}
-	if !reflect.DeepEqual(static.routes, expect) {
-		t.FailNow()
+		{
+			options: []string{
+				"address 192.168.1.100",
+				"netmask 255.255.255.0",
+				"post-up route add gw 192.168.1.1 -net 192.168.1.0/24 || true",
+			},
+			expect: []route{
+				{
+					destination: func() net.IPNet {
+						if _, net, err := net.ParseCIDR("192.168.1.0/24"); err == nil {
+							return *net
+						} else {
+							panic(err)
+						}
+					}(),
+					gateway: net.IPv4(192, 168, 1, 1),
+				},
+			},
+		},
+	} {
+		iface, err := parseInterfaceStanza([]string{"eth", "inet", "static"}, tt.options)
+		if err != nil {
+			t.Fatalf("bad error (%+v): want nil, got %s\n", tt, err)
+		}
+		static, ok := iface.configMethod.(configMethodStatic)
+		if !ok {
+			t.Fatalf("bad config method (%+v): want configMethodStatic, got %T\n", tt, iface.configMethod)
+		}
+		if !reflect.DeepEqual(static.routes, tt.expect) {
+			t.Fatalf("bad routes (%+v): want %#v, got %#v\n", tt, tt.expect, static.routes)
+		}
 	}
 }
 
