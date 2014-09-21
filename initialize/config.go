@@ -39,7 +39,7 @@ type CloudConfig struct {
 	}
 	WriteFiles        []config.File `yaml:"write_files"`
 	Hostname          string
-	Users             []system.User
+	Users             []config.User
 	ManageEtcHosts    config.EtcHosts `yaml:"manage_etc_hosts"`
 	NetworkConfigPath string
 	NetworkConfig     string
@@ -85,7 +85,7 @@ func warnOnUnrecognizedKeys(contents string, warn warner) {
 	// Check for any badly-specified users, if any are set
 	if users, ok := c["users"]; ok {
 		var known map[string]interface{}
-		b, _ := yaml.Marshal(&system.User{})
+		b, _ := yaml.Marshal(&config.User{})
 		yaml.Unmarshal(b, &known)
 
 		if set, ok := users.([]interface{}); ok {
