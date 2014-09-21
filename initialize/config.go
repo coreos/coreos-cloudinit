@@ -33,7 +33,7 @@ type CloudConfig struct {
 	Coreos            struct {
 		Etcd   config.Etcd
 		Fleet  config.Fleet
-		OEM    OEMRelease
+		OEM    config.OEM
 		Update UpdateConfig
 		Units  []system.Unit
 	}
@@ -217,7 +217,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
-	for _, ccf := range []CloudConfigFile{cfg.Coreos.OEM, cfg.Coreos.Update, cfg.ManageEtcHosts} {
+	for _, ccf := range []CloudConfigFile{system.OEM{cfg.Coreos.OEM}, cfg.Coreos.Update, cfg.ManageEtcHosts} {
 		f, err := ccf.File(env.Root())
 		if err != nil {
 			return err
