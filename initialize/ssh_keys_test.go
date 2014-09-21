@@ -39,31 +39,4 @@ func TestCloudConfigUsersUrlMarshal(t *testing.T) {
 	if keys[2] != expected {
 		t.Fatalf("expected %s, got %s", expected, keys[2])
 	}
-
-}
-func TestCloudConfigUsersSSHImportURL(t *testing.T) {
-
-	contents := `
-users:
-  - name: elroy
-    coreos-ssh-import-url: https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys
-`
-	cfg, err := NewCloudConfig(contents)
-	if err != nil {
-		t.Fatalf("Encountered unexpected error: %v", err)
-	}
-
-	if len(cfg.Users) != 1 {
-		t.Fatalf("Parsed %d users, expected 1", cfg.Users)
-	}
-
-	user := cfg.Users[0]
-
-	if user.Name != "elroy" {
-		t.Errorf("User name is %q, expected 'elroy'", user.Name)
-	}
-
-	if user.SSHImportURL != "https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys" {
-		t.Errorf("ssh import url is %q, expected 'https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys'", user.SSHImportURL)
-	}
 }

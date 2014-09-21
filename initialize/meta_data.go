@@ -3,11 +3,13 @@ package initialize
 import (
 	"encoding/json"
 	"sort"
+
+	"github.com/coreos/coreos-cloudinit/config"
 )
 
 // ParseMetaData parses a JSON blob in the OpenStack metadata service format,
 // and converts it to a partially hydrated CloudConfig.
-func ParseMetaData(contents string) (*CloudConfig, error) {
+func ParseMetaData(contents string) (*config.CloudConfig, error) {
 	if len(contents) == 0 {
 		return nil, nil
 	}
@@ -22,7 +24,7 @@ func ParseMetaData(contents string) (*CloudConfig, error) {
 		return nil, err
 	}
 
-	var cfg CloudConfig
+	var cfg config.CloudConfig
 	if len(metadata.SSHAuthorizedKeyMap) > 0 {
 		cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHAuthorizedKeyMap))
 		for _, name := range sortedKeys(metadata.SSHAuthorizedKeyMap) {

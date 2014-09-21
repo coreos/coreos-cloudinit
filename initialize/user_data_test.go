@@ -2,6 +2,8 @@ package initialize
 
 import (
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/config"
 )
 
 func TestParseHeaderCRLF(t *testing.T) {
@@ -37,7 +39,7 @@ func TestParseConfigCRLF(t *testing.T) {
 		t.Fatalf("Failed parsing config: %v", err)
 	}
 
-	cfg := ud.(*CloudConfig)
+	cfg := ud.(*config.CloudConfig)
 
 	if cfg.Hostname != "foo" {
 		t.Error("Failed parsing hostname from config")
