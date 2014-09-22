@@ -35,7 +35,7 @@ type CloudConfig struct {
 		Fleet  config.Fleet
 		OEM    config.OEM
 		Update config.Update
-		Units  []system.Unit
+		Units  []config.Unit
 	}
 	WriteFiles        []system.File `yaml:"write_files"`
 	Hostname          string
@@ -231,6 +231,11 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
+	var units []system.Unit
+	for _, u := range cfg.Coreos.Units {
+		units = append(units, system.Unit{u})
+	}
+
 	for _, ccu := range []CloudConfigUnit{
 		system.Etcd{cfg.Coreos.Etcd},
 		system.Fleet{cfg.Coreos.Fleet},
@@ -240,7 +245,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		if err != nil {
 			return err
 		}
-		cfg.Coreos.Units = append(cfg.Coreos.Units, u...)
+		units = append(units, u...)
 	}
 
 	wroteEnvironment := false
@@ -291,7 +296,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	um := system.NewUnitManager(env.Root())
-	return processUnits(cfg.Coreos.Units, env.Root(), um)
+	return processUnits(units, env.Root(), um)
 
 }
 

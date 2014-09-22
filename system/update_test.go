@@ -27,43 +27,43 @@ func TestUpdateUnits(t *testing.T) {
 		},
 		{
 			config: config.Update{Group: "master", Server: "http://foo.com"},
-			units: []Unit{{
+			units: []Unit{{config.Unit{
 				Name:    "update-engine.service",
 				Command: "restart",
-			}},
+			}}},
 		},
 		{
 			config: config.Update{RebootStrategy: "best-effort"},
-			units: []Unit{{
+			units: []Unit{{config.Unit{
 				Name:    "locksmithd.service",
 				Command: "restart",
 				Runtime: true,
-			}},
+			}}},
 		},
 		{
 			config: config.Update{RebootStrategy: "etcd-lock"},
-			units: []Unit{{
+			units: []Unit{{config.Unit{
 				Name:    "locksmithd.service",
 				Command: "restart",
 				Runtime: true,
-			}},
+			}}},
 		},
 		{
 			config: config.Update{RebootStrategy: "reboot"},
-			units: []Unit{{
+			units: []Unit{{config.Unit{
 				Name:    "locksmithd.service",
 				Command: "restart",
 				Runtime: true,
-			}},
+			}}},
 		},
 		{
 			config: config.Update{RebootStrategy: "off"},
-			units: []Unit{{
+			units: []Unit{{config.Unit{
 				Name:    "locksmithd.service",
 				Command: "stop",
 				Runtime: true,
 				Mask:    true,
-			}},
+			}}},
 		},
 	} {
 		units, err := Update{tt.config, testReadConfig("")}.Units()

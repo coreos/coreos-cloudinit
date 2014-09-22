@@ -103,12 +103,12 @@ func (uc Update) File() (*File, error) {
 func (uc Update) Units() ([]Unit, error) {
 	var units []Unit
 	if uc.Config.RebootStrategy != "" {
-		ls := &Unit{
+		ls := &Unit{config.Unit{
 			Name:    locksmithUnit,
 			Command: "restart",
 			Mask:    false,
 			Runtime: true,
-		}
+		}}
 
 		if uc.Config.RebootStrategy == "off" {
 			ls.Command = "stop"
@@ -118,10 +118,10 @@ func (uc Update) Units() ([]Unit, error) {
 	}
 
 	if uc.Config.Group != "" || uc.Config.Server != "" {
-		ue := Unit{
+		ue := Unit{config.Unit{
 			Name:    updateEngineUnit,
 			Command: "restart",
-		}
+		}}
 		units = append(units, ue)
 	}
 

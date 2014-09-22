@@ -21,7 +21,7 @@ func TestEtcdUnits(t *testing.T) {
 				Discovery:    "http://disco.example.com/foobar",
 				PeerBindAddr: "127.0.0.1:7002",
 			},
-			[]Unit{{
+			[]Unit{{config.Unit{
 				Name:    "etcd.service",
 				Runtime: true,
 				DropIn:  true,
@@ -29,7 +29,7 @@ func TestEtcdUnits(t *testing.T) {
 Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `,
-			}},
+			}}},
 		},
 		{
 			config.Etcd{
@@ -37,7 +37,7 @@ Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 				Discovery:    "http://disco.example.com/foobar",
 				PeerBindAddr: "127.0.0.1:7002",
 			},
-			[]Unit{{
+			[]Unit{{config.Unit{
 				Name:    "etcd.service",
 				Runtime: true,
 				DropIn:  true,
@@ -46,7 +46,7 @@ Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
 Environment="ETCD_NAME=node001"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `,
-			}},
+			}}},
 		},
 	} {
 		units, err := Etcd{tt.config}.Units()

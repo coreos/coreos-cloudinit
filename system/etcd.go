@@ -16,10 +16,10 @@ func (ee Etcd) Units() ([]Unit, error) {
 	if content == "" {
 		return nil, nil
 	}
-	return []Unit{{
+	return []Unit{{config.Unit{
 		Name:    "etcd.service",
 		Runtime: true,
 		DropIn:  true,
 		Content: content,
-	}}, nil
+	}}}, nil
 }

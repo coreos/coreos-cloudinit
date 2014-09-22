@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -401,10 +402,10 @@ func (tum *TestUnitManager) UnmaskUnit(unit *system.Unit) error {
 func TestProcessUnits(t *testing.T) {
 	tum := &TestUnitManager{}
 	units := []system.Unit{
-		system.Unit{
+		system.Unit{config.Unit{
 			Name: "foo",
 			Mask: true,
-		},
+		}},
 	}
 	if err := processUnits(units, "", tum); err != nil {
 		t.Fatalf("unexpected error calling processUnits: %v", err)
@@ -415,9 +416,9 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{
+		system.Unit{config.Unit{
 			Name: "bar.network",
-		},
+		}},
 	}
 	if err := processUnits(units, "", tum); err != nil {
 		t.Fatalf("unexpected error calling processUnits: %v", err)
@@ -428,10 +429,10 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{
+		system.Unit{config.Unit{
 			Name:    "baz.service",
 			Content: "[Service]\nExecStart=/bin/true",
-		},
+		}},
 	}
 	if err := processUnits(units, "", tum); err != nil {
 		t.Fatalf("unexpected error calling processUnits: %v", err)
@@ -442,10 +443,10 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{
+		system.Unit{config.Unit{
 			Name:    "locksmithd.service",
 			Runtime: true,
-		},
+		}},
 	}
 	if err := processUnits(units, "", tum); err != nil {
 		t.Fatalf("unexpected error calling processUnits: %v", err)
@@ -456,10 +457,10 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{
+		system.Unit{config.Unit{
 			Name:   "woof",
 			Enable: true,
-		},
+		}},
 	}
 	if err := processUnits(units, "", tum); err != nil {
 		t.Fatalf("unexpected error calling processUnits: %v", err)

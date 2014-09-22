@@ -17,10 +17,10 @@ func (fe Fleet) Units() ([]Unit, error) {
 	if content == "" {
 		return nil, nil
 	}
-	return []Unit{{
+	return []Unit{{config.Unit{
 		Name:    "fleet.service",
 		Runtime: true,
 		DropIn:  true,
 		Content: content,
-	}}, nil
+	}}}, nil
 }
