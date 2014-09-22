@@ -104,16 +104,3 @@ func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 		return &ef
 	}
 }
-
-// normalizeSvcEnv standardizes the keys of the map (environment variables for a service)
-// by replacing any dashes with underscores and ensuring they are entirely upper case.
-// For example, "some-env" --> "SOME_ENV"
-func normalizeSvcEnv(m map[string]string) map[string]string {
-	out := make(map[string]string, len(m))
-	for key, val := range m {
-		key = strings.ToUpper(key)
-		key = strings.Replace(key, "-", "_", -1)
-		out[key] = val
-	}
-	return out
-}

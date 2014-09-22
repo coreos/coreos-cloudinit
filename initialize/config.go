@@ -32,7 +32,7 @@ type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
 		Etcd   config.Etcd
-		Fleet  FleetEnvironment
+		Fleet  config.Fleet
 		OEM    OEMRelease
 		Update UpdateConfig
 		Units  []system.Unit
@@ -227,7 +227,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
-	for _, ccu := range []CloudConfigUnit{system.Etcd{cfg.Coreos.Etcd}, cfg.Coreos.Fleet, cfg.Coreos.Update} {
+	for _, ccu := range []CloudConfigUnit{system.Etcd{cfg.Coreos.Etcd}, system.Fleet{cfg.Coreos.Fleet}, cfg.Coreos.Update} {
 		u, err := ccu.Units(env.Root())
 		if err != nil {
 			return err
