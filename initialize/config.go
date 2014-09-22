@@ -37,7 +37,7 @@ type CloudConfig struct {
 		Update config.Update
 		Units  []config.Unit
 	}
-	WriteFiles        []system.File `yaml:"write_files"`
+	WriteFiles        []config.File `yaml:"write_files"`
 	Hostname          string
 	Users             []system.User
 	ManageEtcHosts    config.EtcHosts `yaml:"manage_etc_hosts"`
@@ -217,6 +217,11 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
+	var writeFiles []system.File
+	for _, file := range cfg.WriteFiles {
+		writeFiles = append(writeFiles, system.File{file})
+	}
+
 	for _, ccf := range []CloudConfigFile{
 		system.OEM{cfg.Coreos.OEM},
 		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
@@ -227,7 +232,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 			return err
 		}
 		if f != nil {
-			cfg.WriteFiles = append(cfg.WriteFiles, *f)
+			writeFiles = append(writeFiles, *f)
 		}
 	}
 
@@ -249,7 +254,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 	}
 
 	wroteEnvironment := false
-	for _, file := range cfg.WriteFiles {
+	for _, file := range writeFiles {
 		fullPath, err := system.WriteFile(&file, env.Root())
 		if err != nil {
 			return err

@@ -24,7 +24,7 @@ func TestOEMFile(t *testing.T) {
 				HomeURL:      "https://www.rackspace.com/cloud/servers/",
 				BugReportURL: "https://github.com/coreos/coreos-overlay",
 			},
-			&File{
+			&File{config.File{
 				Path:               "etc/oem-release",
 				RawFilePermissions: "0644",
 				Content: `ID=rackspace
@@ -33,7 +33,7 @@ NAME="Rackspace Cloud Servers"
 HOME_URL="https://www.rackspace.com/cloud/servers/"
 BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 `,
-			},
+			}},
 		},
 	} {
 		file, err := OEM{tt.config}.File()

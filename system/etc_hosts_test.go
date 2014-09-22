@@ -27,11 +27,11 @@ func TestEtcdHostsFile(t *testing.T) {
 		},
 		{
 			"localhost",
-			&File{
+			&File{config.File{
 				Content:            fmt.Sprintf("127.0.0.1 %s\n", hostname),
 				Path:               "etc/hosts",
 				RawFilePermissions: "0644",
-			},
+			}},
 			nil,
 		},
 	} {

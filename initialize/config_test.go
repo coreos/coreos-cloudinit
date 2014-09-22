@@ -178,7 +178,7 @@ hostname: trontastic
 	if len(cfg.WriteFiles) != 1 {
 		t.Error("Failed to parse correct number of write_files")
 	} else {
-		wf := cfg.WriteFiles[0]
+		wf := system.File{cfg.WriteFiles[0]}
 		if wf.Content != "penny\nelroy\n" {
 			t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
 		}

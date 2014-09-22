@@ -24,9 +24,9 @@ func (oem OEM) File() (*File, error) {
 	content += fmt.Sprintf("HOME_URL=%q\n", oem.HomeURL)
 	content += fmt.Sprintf("BUG_REPORT_URL=%q\n", oem.BugReportURL)
 
-	return &File{
+	return &File{config.File{
 		Path:               path.Join("etc", "oem-release"),
 		RawFilePermissions: "0644",
 		Content:            content,
-	}, nil
+	}}, nil
 }

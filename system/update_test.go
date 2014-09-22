@@ -92,52 +92,52 @@ func TestUpdateFile(t *testing.T) {
 		},
 		{
 			config: config.Update{Group: "master", Server: "http://foo.com"},
-			file: &File{
+			file: &File{config.File{
 				Content:            "GROUP=master\nSERVER=http://foo.com\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
-			},
+			}},
 		},
 		{
 			config: config.Update{RebootStrategy: "best-effort"},
-			file: &File{
+			file: &File{config.File{
 				Content:            "REBOOT_STRATEGY=best-effort\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
-			},
+			}},
 		},
 		{
 			config: config.Update{RebootStrategy: "etcd-lock"},
-			file: &File{
+			file: &File{config.File{
 				Content:            "REBOOT_STRATEGY=etcd-lock\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
-			},
+			}},
 		},
 		{
 			config: config.Update{RebootStrategy: "reboot"},
-			file: &File{
+			file: &File{config.File{
 				Content:            "REBOOT_STRATEGY=reboot\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
-			},
+			}},
 		},
 		{
 			config: config.Update{RebootStrategy: "off"},
-			file: &File{
+			file: &File{config.File{
 				Content:            "REBOOT_STRATEGY=off\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
-			},
+			}},
 		},
 		{
 			config: config.Update{RebootStrategy: "etcd-lock"},
 			orig:   "SERVER=https://example.com\nGROUP=thegroupc\nREBOOT_STRATEGY=awesome",
-			file: &File{
+			file: &File{config.File{
 				Content:            "SERVER=https://example.com\nGROUP=thegroupc\nREBOOT_STRATEGY=etcd-lock\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
-			},
+			}},
 		},
 	} {
 		file, err := Update{tt.config, testReadConfig(tt.orig)}.File()

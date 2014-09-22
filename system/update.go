@@ -90,11 +90,11 @@ func (uc Update) File() (*File, error) {
 		out += "\n"
 	}
 
-	return &File{
+	return &File{config.File{
 		Path:               path.Join("etc", "coreos", "update.conf"),
 		RawFilePermissions: "0644",
 		Content:            out,
-	}, nil
+	}}, nil
 }
 
 // Units generates units for the cloud-init initializer to act on:

@@ -40,9 +40,9 @@ func (eh EtcHosts) File() (*File, error) {
 		return nil, err
 	}
 
-	return &File{
+	return &File{config.File{
 		Path:               path.Join("etc", "hosts"),
 		RawFilePermissions: "0644",
 		Content:            etcHosts,
-	}, nil
+	}}, nil
 }

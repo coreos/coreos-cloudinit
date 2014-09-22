@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -81,9 +82,9 @@ func (e *Environment) Apply(data string) string {
 
 func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 	ef := system.EnvFile{
-		File: &system.File{
+		File: &system.File{config.File{
 			Path: "/etc/environment",
-		},
+		}},
 		Vars: map[string]string{},
 	}
 	if ip, ok := e.substitutions["$public_ipv4"]; ok && len(ip) > 0 {

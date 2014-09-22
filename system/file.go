@@ -8,14 +8,14 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
+
+	"github.com/coreos/coreos-cloudinit/config"
 )
 
+// File is a top-level structure which embeds its underlying configuration,
+// config.File, and provides the system-specific Permissions().
 type File struct {
-	Encoding           string
-	Content            string
-	Owner              string
-	Path               string
-	RawFilePermissions string `yaml:"permissions"`
+	config.File
 }
 
 func (f *File) Permissions() (os.FileMode, error) {
