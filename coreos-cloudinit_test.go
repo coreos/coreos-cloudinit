@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/coreos/coreos-cloudinit/config"
 )
 
 func TestMergeCloudConfig(t *testing.T) {
@@ -81,7 +82,7 @@ func TestMergeCloudConfig(t *testing.T) {
 			// Non-mergeable settings in user-data should not be affected
 			initialize.CloudConfig{
 				Hostname:       "mememe",
-				ManageEtcHosts: initialize.EtcHosts("lolz"),
+				ManageEtcHosts: config.EtcHosts("lolz"),
 			},
 			initialize.CloudConfig{
 				Hostname:          "youyouyou",
@@ -90,7 +91,7 @@ func TestMergeCloudConfig(t *testing.T) {
 			},
 			initialize.CloudConfig{
 				Hostname:          "mememe",
-				ManageEtcHosts:    initialize.EtcHosts("lolz"),
+				ManageEtcHosts:    config.EtcHosts("lolz"),
 				NetworkConfigPath: "meta-meta-yo",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},
@@ -101,7 +102,7 @@ func TestMergeCloudConfig(t *testing.T) {
 				Hostname: "mememe",
 			},
 			initialize.CloudConfig{
-				ManageEtcHosts:    initialize.EtcHosts("lolz"),
+				ManageEtcHosts:    config.EtcHosts("lolz"),
 				NetworkConfigPath: "meta-meta-yo",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},

@@ -36,7 +36,7 @@ BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 			},
 		},
 	} {
-		file, err := OEM{tt.config}.File("")
+		file, err := OEM{tt.config}.File()
 		if err != nil {
 			t.Errorf("bad error (%q): want %q, got %q", tt.config, nil, err)
 		}

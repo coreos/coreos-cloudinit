@@ -30,7 +30,7 @@ Environment="FLEET_PUBLIC_IP=12.34.56.78"
 			}},
 		},
 	} {
-		units, err := Fleet{tt.config}.Units("")
+		units, err := Fleet{tt.config}.Units()
 		if err != nil {
 			t.Errorf("bad error (%q): want %q, got %q", tt.config, nil, err)
 		}

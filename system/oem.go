@@ -13,7 +13,7 @@ type OEM struct {
 	config.OEM
 }
 
-func (oem OEM) File(_ string) (*File, error) {
+func (oem OEM) File() (*File, error) {
 	if oem.ID == "" {
 		return nil, nil
 	}

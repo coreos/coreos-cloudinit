@@ -226,7 +226,7 @@ Address=10.209.171.177/19
 	if cfg.Hostname != "trontastic" {
 		t.Errorf("Failed to parse hostname")
 	}
-	if cfg.Coreos.Update["reboot-strategy"] != "reboot" {
+	if cfg.Coreos.Update.RebootStrategy != "reboot" {
 		t.Errorf("Failed to parse locksmith strategy")
 	}
 }

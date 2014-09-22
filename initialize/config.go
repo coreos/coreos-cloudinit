@@ -18,13 +18,13 @@ import (
 type CloudConfigFile interface {
 	// File should either return (*system.File, error), or (nil, nil) if nothing
 	// needs to be done for this configuration option.
-	File(root string) (*system.File, error)
+	File() (*system.File, error)
 }
 
 // CloudConfigUnit represents a CoreOS specific configuration option that can generate
 // associated system.Units to be created/enabled appropriately
 type CloudConfigUnit interface {
-	Units(root string) ([]system.Unit, error)
+	Units() ([]system.Unit, error)
 }
 
 // CloudConfig encapsulates the entire cloud-config configuration file and maps directly to YAML
@@ -34,13 +34,13 @@ type CloudConfig struct {
 		Etcd   config.Etcd
 		Fleet  config.Fleet
 		OEM    config.OEM
-		Update UpdateConfig
+		Update config.Update
 		Units  []system.Unit
 	}
 	WriteFiles        []system.File `yaml:"write_files"`
 	Hostname          string
 	Users             []system.User
-	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
+	ManageEtcHosts    config.EtcHosts `yaml:"manage_etc_hosts"`
 	NetworkConfigPath string
 	NetworkConfig     string
 }
@@ -217,8 +217,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
-	for _, ccf := range []CloudConfigFile{system.OEM{cfg.Coreos.OEM}, cfg.Coreos.Update, cfg.ManageEtcHosts} {
-		f, err := ccf.File(env.Root())
+	for _, ccf := range []CloudConfigFile{
+		system.OEM{cfg.Coreos.OEM},
+		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
+		system.EtcHosts{cfg.ManageEtcHosts},
+	} {
+		f, err := ccf.File()
 		if err != nil {
 			return err
 		}
@@ -227,8 +231,12 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
-	for _, ccu := range []CloudConfigUnit{system.Etcd{cfg.Coreos.Etcd}, system.Fleet{cfg.Coreos.Fleet}, cfg.Coreos.Update} {
-		u, err := ccu.Units(env.Root())
+	for _, ccu := range []CloudConfigUnit{
+		system.Etcd{cfg.Coreos.Etcd},
+		system.Fleet{cfg.Coreos.Fleet},
+		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
+	} {
+		u, err := ccu.Units()
 		if err != nil {
 			return err
 		}
