@@ -66,7 +66,7 @@ hostname:
 	if cfg.Hostname != "foo" {
 		t.Fatalf("hostname not correctly set when invalid keys are present")
 	}
-	if len(cfg.Coreos.Etcd) < 1 {
+	if cfg.Coreos.Etcd.Discovery != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
 		t.Fatalf("etcd section not correctly set when invalid keys are present")
 	}
 	if len(cfg.WriteFiles) < 1 || cfg.WriteFiles[0].Content != "fun" || cfg.WriteFiles[0].Path != "/var/party" {

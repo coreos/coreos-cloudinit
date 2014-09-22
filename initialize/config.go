@@ -8,6 +8,7 @@ import (
 
 	"github.com/coreos/coreos-cloudinit/third_party/gopkg.in/yaml.v1"
 
+	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
 )
@@ -30,7 +31,7 @@ type CloudConfigUnit interface {
 type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
-		Etcd   EtcdEnvironment
+		Etcd   config.Etcd
 		Fleet  FleetEnvironment
 		OEM    OEMRelease
 		Update UpdateConfig
@@ -226,7 +227,7 @@ func Apply(cfg CloudConfig, env *Environment) error {
 		}
 	}
 
-	for _, ccu := range []CloudConfigUnit{cfg.Coreos.Etcd, cfg.Coreos.Fleet, cfg.Coreos.Update} {
+	for _, ccu := range []CloudConfigUnit{system.Etcd{cfg.Coreos.Etcd}, cfg.Coreos.Fleet, cfg.Coreos.Update} {
 		u, err := ccu.Units(env.Root())
 		if err != nil {
 			return err
