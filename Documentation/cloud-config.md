@@ -130,11 +130,11 @@ The `coreos.units.*` parameters define a list of arbitrary systemd units to star
 Each item is an object with the following fields:
 
 - **name**: String representing unit's name. Required.
-- **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analogous to the `--runtime` argument to `systemctl enable`. Default value is false.
-- **enable**: Boolean indicating whether or not to handle the [Install] section of the unit file. This is similar to running `systemctl enable <name>`. Default value is false.
+- **runtime**: Boolean indicating whether or not to persist the unit across reboots. This is analogous to the `--runtime` argument to `systemctl enable`. The default value is false.
+- **enable**: Boolean indicating whether or not to handle the [Install] section of the unit file. This is similar to running `systemctl enable <name>`. The default value is false.
 - **content**: Plaintext string representing entire unit file. If no value is provided, the unit is assumed to exist already.
-- **command**: Command to execute on unit: start, stop, reload, restart, try-restart, reload-or-restart, reload-or-try-restart. Default value is restart.
-- **mask**: Whether to mask the unit file by symlinking it to `/dev/null` (analogous to `systemctl mask <name>`). Note that unlike `systemctl mask`, **this will destructively remove any existing unit file** located at `/etc/systemd/system/<unit>`, to ensure that the mask succeeds. Default value is false.
+- **command**: Command to execute on unit: start, stop, reload, restart, try-restart, reload-or-restart, reload-or-try-restart. The default behavior is to not execute any commands.
+- **mask**: Whether to mask the unit file by symlinking it to `/dev/null` (analogous to `systemctl mask <name>`). Note that unlike `systemctl mask`, **this will destructively remove any existing unit file** located at `/etc/systemd/system/<unit>`, to ensure that the mask succeeds. The default value is false.
 
 **NOTE:** The command field is ignored for all network, netdev, and link units. The systemd-networkd.service unit will be restarted in their place.
 
