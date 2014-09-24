@@ -13,9 +13,9 @@ import (
 
 const (
 	DefaultAddress = "http://169.254.169.254/"
-	apiVersion     = "2009-04-04"
-	userdataPath   = apiVersion + "/user-data"
-	metadataPath   = apiVersion + "/meta-data"
+	apiVersion     = "2009-04-04/"
+	userdataPath   = apiVersion + "user-data"
+	metadataPath   = apiVersion + "meta-data"
 )
 
 type metadataService struct {
