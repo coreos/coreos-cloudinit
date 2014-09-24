@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -24,7 +25,7 @@ func ParseUserData(contents string) (interface{}, error) {
 		return system.Script(contents), nil
 	} else if header == "#cloud-config" {
 		log.Printf("Parsing user-data as cloud-config")
-		return NewCloudConfig(contents)
+		return config.NewCloudConfig(contents)
 	} else {
 		return nil, fmt.Errorf("Unrecognized user-data header: %s", header)
 	}

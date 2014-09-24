@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -81,9 +82,9 @@ func (e *Environment) Apply(data string) string {
 
 func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 	ef := system.EnvFile{
-		File: &system.File{
+		File: &system.File{config.File{
 			Path: "/etc/environment",
-		},
+		}},
 		Vars: map[string]string{},
 	}
 	if ip, ok := e.substitutions["$public_ipv4"]; ok && len(ip) > 0 {
@@ -103,17 +104,4 @@ func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 	} else {
 		return &ef
 	}
-}
-
-// normalizeSvcEnv standardizes the keys of the map (environment variables for a service)
-// by replacing any dashes with underscores and ensuring they are entirely upper case.
-// For example, "some-env" --> "SOME_ENV"
-func normalizeSvcEnv(m map[string]string) map[string]string {
-	out := make(map[string]string, len(m))
-	for key, val := range m {
-		key = strings.ToUpper(key)
-		key = strings.Replace(key, "-", "_", -1)
-		out[key] = val
-	}
-	return out
 }
