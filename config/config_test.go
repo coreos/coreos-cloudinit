@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -130,29 +129,6 @@ hostname:
 	}
 	if len(cfg.Users) < 1 || cfg.Users[0].Name != "fry" || cfg.Users[0].PasswordHash != "somehash" {
 		t.Fatalf("users section not correctly set when invalid keys are present")
-	}
-
-	var warnings string
-	catchWarn := func(f string, v ...interface{}) {
-		warnings += fmt.Sprintf(f, v...)
-	}
-
-	warnOnUnrecognizedKeys(contents, catchWarn)
-
-	if !strings.Contains(warnings, "coreos_unknown") {
-		t.Errorf("warnings did not catch unrecognized coreos option coreos_unknown")
-	}
-	if !strings.Contains(warnings, "bare_unknown") {
-		t.Errorf("warnings did not catch unrecognized key bare_unknown")
-	}
-	if !strings.Contains(warnings, "section_unknown") {
-		t.Errorf("warnings did not catch unrecognized key section_unknown")
-	}
-	if !strings.Contains(warnings, "user_unknown") {
-		t.Errorf("warnings did not catch unrecognized user key user_unknown")
-	}
-	if !strings.Contains(warnings, "file_unknown") {
-		t.Errorf("warnings did not catch unrecognized file key file_unknown")
 	}
 }
 
