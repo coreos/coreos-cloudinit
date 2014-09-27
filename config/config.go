@@ -45,6 +45,17 @@ type CloudConfig struct {
 	NetworkConfig     string   `yaml:"-"`
 }
 
+func IsCloudConfig(userdata string) bool {
+	header := strings.SplitN(userdata, "\n", 2)[0]
+
+	// Explicitly trim the header so we can handle user-data from
+	// non-unix operating systems. The rest of the file is parsed
+	// by yaml, which correctly handles CRLF.
+	header = strings.TrimSuffix(header, "\r")
+
+	return (header == "#cloud-config")
+}
+
 // NewCloudConfig instantiates a new CloudConfig from the given contents (a
 // string of YAML), returning any error encountered. It will ignore unknown
 // fields but log encountering them.

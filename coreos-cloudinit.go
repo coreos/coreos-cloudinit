@@ -180,7 +180,7 @@ func main() {
 	userdata := env.Apply(string(userdataBytes))
 
 	var ccm, ccu *config.CloudConfig
-	var script *system.Script
+	var script *config.Script
 	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
 		os.Exit(1)
@@ -203,7 +203,7 @@ func main() {
 		switch t := ud.(type) {
 		case *config.CloudConfig:
 			ccu = t
-		case system.Script:
+		case config.Script:
 			script = &t
 		}
 	}
@@ -362,7 +362,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 }
 
 // TODO(jonboulle): this should probably be refactored and moved into a different module
-func runScript(script system.Script, env *initialize.Environment) error {
+func runScript(script config.Script, env *initialize.Environment) error {
 	err := initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
 		fmt.Printf("Failed preparing workspace: %v\n", err)
