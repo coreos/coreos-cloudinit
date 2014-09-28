@@ -1,25 +1,21 @@
 package initialize
 
-import (
-	"reflect"
-	"testing"
-
-	"github.com/coreos/coreos-cloudinit/config"
-)
+import "reflect"
+import "testing"
 
 func TestParseMetadata(t *testing.T) {
 	for i, tt := range []struct {
 		in   string
-		want *config.CloudConfig
+		want *CloudConfig
 		err  bool
 	}{
 		{"", nil, false},
 		{`garbage, invalid json`, nil, true},
-		{`{"foo": "bar"}`, &config.CloudConfig{}, false},
-		{`{"network_config": {"content_path": "asdf"}}`, &config.CloudConfig{NetworkConfigPath: "asdf"}, false},
-		{`{"hostname": "turkleton"}`, &config.CloudConfig{Hostname: "turkleton"}, false},
-		{`{"public_keys": {"jack": "jill", "bob": "alice"}}`, &config.CloudConfig{SSHAuthorizedKeys: []string{"alice", "jill"}}, false},
-		{`{"unknown": "thing", "hostname": "my_host", "public_keys": {"do": "re", "mi": "fa"}, "network_config": {"content_path": "/root", "blah": "zzz"}}`, &config.CloudConfig{SSHAuthorizedKeys: []string{"re", "fa"}, Hostname: "my_host", NetworkConfigPath: "/root"}, false},
+		{`{"foo": "bar"}`, &CloudConfig{}, false},
+		{`{"network_config": {"content_path": "asdf"}}`, &CloudConfig{NetworkConfigPath: "asdf"}, false},
+		{`{"hostname": "turkleton"}`, &CloudConfig{Hostname: "turkleton"}, false},
+		{`{"public_keys": {"jack": "jill", "bob": "alice"}}`, &CloudConfig{SSHAuthorizedKeys: []string{"alice", "jill"}}, false},
+		{`{"unknown": "thing", "hostname": "my_host", "public_keys": {"do": "re", "mi": "fa"}, "network_config": {"content_path": "/root", "blah": "zzz"}}`, &CloudConfig{SSHAuthorizedKeys: []string{"re", "fa"}, Hostname: "my_host", NetworkConfigPath: "/root"}, false},
 	} {
 		got, err := ParseMetaData(tt.in)
 		if tt.err != (err != nil) {

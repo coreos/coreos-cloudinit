@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/third_party/github.com/coreos/go-systemd/dbus"
 )
 
@@ -36,11 +35,11 @@ func (s *systemd) PlaceUnit(u *Unit, dst string) error {
 		}
 	}
 
-	file := File{config.File{
+	file := File{
 		Path:               filepath.Base(dst),
 		Content:            u.Content,
 		RawFilePermissions: "0644",
-	}}
+	}
 
 	_, err := WriteFile(&file, dir)
 	if err != nil {

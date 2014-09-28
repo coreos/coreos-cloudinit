@@ -6,7 +6,8 @@ import (
 	"log"
 	"path"
 
-	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/third_party/gopkg.in/yaml.v1"
+
 	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
 )
@@ -16,19 +17,146 @@ import (
 type CloudConfigFile interface {
 	// File should either return (*system.File, error), or (nil, nil) if nothing
 	// needs to be done for this configuration option.
-	File() (*system.File, error)
+	File(root string) (*system.File, error)
 }
 
 // CloudConfigUnit represents a CoreOS specific configuration option that can generate
 // associated system.Units to be created/enabled appropriately
 type CloudConfigUnit interface {
-	Units() ([]system.Unit, error)
+	Units(root string) ([]system.Unit, error)
+}
+
+// CloudConfig encapsulates the entire cloud-config configuration file and maps directly to YAML
+type CloudConfig struct {
+	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
+	Coreos            struct {
+		Etcd   EtcdEnvironment
+		Fleet  FleetEnvironment
+		OEM    OEMRelease
+		Update UpdateConfig
+		Units  []system.Unit
+	}
+	WriteFiles        []system.File `yaml:"write_files"`
+	Hostname          string
+	Users             []system.User
+	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
+	NetworkConfigPath string
+	NetworkConfig     string
+}
+
+type warner func(format string, v ...interface{})
+
+// warnOnUnrecognizedKeys parses the contents of a cloud-config file and calls
+// warn(msg, key) for every unrecognized key (i.e. those not present in CloudConfig)
+func warnOnUnrecognizedKeys(contents string, warn warner) {
+	// Generate a map of all understood cloud config options
+	var cc map[string]interface{}
+	b, _ := yaml.Marshal(&CloudConfig{})
+	yaml.Unmarshal(b, &cc)
+
+	// Now unmarshal the entire provided contents
+	var c map[string]interface{}
+	yaml.Unmarshal([]byte(contents), &c)
+
+	// Check that every key in the contents exists in the cloud config
+	for k, _ := range c {
+		if _, ok := cc[k]; !ok {
+			warn("Warning: unrecognized key %q in provided cloud config - ignoring section", k)
+		}
+	}
+
+	// Check for unrecognized coreos options, if any are set
+	if coreos, ok := c["coreos"]; ok {
+		if set, ok := coreos.(map[interface{}]interface{}); ok {
+			known := cc["coreos"].(map[interface{}]interface{})
+			for k, _ := range set {
+				if key, ok := k.(string); ok {
+					if _, ok := known[key]; !ok {
+						warn("Warning: unrecognized key %q in coreos section of provided cloud config - ignoring", key)
+					}
+				} else {
+					warn("Warning: unrecognized key %q in coreos section of provided cloud config - ignoring", k)
+				}
+			}
+		}
+	}
+
+	// Check for any badly-specified users, if any are set
+	if users, ok := c["users"]; ok {
+		var known map[string]interface{}
+		b, _ := yaml.Marshal(&system.User{})
+		yaml.Unmarshal(b, &known)
+
+		if set, ok := users.([]interface{}); ok {
+			for _, u := range set {
+				if user, ok := u.(map[interface{}]interface{}); ok {
+					for k, _ := range user {
+						if key, ok := k.(string); ok {
+							if _, ok := known[key]; !ok {
+								warn("Warning: unrecognized key %q in user section of cloud config - ignoring", key)
+							}
+						} else {
+							warn("Warning: unrecognized key %q in user section of cloud config - ignoring", k)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Check for any badly-specified files, if any are set
+	if files, ok := c["write_files"]; ok {
+		var known map[string]interface{}
+		b, _ := yaml.Marshal(&system.File{})
+		yaml.Unmarshal(b, &known)
+
+		if set, ok := files.([]interface{}); ok {
+			for _, f := range set {
+				if file, ok := f.(map[interface{}]interface{}); ok {
+					for k, _ := range file {
+						if key, ok := k.(string); ok {
+							if _, ok := known[key]; !ok {
+								warn("Warning: unrecognized key %q in file section of cloud config - ignoring", key)
+							}
+						} else {
+							warn("Warning: unrecognized key %q in file section of cloud config - ignoring", k)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// NewCloudConfig instantiates a new CloudConfig from the given contents (a
+// string of YAML), returning any error encountered. It will ignore unknown
+// fields but log encountering them.
+func NewCloudConfig(contents string) (*CloudConfig, error) {
+	var cfg CloudConfig
+	err := yaml.Unmarshal([]byte(contents), &cfg)
+	if err != nil {
+		return &cfg, err
+	}
+	warnOnUnrecognizedKeys(contents, log.Printf)
+	return &cfg, nil
+}
+
+func (cc CloudConfig) String() string {
+	bytes, err := yaml.Marshal(cc)
+	if err != nil {
+		return ""
+	}
+
+	stringified := string(bytes)
+	stringified = fmt.Sprintf("#cloud-config\n%s", stringified)
+
+	return stringified
 }
 
 // Apply renders a CloudConfig to an Environment. This can involve things like
 // configuring the hostname, adding new users, writing various configuration
 // files to disk, and manipulating systemd services.
-func Apply(cfg config.CloudConfig, env *Environment) error {
+func Apply(cfg CloudConfig, env *Environment) error {
 	if cfg.Hostname != "" {
 		if err := system.SetHostname(cfg.Hostname); err != nil {
 			return err
@@ -88,44 +216,26 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		}
 	}
 
-	var writeFiles []system.File
-	for _, file := range cfg.WriteFiles {
-		writeFiles = append(writeFiles, system.File{file})
-	}
-
-	for _, ccf := range []CloudConfigFile{
-		system.OEM{cfg.Coreos.OEM},
-		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
-		system.EtcHosts{cfg.ManageEtcHosts},
-	} {
-		f, err := ccf.File()
+	for _, ccf := range []CloudConfigFile{cfg.Coreos.OEM, cfg.Coreos.Update, cfg.ManageEtcHosts} {
+		f, err := ccf.File(env.Root())
 		if err != nil {
 			return err
 		}
 		if f != nil {
-			writeFiles = append(writeFiles, *f)
+			cfg.WriteFiles = append(cfg.WriteFiles, *f)
 		}
 	}
 
-	var units []system.Unit
-	for _, u := range cfg.Coreos.Units {
-		units = append(units, system.Unit{u})
-	}
-
-	for _, ccu := range []CloudConfigUnit{
-		system.Etcd{cfg.Coreos.Etcd},
-		system.Fleet{cfg.Coreos.Fleet},
-		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
-	} {
-		u, err := ccu.Units()
+	for _, ccu := range []CloudConfigUnit{cfg.Coreos.Etcd, cfg.Coreos.Fleet, cfg.Coreos.Update} {
+		u, err := ccu.Units(env.Root())
 		if err != nil {
 			return err
 		}
-		units = append(units, u...)
+		cfg.Coreos.Units = append(cfg.Coreos.Units, u...)
 	}
 
 	wroteEnvironment := false
-	for _, file := range writeFiles {
+	for _, file := range cfg.WriteFiles {
 		fullPath, err := system.WriteFile(&file, env.Root())
 		if err != nil {
 			return err
@@ -172,7 +282,7 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 	}
 
 	um := system.NewUnitManager(env.Root())
-	return processUnits(units, env.Root(), um)
+	return processUnits(cfg.Coreos.Units, env.Root(), um)
 
 }
 
