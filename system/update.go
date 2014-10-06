@@ -100,7 +100,7 @@ func (uc Update) File() (*File, error) {
 // Units generates units for the cloud-init initializer to act on:
 // - a locksmith Unit, if "reboot-strategy" was set in cloud-config
 // - an update_engine Unit, if "group" or "server" was set in cloud-config
-func (uc Update) Units() ([]Unit, error) {
+func (uc Update) Units() []Unit {
 	var units []Unit
 	if uc.Config.RebootStrategy != "" {
 		ls := &Unit{config.Unit{
@@ -125,7 +125,7 @@ func (uc Update) Units() ([]Unit, error) {
 		units = append(units, ue)
 	}
 
-	return units, nil
+	return units
 }
 
 func sortedKeys(m map[string]string) (keys []string) {
