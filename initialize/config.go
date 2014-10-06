@@ -22,7 +22,7 @@ type CloudConfigFile interface {
 // CloudConfigUnit represents a CoreOS specific configuration option that can generate
 // associated system.Units to be created/enabled appropriately
 type CloudConfigUnit interface {
-	Units() ([]system.Unit, error)
+	Units() []system.Unit
 }
 
 // Apply renders a CloudConfig to an Environment. This can involve things like
@@ -117,11 +117,7 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		system.Fleet{cfg.Coreos.Fleet},
 		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
 	} {
-		u, err := ccu.Units()
-		if err != nil {
-			return err
-		}
-		units = append(units, u...)
+		units = append(units, ccu.Units()...)
 	}
 
 	wroteEnvironment := false

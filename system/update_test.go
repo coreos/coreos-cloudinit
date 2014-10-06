@@ -66,10 +66,7 @@ func TestUpdateUnits(t *testing.T) {
 			}}},
 		},
 	} {
-		units, err := Update{tt.config, testReadConfig("")}.Units()
-		if !reflect.DeepEqual(tt.err, err) {
-			t.Errorf("bad error (%q): want %q, got %q", tt.config, tt.err, err)
-		}
+		units := Update{tt.config, testReadConfig("")}.Units()
 		if !reflect.DeepEqual(tt.units, units) {
 			t.Errorf("bad units (%q): want %#v, got %#v", tt.config, tt.units, units)
 		}

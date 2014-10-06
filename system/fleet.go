@@ -12,15 +12,15 @@ type Fleet struct {
 
 // Units generates a Unit file drop-in for fleet, if any fleet options were
 // configured in cloud-config
-func (fe Fleet) Units() ([]Unit, error) {
+func (fe Fleet) Units() []Unit {
 	content := dropinContents(fe.Fleet)
 	if content == "" {
-		return nil, nil
+		return nil
 	}
 	return []Unit{{config.Unit{
 		Name:    "fleet.service",
 		Runtime: true,
 		DropIn:  true,
 		Content: content,
-	}}}, nil
+	}}}
 }

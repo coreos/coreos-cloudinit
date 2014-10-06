@@ -11,15 +11,15 @@ type Etcd struct {
 }
 
 // Units creates a Unit file drop-in for etcd, using any configured options.
-func (ee Etcd) Units() ([]Unit, error) {
+func (ee Etcd) Units() []Unit {
 	content := dropinContents(ee.Etcd)
 	if content == "" {
-		return nil, nil
+		return nil
 	}
 	return []Unit{{config.Unit{
 		Name:    "etcd.service",
 		Runtime: true,
 		DropIn:  true,
 		Content: content,
-	}}}, nil
+	}}}
 }
