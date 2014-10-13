@@ -29,10 +29,6 @@ import (
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/dotcloud/docker/pkg/netlink"
 )
 
-const (
-	runtimeNetworkPath = "/run/systemd/network"
-)
-
 func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
 	defer func() {
 		if e := restartNetworkd(); e != nil {
@@ -98,32 +94,5 @@ func restartNetworkd() error {
 	log.Printf("Restarting networkd.service\n")
 	networkd := Unit{config.Unit{Name: "systemd-networkd.service"}}
 	_, err := NewUnitManager("").RunUnitCommand(networkd, "restart")
-	return err
-}
-
-func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
-	for _, iface := range interfaces {
-		filename := fmt.Sprintf("%s.netdev", iface.Filename())
-		if err := writeConfig(filename, iface.Netdev()); err != nil {
-			return err
-		}
-		filename = fmt.Sprintf("%s.link", iface.Filename())
-		if err := writeConfig(filename, iface.Link()); err != nil {
-			return err
-		}
-		filename = fmt.Sprintf("%s.network", iface.Filename())
-		if err := writeConfig(filename, iface.Network()); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func writeConfig(filename string, content string) error {
-	if content == "" {
-		return nil
-	}
-	log.Printf("Writing networkd unit %q\n", filename)
-	_, err := WriteFile(&File{config.File{Content: content, Path: filename}}, runtimeNetworkPath)
 	return err
 }
