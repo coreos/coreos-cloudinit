@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/third_party/github.com/dotcloud/docker/pkg/netlink"
 )
@@ -109,11 +108,11 @@ func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
 	return nil
 }
 
-func writeConfig(filename string, content string) error {
-	if content == "" {
+func writeConfig(filename string, config string) error {
+	if config == "" {
 		return nil
 	}
 	log.Printf("Writing networkd unit %q\n", filename)
-	_, err := WriteFile(&File{config.File{Content: content, Path: filename}}, runtimeNetworkPath)
+	_, err := WriteFile(&File{Content: config, Path: filename}, runtimeNetworkPath)
 	return err
 }
