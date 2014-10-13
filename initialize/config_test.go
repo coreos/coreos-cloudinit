@@ -32,6 +32,7 @@ type TestUnitManager struct {
 	unmasked []string
 	commands []UnitAction
 	reload   bool
+	network  bool
 }
 
 type UnitAction struct {
@@ -65,6 +66,10 @@ func (tum *TestUnitManager) MaskUnit(u system.Unit) error {
 }
 func (tum *TestUnitManager) UnmaskUnit(u system.Unit) error {
 	tum.unmasked = append(tum.unmasked, u.Name)
+	return nil
+}
+func (tum *TestUnitManager) RestartNetwork(unit []system.Unit) error {
+	tum.network = true
 	return nil
 }
 
@@ -184,10 +189,10 @@ func TestProcessUnits(t *testing.T) {
 			result: TestUnitManager{
 				placed: []string{"baz.service", "foo.network", "bar.network"},
 				commands: []UnitAction{
-					UnitAction{"systemd-networkd.service", "restart"},
 					UnitAction{"baz.service", "start"},
 				},
-				reload: true,
+				network: true,
+				reload:  true,
 			},
 		},
 		{

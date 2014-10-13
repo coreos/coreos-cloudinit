@@ -176,7 +176,7 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		}
 
 		units = append(units, createNetworkingUnits(interfaces)...)
-		if err := system.RestartNetwork(interfaces); err != nil {
+		if err := system.ProbeModules(interfaces); err != nil {
 			return err
 		}
 	}
@@ -281,12 +281,10 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 
 	if restartNetworkd {
 		log.Printf("Restarting systemd-networkd")
-		networkd := system.Unit{Unit: config.Unit{Name: "systemd-networkd.service"}}
-		res, err := um.RunUnitCommand(networkd, "restart")
-		if err != nil {
+		if err := um.RestartNetwork(units); err != nil {
 			return err
 		}
-		log.Printf("Restarted systemd-networkd (%s)", res)
+		log.Printf("Restarted systemd-networkd")
 	}
 
 	for _, action := range actions {
