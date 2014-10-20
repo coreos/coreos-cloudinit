@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/coreos/coreos-cloudinit/third_party/github.com/cloudsigma/cepgo"
+	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/cloudsigma/cepgo"
 )
 
 const (

@@ -22,7 +22,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/coreos/coreos-cloudinit/third_party/gopkg.in/yaml.v1"
+	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/gopkg.in/yaml.v1"
 )
 
 // CloudConfig encapsulates the entire cloud-config configuration file and maps

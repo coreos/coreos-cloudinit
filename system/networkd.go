@@ -24,9 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/dotcloud/docker/pkg/netlink"
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/network"
-	"github.com/coreos/coreos-cloudinit/third_party/github.com/dotcloud/docker/pkg/netlink"
 )
 
 const (
