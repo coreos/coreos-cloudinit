@@ -1,0 +1,34 @@
+{
+	"ImportPath": "github.com/coreos/coreos-cloudinit",
+	"GoVersion": "go1.3.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/cloudsigma/cepgo",
+			"Rev": "1bfc4895bf5c4d3b599f3f6ee142299488c8739b"
+		},
+		{
+			"ImportPath": "github.com/coreos/go-systemd/dbus",
+			"Rev": "4fbc5060a317b142e6c7bfbedb65596d5f0ab99b"
+		},
+		{
+			"ImportPath": "github.com/dotcloud/docker/pkg/netlink",
+			"Comment": "v0.11.1-359-g55d41c3e21e1",
+			"Rev": "55d41c3e21e1593b944c06196ffb2ac57ab7f653"
+		},
+		{
+			"ImportPath": "github.com/guelfey/go.dbus",
+			"Rev": "f6a3a2366cc39b8479cadc499d3c735fb10fbdda"
+		},
+		{
+			"ImportPath": "github.com/tarm/goserial",
+			"Rev": "cdabc8d44e8e84f58f18074ae44337e1f2f375b9"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v1",
+			"Rev": "feb4ca79644e8e7e39c06095246ee54b1282c118"
+		}
+	]
+}
