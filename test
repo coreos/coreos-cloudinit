@@ -15,6 +15,7 @@ source ./build
 
 declare -a TESTPKGS=(
 	config
+	config/validate
 	datasource
 	datasource/configdrive
 	datasource/file
