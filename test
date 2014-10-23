@@ -54,4 +54,11 @@ if [ -n "$fmtRes" ]; then
 	exit 1
 fi
 
+echo "Checking govet..."
+vetRes=$(go vet $TESTPKGS)
+if [ -n "${vetRes}" ]; then
+ echo -e "govet checking failed:\n${vetRes}"
+ exit 255
+fi
+
 echo "Success"
