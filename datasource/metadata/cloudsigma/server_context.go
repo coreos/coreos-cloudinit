@@ -73,12 +73,13 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 			UUID string            `json:"uuid"`
 			Meta map[string]string `json:"meta"`
 			Nics []struct {
-				Runtime struct {
+				Mac      string `json:"mac"`
+				IPv4Conf struct {
 					InterfaceType string `json:"interface_type"`
-					IPv4          struct {
-						IP string `json:"uuid"`
-					} `json:"ip_v4"`
-				} `json:"runtime"`
+					IP            struct {
+						UUID string `json:"uuid"`
+					} `json:"ip"`
+				} `json:"ip_v4_conf"`
 			} `json:"nics"`
 		}
 		outputMetadata struct {
@@ -112,12 +113,9 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 	}
 
 	for _, nic := range inputMetadata.Nics {
-		if nic.Runtime.IPv4.IP != "" {
-			if nic.Runtime.InterfaceType == "public" {
-				outputMetadata.PublicIPv4 = nic.Runtime.IPv4.IP
-			} else {
-				outputMetadata.LocalIPv4 = nic.Runtime.IPv4.IP
-			}
+		if nic.IPv4Conf.IP.UUID != "" {
+			outputMetadata.PublicIPv4 = nic.IPv4Conf.IP.UUID
+			break
 		}
 	}
 
