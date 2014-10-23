@@ -74,7 +74,7 @@ func TestFetchAttributes(t *testing.T) {
 		},
 	} {
 		service := metadataService{metadata.MetadataService{
-			Client: &test.HttpClient{s.resources, s.err},
+			Client: &test.HttpClient{Resources: s.resources, Err: s.err},
 		}}
 		for _, tt := range s.tests {
 			attrs, err := service.fetchAttributes(tt.path)
@@ -128,7 +128,7 @@ func TestFetchAttribute(t *testing.T) {
 		},
 	} {
 		service := metadataService{metadata.MetadataService{
-			Client: &test.HttpClient{s.resources, s.err},
+			Client: &test.HttpClient{Resources: s.resources, Err: s.err},
 		}}
 		for _, tt := range s.tests {
 			attr, err := service.fetchAttribute(tt.path)
@@ -174,13 +174,13 @@ func TestFetchMetadata(t *testing.T) {
 			expect: []byte(`{"hostname":"host","local-ipv4":"1.2.3.4","network_config":{"content_path":"path"},"public-ipv4":"5.6.7.8","public_keys":{"test1":"key"}}`),
 		},
 		{
-			clientErr: pkg.ErrTimeout{fmt.Errorf("test error")},
-			expectErr: pkg.ErrTimeout{fmt.Errorf("test error")},
+			clientErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
+			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 		},
 	} {
 		service := &metadataService{metadata.MetadataService{
 			Root:         tt.root,
-			Client:       &test.HttpClient{tt.resources, tt.clientErr},
+			Client:       &test.HttpClient{Resources: tt.resources, Err: tt.clientErr},
 			MetadataPath: tt.metadataPath,
 		}}
 		metadata, err := service.FetchMetadata()

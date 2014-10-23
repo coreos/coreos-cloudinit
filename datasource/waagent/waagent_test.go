@@ -101,7 +101,7 @@ func TestFetchMetadata(t *testing.T) {
 		a := waagent{tt.root, tt.files.readFile}
 		metadataBytes, err := a.FetchMetadata()
 		if err != nil {
-			t.Fatalf("bad error for %q: want %q, got %q", tt, nil, err)
+			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
 		var metadata map[string]string
 		if len(metadataBytes) > 0 {
@@ -136,7 +136,7 @@ func TestFetchUserdata(t *testing.T) {
 		a := waagent{tt.root, tt.files.readFile}
 		_, err := a.FetchUserdata()
 		if err != nil {
-			t.Fatalf("bad error for %q: want %q, got %q", tt, nil, err)
+			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
 	}
 }

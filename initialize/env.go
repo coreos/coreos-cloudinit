@@ -98,7 +98,7 @@ func (e *Environment) Apply(data string) string {
 
 func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 	ef := system.EnvFile{
-		File: &system.File{config.File{
+		File: &system.File{File: config.File{
 			Path: "/etc/environment",
 		}},
 		Vars: map[string]string{},

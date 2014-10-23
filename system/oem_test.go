@@ -54,7 +54,7 @@ BUG_REPORT_URL="https://github.com/coreos/coreos-overlay"
 	} {
 		file, err := OEM{tt.config}.File()
 		if err != nil {
-			t.Errorf("bad error (%q): want %q, got %q", tt.config, nil, err)
+			t.Errorf("bad error (%q): want %v, got %q", tt.config, nil, err)
 		}
 		if !reflect.DeepEqual(tt.file, file) {
 			t.Errorf("bad file (%q): want %#v, got %#v", tt.config, tt.file, file)

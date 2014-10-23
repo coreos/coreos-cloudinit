@@ -106,13 +106,13 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 
 	var writeFiles []system.File
 	for _, file := range cfg.WriteFiles {
-		writeFiles = append(writeFiles, system.File{file})
+		writeFiles = append(writeFiles, system.File{File: file})
 	}
 
 	for _, ccf := range []CloudConfigFile{
-		system.OEM{cfg.Coreos.OEM},
-		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
-		system.EtcHosts{cfg.ManageEtcHosts},
+		system.OEM{OEM: cfg.Coreos.OEM},
+		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
+		system.EtcHosts{EtcHosts: cfg.ManageEtcHosts},
 	} {
 		f, err := ccf.File()
 		if err != nil {
@@ -125,13 +125,13 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 
 	var units []system.Unit
 	for _, u := range cfg.Coreos.Units {
-		units = append(units, system.Unit{u})
+		units = append(units, system.Unit{Unit: u})
 	}
 
 	for _, ccu := range []CloudConfigUnit{
-		system.Etcd{cfg.Coreos.Etcd},
-		system.Fleet{cfg.Coreos.Fleet},
-		system.Update{cfg.Coreos.Update, system.DefaultReadConfig},
+		system.Etcd{Etcd: cfg.Coreos.Etcd},
+		system.Fleet{Fleet: cfg.Coreos.Fleet},
+		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
 	} {
 		units = append(units, ccu.Units()...)
 	}

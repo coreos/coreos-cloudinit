@@ -28,7 +28,7 @@ import (
 func TestAvailabilityChanges(t *testing.T) {
 	want := true
 	if ac := (MetadataService{}).AvailabilityChanges(); ac != want {
-		t.Fatalf("bad AvailabilityChanges: want %q, got %q", want, ac)
+		t.Fatalf("bad AvailabilityChanges: want %t, got %t", want, ac)
 	}
 }
 
@@ -55,11 +55,11 @@ func TestIsAvailable(t *testing.T) {
 	} {
 		service := &MetadataService{
 			Root:       tt.root,
-			Client:     &test.HttpClient{tt.resources, nil},
+			Client:     &test.HttpClient{Resources: tt.resources, Err: nil},
 			ApiVersion: tt.apiVersion,
 		}
 		if a := service.IsAvailable(); a != tt.expect {
-			t.Fatalf("bad isAvailable (%q): want %q, got %q", tt.resources, tt.expect, a)
+			t.Fatalf("bad isAvailable (%q): want %t, got %t", tt.resources, tt.expect, a)
 		}
 	}
 }
@@ -83,18 +83,18 @@ func TestFetchUserdata(t *testing.T) {
 		},
 		{
 			root:      "/",
-			clientErr: pkg.ErrNotFound{fmt.Errorf("test not found error")},
+			clientErr: pkg.ErrNotFound{Err: fmt.Errorf("test not found error")},
 			userdata:  []byte{},
 		},
 		{
 			root:      "/",
-			clientErr: pkg.ErrTimeout{fmt.Errorf("test timeout error")},
-			expectErr: pkg.ErrTimeout{fmt.Errorf("test timeout error")},
+			clientErr: pkg.ErrTimeout{Err: fmt.Errorf("test timeout error")},
+			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test timeout error")},
 		},
 	} {
 		service := &MetadataService{
 			Root:         tt.root,
-			Client:       &test.HttpClient{tt.resources, tt.clientErr},
+			Client:       &test.HttpClient{Resources: tt.resources, Err: tt.clientErr},
 			UserdataPath: tt.userdataPath,
 		}
 		data, err := service.FetchUserdata()

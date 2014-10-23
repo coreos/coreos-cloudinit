@@ -61,7 +61,7 @@ func (tum *TestUnitManager) UnmaskUnit(unit *system.Unit) error {
 func TestProcessUnits(t *testing.T) {
 	tum := &TestUnitManager{}
 	units := []system.Unit{
-		system.Unit{config.Unit{
+		system.Unit{Unit: config.Unit{
 			Name: "foo",
 			Mask: true,
 		}},
@@ -75,7 +75,7 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{config.Unit{
+		system.Unit{Unit: config.Unit{
 			Name: "bar.network",
 		}},
 	}
@@ -88,7 +88,7 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{config.Unit{
+		system.Unit{Unit: config.Unit{
 			Name:    "baz.service",
 			Content: "[Service]\nExecStart=/bin/true",
 		}},
@@ -102,7 +102,7 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{config.Unit{
+		system.Unit{Unit: config.Unit{
 			Name:    "locksmithd.service",
 			Runtime: true,
 		}},
@@ -116,7 +116,7 @@ func TestProcessUnits(t *testing.T) {
 
 	tum = &TestUnitManager{}
 	units = []system.Unit{
-		system.Unit{config.Unit{
+		system.Unit{Unit: config.Unit{
 			Name:   "woof",
 			Enable: true,
 		}},

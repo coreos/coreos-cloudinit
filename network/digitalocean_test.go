@@ -36,11 +36,11 @@ func TestParseNameservers(t *testing.T) {
 			nss: []net.IP{},
 		},
 		{
-			dns: digitalocean.DNS{[]string{"1.2.3.4"}},
+			dns: digitalocean.DNS{Nameservers: []string{"1.2.3.4"}},
 			nss: []net.IP{net.ParseIP("1.2.3.4")},
 		},
 		{
-			dns: digitalocean.DNS{[]string{"bad"}},
+			dns: digitalocean.DNS{Nameservers: []string{"bad"}},
 			err: errors.New("could not parse \"bad\" as nameserver IP address"),
 		},
 	} {
@@ -132,7 +132,10 @@ func TestParseInterface(t *testing.T) {
 			iface: &logicalInterface{
 				hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}),
 				config: configMethodStatic{
-					addresses:   []net.IPNet{net.IPNet{net.ParseIP("1.2.3.4"), net.IPMask(net.ParseIP("255.255.0.0"))}},
+					addresses: []net.IPNet{net.IPNet{
+						IP:   net.ParseIP("1.2.3.4"),
+						Mask: net.IPMask(net.ParseIP("255.255.0.0")),
+					}},
 					nameservers: []net.IP{},
 					routes:      []route{},
 				},
@@ -165,9 +168,15 @@ func TestParseInterface(t *testing.T) {
 			iface: &logicalInterface{
 				hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}),
 				config: configMethodStatic{
-					addresses:   []net.IPNet{net.IPNet{net.ParseIP("1.2.3.4"), net.IPMask(net.ParseIP("255.255.0.0"))}},
+					addresses: []net.IPNet{net.IPNet{
+						IP:   net.ParseIP("1.2.3.4"),
+						Mask: net.IPMask(net.ParseIP("255.255.0.0")),
+					}},
 					nameservers: []net.IP{},
-					routes:      []route{route{net.IPNet{net.IPv4zero, net.IPMask(net.IPv4zero)}, net.ParseIP("5.6.7.8")}},
+					routes: []route{route{
+						net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
+						net.ParseIP("5.6.7.8"),
+					}},
 				},
 			},
 		},
@@ -195,7 +204,10 @@ func TestParseInterface(t *testing.T) {
 			iface: &logicalInterface{
 				hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}),
 				config: configMethodStatic{
-					addresses:   []net.IPNet{net.IPNet{net.ParseIP("fe00::"), net.IPMask(net.ParseIP("ffff::"))}},
+					addresses: []net.IPNet{net.IPNet{
+						IP:   net.ParseIP("fe00::"),
+						Mask: net.IPMask(net.ParseIP("ffff::")),
+					}},
 					nameservers: []net.IP{},
 					routes:      []route{},
 				},
@@ -228,9 +240,15 @@ func TestParseInterface(t *testing.T) {
 			iface: &logicalInterface{
 				hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}),
 				config: configMethodStatic{
-					addresses:   []net.IPNet{net.IPNet{net.ParseIP("fe00::"), net.IPMask(net.ParseIP("ffff::"))}},
+					addresses: []net.IPNet{net.IPNet{
+						IP:   net.ParseIP("fe00::"),
+						Mask: net.IPMask(net.ParseIP("ffff::")),
+					}},
 					nameservers: []net.IP{},
-					routes:      []route{route{net.IPNet{net.IPv6zero, net.IPMask(net.IPv6zero)}, net.ParseIP("fe00:1234::")}},
+					routes: []route{route{
+						net.IPNet{IP: net.IPv6zero, Mask: net.IPMask(net.IPv6zero)},
+						net.ParseIP("fe00:1234::"),
+					}},
 				},
 			},
 		},
