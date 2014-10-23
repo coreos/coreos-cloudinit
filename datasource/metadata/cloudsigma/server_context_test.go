@@ -133,12 +133,8 @@ func TestServerContextFetchMetadata(t *testing.T) {
 		t.Error("Public SSH Keys are not being read properly")
 	}
 
-	if metadata.LocalIPv4 != "" {
-		t.Errorf("Local IP is not empty but %s instead", metadata.LocalIPv4)
-	}
-
 	if metadata.PublicIPv4 != "31.171.251.74" {
-		t.Errorf("Local IP is not 31.171.251.74 but %s instead", metadata.PublicIPv4)
+		t.Errorf("Public IP is not 31.171.251.74 but %s instead", metadata.PublicIPv4)
 	}
 }
 

@@ -17,8 +17,11 @@
 package cloudsigma
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"net"
 	"os"
 	"strings"
 
@@ -80,6 +83,9 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 						UUID string `json:"uuid"`
 					} `json:"ip"`
 				} `json:"ip_v4_conf"`
+				VLAN struct {
+					UUID string `json:"uuid"`
+				} `json: "vlan"`
 			} `json:"nics"`
 		}
 		outputMetadata struct {
@@ -115,7 +121,11 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 	for _, nic := range inputMetadata.Nics {
 		if nic.IPv4Conf.IP.UUID != "" {
 			outputMetadata.PublicIPv4 = nic.IPv4Conf.IP.UUID
-			break
+		}
+		if nic.VLAN.UUID != "" {
+			if localIP, err := scs.findLocalIP(nic.Mac); err == nil {
+				outputMetadata.LocalIPv4 = localIP
+			}
 		}
 	}
 
@@ -142,6 +152,36 @@ func (scs *serverContextService) FetchUserdata() ([]byte, error) {
 
 func (scs *serverContextService) FetchNetworkConfig(a string) ([]byte, error) {
 	return nil, nil
+}
+
+func (scs *serverContextService) findLocalIP(mac string) (string, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+	ifaceMac, err := net.ParseMAC(mac)
+	if err != nil {
+		return "", err
+	}
+	for _, iface := range ifaces {
+		if !bytes.Equal(iface.HardwareAddr, ifaceMac) {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			switch ip := addr.(type) {
+			case *net.IPNet:
+				if ip.IP.To4() != nil {
+					return ip.IP.To4().String(), nil
+				}
+			}
+		}
+	}
+	return "", errors.New("Local IP not found")
 }
 
 func isBase64Encoded(field string, userdata map[string]string) bool {
