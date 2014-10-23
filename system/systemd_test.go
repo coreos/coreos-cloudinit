@@ -187,10 +187,10 @@ func TestMaskUnit(t *testing.T) {
 	fooPath := path.Join(dir, "etc", "systemd", "system", "foo.service")
 	fooTgt, err := os.Readlink(fooPath)
 	if err != nil {
-		t.Fatalf("Unable to read link", err)
+		t.Fatal("Unable to read link", err)
 	}
 	if fooTgt != "/dev/null" {
-		t.Fatalf("unit not masked, got unit target", fooTgt)
+		t.Fatal("unit not masked, got unit target", fooTgt)
 	}
 
 	// Ensure mask works with unit files that already exist
@@ -204,10 +204,10 @@ func TestMaskUnit(t *testing.T) {
 	}
 	barTgt, err := os.Readlink(barPath)
 	if err != nil {
-		t.Fatalf("Unable to read link", err)
+		t.Fatal("Unable to read link", err)
 	}
 	if barTgt != "/dev/null" {
-		t.Fatalf("unit not masked, got unit target", barTgt)
+		t.Fatal("unit not masked, got unit target", barTgt)
 	}
 }
 
@@ -254,7 +254,7 @@ func TestUnmaskUnit(t *testing.T) {
 		t.Errorf("unmask of unit returned unexpected error: %v", err)
 	}
 	if _, err := os.Stat(dst); !os.IsNotExist(err) {
-		t.Errorf("expected %s to not exist after unmask, but got err: %s", err)
+		t.Errorf("expected %s to not exist after unmask, but got err: %s", dst, err)
 	}
 }
 

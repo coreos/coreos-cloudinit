@@ -57,7 +57,7 @@ func TestFetchMetadata(t *testing.T) {
 		cd := configDrive{tt.root, tt.files.readFile}
 		filename, err := cd.FetchMetadata()
 		if err != nil {
-			t.Fatalf("bad error for %q: want %q, got %q", tt, nil, err)
+			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
 		if string(filename) != tt.filename {
 			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.filename, filename)
@@ -90,7 +90,7 @@ func TestFetchUserdata(t *testing.T) {
 		cd := configDrive{tt.root, tt.files.readFile}
 		filename, err := cd.FetchUserdata()
 		if err != nil {
-			t.Fatalf("bad error for %q: want %q, got %q", tt, nil, err)
+			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
 		if string(filename) != tt.filename {
 			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.filename, filename)

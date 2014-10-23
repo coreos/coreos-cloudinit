@@ -82,7 +82,7 @@ func TestUpdateUnits(t *testing.T) {
 			}}},
 		},
 	} {
-		units := Update{tt.config, testReadConfig("")}.Units()
+		units := Update{Update: tt.config, ReadConfig: testReadConfig("")}.Units()
 		if !reflect.DeepEqual(tt.units, units) {
 			t.Errorf("bad units (%q): want %#v, got %#v", tt.config, tt.units, units)
 		}
@@ -153,7 +153,7 @@ func TestUpdateFile(t *testing.T) {
 			}},
 		},
 	} {
-		file, err := Update{tt.config, testReadConfig(tt.orig)}.File()
+		file, err := Update{Update: tt.config, ReadConfig: testReadConfig(tt.orig)}.File()
 		if !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad error (%q): want %q, got %q", tt.config, tt.err, err)
 		}

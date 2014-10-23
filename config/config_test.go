@@ -38,7 +38,7 @@ func TestIsZero(t *testing.T) {
 		{struct{ A int }{A: 1}, false},
 	} {
 		if empty := IsZero(tt.c); tt.empty != empty {
-			t.Errorf("bad result (%q): want %q, got %q", tt.c, tt.empty, empty)
+			t.Errorf("bad result (%q): want %t, got %t", tt.c, tt.empty, empty)
 		}
 	}
 }
@@ -373,7 +373,7 @@ users:
 	}
 
 	if len(cfg.Users) != 1 {
-		t.Fatalf("Parsed %d users, expected 1", cfg.Users)
+		t.Fatalf("Parsed %d users, expected 1", len(cfg.Users))
 	}
 
 	user := cfg.Users[0]
@@ -448,7 +448,7 @@ users:
 	}
 
 	if len(cfg.Users) != 1 {
-		t.Fatalf("Parsed %d users, expected 1", cfg.Users)
+		t.Fatalf("Parsed %d users, expected 1", len(cfg.Users))
 	}
 
 	user := cfg.Users[0]
@@ -474,7 +474,7 @@ users:
 	}
 
 	if len(cfg.Users) != 1 {
-		t.Fatalf("Parsed %d users, expected 1", cfg.Users)
+		t.Fatalf("Parsed %d users, expected 1", len(cfg.Users))
 	}
 
 	user := cfg.Users[0]

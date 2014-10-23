@@ -28,11 +28,11 @@ import (
 const DefaultIpv4Address = "127.0.0.1"
 
 type EtcHosts struct {
-	Config config.EtcHosts
+	config.EtcHosts
 }
 
 func (eh EtcHosts) generateEtcHosts() (out string, err error) {
-	if eh.Config != "localhost" {
+	if eh.EtcHosts != "localhost" {
 		return "", errors.New("Invalid option to manage_etc_hosts")
 	}
 
@@ -47,7 +47,7 @@ func (eh EtcHosts) generateEtcHosts() (out string, err error) {
 }
 
 func (eh EtcHosts) File() (*File, error) {
-	if eh.Config == "" {
+	if eh.EtcHosts == "" {
 		return nil, nil
 	}
 

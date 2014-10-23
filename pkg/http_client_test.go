@@ -98,7 +98,7 @@ func TestGetURL4xx(t *testing.T) {
 	}
 
 	if retries > 1 {
-		t.Errorf("Number of retries:\n%d\nExpected number of retries:\n%s", retries, 1)
+		t.Errorf("Number of retries:\n%d\nExpected number of retries:\n%d", retries, 1)
 	}
 }
 

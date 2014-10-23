@@ -39,8 +39,8 @@ const (
 // implementation reading from the filesystem), and provides the system-specific
 // File() and Unit().
 type Update struct {
-	Config     config.Update
 	ReadConfig func() (io.Reader, error)
+	config.Update
 }
 
 func DefaultReadConfig() (io.Reader, error) {
@@ -58,17 +58,17 @@ func DefaultReadConfig() (io.Reader, error) {
 // configuration options are set in cloud-config) by either rewriting the
 // existing file on disk, or starting from `/usr/share/coreos/update.conf`
 func (uc Update) File() (*File, error) {
-	if config.IsZero(uc.Config) {
+	if config.IsZero(uc.Update) {
 		return nil, nil
 	}
-	if err := config.AssertValid(uc.Config); err != nil {
+	if err := config.AssertValid(uc.Update); err != nil {
 		return nil, err
 	}
 
 	// Generate the list of possible substitutions to be performed based on the options that are configured
 	subs := map[string]string{}
-	uct := reflect.TypeOf(uc.Config)
-	ucv := reflect.ValueOf(uc.Config)
+	uct := reflect.TypeOf(uc.Update)
+	ucv := reflect.ValueOf(uc.Update)
 	for i := 0; i < uct.NumField(); i++ {
 		val := ucv.Field(i).String()
 		if val == "" {
@@ -118,7 +118,7 @@ func (uc Update) File() (*File, error) {
 // - an update_engine Unit, if "group" or "server" was set in cloud-config
 func (uc Update) Units() []Unit {
 	var units []Unit
-	if uc.Config.RebootStrategy != "" {
+	if uc.Update.RebootStrategy != "" {
 		ls := &Unit{config.Unit{
 			Name:    locksmithUnit,
 			Command: "restart",
@@ -126,14 +126,14 @@ func (uc Update) Units() []Unit {
 			Runtime: true,
 		}}
 
-		if uc.Config.RebootStrategy == "off" {
+		if uc.Update.RebootStrategy == "off" {
 			ls.Command = "stop"
 			ls.Mask = true
 		}
 		units = append(units, *ls)
 	}
 
-	if uc.Config.Group != "" || uc.Config.Server != "" {
+	if uc.Update.Group != "" || uc.Update.Server != "" {
 		ue := Unit{config.Unit{
 			Name:    updateEngineUnit,
 			Command: "restart",

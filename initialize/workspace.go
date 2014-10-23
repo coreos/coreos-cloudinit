@@ -48,7 +48,7 @@ func PersistScriptInWorkspace(script system.Script, workspace string) (string, e
 
 	relpath := strings.TrimPrefix(tmp.Name(), workspace)
 
-	file := system.File{config.File{
+	file := system.File{File: config.File{
 		Path:               relpath,
 		RawFilePermissions: "0744",
 		Content:            string(script),
@@ -58,7 +58,7 @@ func PersistScriptInWorkspace(script system.Script, workspace string) (string, e
 }
 
 func PersistUnitNameInWorkspace(name string, workspace string) error {
-	file := system.File{config.File{
+	file := system.File{File: config.File{
 		Path:               path.Join("scripts", "unit-name"),
 		RawFilePermissions: "0644",
 		Content:            name,

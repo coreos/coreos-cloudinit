@@ -86,14 +86,14 @@ func TestFetchMetadata(t *testing.T) {
 			expect: []byte(`{"hostname":"","public-ipv4":"192.168.1.2","public-ipv6":"fe00::","public_keys":{"0":"publickey1","1":"publickey2"}}`),
 		},
 		{
-			clientErr: pkg.ErrTimeout{fmt.Errorf("test error")},
-			expectErr: pkg.ErrTimeout{fmt.Errorf("test error")},
+			clientErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
+			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 		},
 	} {
 		service := &metadataService{
 			MetadataService: metadata.MetadataService{
 				Root:         tt.root,
-				Client:       &test.HttpClient{tt.resources, tt.clientErr},
+				Client:       &test.HttpClient{Resources: tt.resources, Err: tt.clientErr},
 				MetadataPath: tt.metadataPath,
 			},
 		}
