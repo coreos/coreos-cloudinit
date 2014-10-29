@@ -17,7 +17,6 @@
 package system
 
 import (
-	"errors"
 	"io"
 	"reflect"
 	"strings"
@@ -101,7 +100,7 @@ func TestUpdateFile(t *testing.T) {
 		},
 		{
 			config: config.Update{RebootStrategy: "wizzlewazzle"},
-			err:    errors.New("invalid value \"wizzlewazzle\" for option \"RebootStrategy\" (valid options: \"best-effort,etcd-lock,reboot,false\")"),
+			err:    &config.ErrorValid{Value: "wizzlewazzle", Field: "RebootStrategy", Valid: []string{"best-effort", "etcd-lock", "reboot", "false"}},
 		},
 		{
 			config: config.Update{Group: "master", Server: "http://foo.com"},

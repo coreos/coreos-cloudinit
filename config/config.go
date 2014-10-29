@@ -90,10 +90,20 @@ func IsZero(c interface{}) bool {
 	return isZero(reflect.ValueOf(c))
 }
 
-// AssertValid checks the fields in the structure and makes sure that they
-// contain valid values as specified by the 'valid' flag. Empty fields are
+type ErrorValid struct {
+	Value string
+	Valid []string
+	Field string
+}
+
+func (e ErrorValid) Error() string {
+	return fmt.Sprintf("invalid value %q for option %q (valid options: %q)", e.Value, e.Field, e.Valid)
+}
+
+// AssertStructValid checks the fields in the structure and makes sure that
+// they contain valid values as specified by the 'valid' flag. Empty fields are
 // implicitly valid.
-func AssertValid(c interface{}) error {
+func AssertStructValid(c interface{}) error {
 	ct := reflect.TypeOf(c)
 	cv := reflect.ValueOf(c)
 	for i := 0; i < ct.NumField(); i++ {
@@ -102,13 +112,31 @@ func AssertValid(c interface{}) error {
 			continue
 		}
 
-		valid := ft.Tag.Get("valid")
-		val := cv.Field(i)
-		if !isValid(val, valid) {
-			return fmt.Errorf("invalid value \"%v\" for option %q (valid options: %q)", val.Interface(), ft.Name, valid)
+		if err := AssertValid(cv.Field(i), ft.Tag.Get("valid")); err != nil {
+			err.Field = ft.Name
+			return err
 		}
 	}
 	return nil
+}
+
+// AssertValid checks to make sure that the given value is in the list of
+// valid values. Zero values are implicitly valid.
+func AssertValid(value reflect.Value, valid string) *ErrorValid {
+	if valid == "" || isZero(value) {
+		return nil
+	}
+	vs := fmt.Sprintf("%v", value.Interface())
+	valids := strings.Split(valid, ",")
+	for _, valid := range valids {
+		if vs == valid {
+			return nil
+		}
+	}
+	return &ErrorValid{
+		Value: vs,
+		Valid: valids,
+	}
 }
 
 func isZero(v reflect.Value) bool {
@@ -128,19 +156,6 @@ func isZero(v reflect.Value) bool {
 
 func isFieldExported(f reflect.StructField) bool {
 	return f.PkgPath == ""
-}
-
-func isValid(v reflect.Value, valid string) bool {
-	if valid == "" || isZero(v) {
-		return true
-	}
-	vs := fmt.Sprintf("%v", v.Interface())
-	for _, valid := range strings.Split(valid, ",") {
-		if vs == valid {
-			return true
-		}
-	}
-	return false
 }
 
 type warner func(format string, v ...interface{})

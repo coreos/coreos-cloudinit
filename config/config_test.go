@@ -17,7 +17,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -43,7 +42,7 @@ func TestIsZero(t *testing.T) {
 	}
 }
 
-func TestAssertValid(t *testing.T) {
+func TestAssertStructValid(t *testing.T) {
 	for _, tt := range []struct {
 		c   interface{}
 		err error
@@ -60,7 +59,7 @@ func TestAssertValid(t *testing.T) {
 		}{A: "1", b: "hello"}, nil},
 		{struct {
 			A, b string `valid:"1,2"`
-		}{A: "hello", b: "2"}, errors.New("invalid value \"hello\" for option \"A\" (valid options: \"1,2\")")},
+		}{A: "hello", b: "2"}, &ErrorValid{Value: "hello", Field: "A", Valid: []string{"1", "2"}}},
 		{struct {
 			A, b int `valid:"1,2"`
 		}{}, nil},
@@ -72,9 +71,9 @@ func TestAssertValid(t *testing.T) {
 		}{A: 1, b: 9}, nil},
 		{struct {
 			A, b int `valid:"1,2"`
-		}{A: 9, b: 2}, errors.New("invalid value \"9\" for option \"A\" (valid options: \"1,2\")")},
+		}{A: 9, b: 2}, &ErrorValid{Value: "9", Field: "A", Valid: []string{"1", "2"}}},
 	} {
-		if err := AssertValid(tt.c); !reflect.DeepEqual(tt.err, err) {
+		if err := AssertStructValid(tt.c); !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad result (%q): want %q, got %q", tt.c, tt.err, err)
 		}
 	}
