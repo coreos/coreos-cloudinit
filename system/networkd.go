@@ -22,11 +22,11 @@ import (
 	"net"
 	"os/exec"
 	"strings"
-	"time"
 
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/dotcloud/docker/pkg/netlink"
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/network"
+
+	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/dotcloud/docker/pkg/netlink"
 )
 
 const (
@@ -35,13 +35,6 @@ const (
 
 func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
 	defer func() {
-		if e := restartNetworkd(); e != nil {
-			err = e
-			return
-		}
-		// TODO(crawford): Get rid of this once networkd fixes the race
-		// https://bugs.freedesktop.org/show_bug.cgi?id=76077
-		time.Sleep(5 * time.Second)
 		if e := restartNetworkd(); e != nil {
 			err = e
 		}
