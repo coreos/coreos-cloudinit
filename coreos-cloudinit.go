@@ -23,7 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
@@ -179,7 +178,7 @@ func main() {
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, subs)
 	userdata := env.Apply(string(userdataBytes))
 
-	var ccm, ccu *config.CloudConfig
+	var ccm, ccu *initialize.CloudConfig
 	var script *system.Script
 	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
@@ -201,14 +200,14 @@ func main() {
 		failure = true
 	} else {
 		switch t := ud.(type) {
-		case *config.CloudConfig:
+		case *initialize.CloudConfig:
 			ccu = t
 		case system.Script:
 			script = &t
 		}
 	}
 
-	var cc *config.CloudConfig
+	var cc *initialize.CloudConfig
 	if ccm != nil && ccu != nil {
 		fmt.Println("Merging cloud-config from meta-data and user-data")
 		merged := mergeCloudConfig(*ccm, *ccu)
@@ -247,7 +246,7 @@ func main() {
 // not already set on udcc (i.e. user-data always takes precedence)
 // NB: This needs to be kept in sync with ParseMetadata so that it tracks all
 // elements of a CloudConfig which that function can populate.
-func mergeCloudConfig(mdcc, udcc config.CloudConfig) (cc config.CloudConfig) {
+func mergeCloudConfig(mdcc, udcc initialize.CloudConfig) (cc initialize.CloudConfig) {
 	if mdcc.Hostname != "" {
 		if udcc.Hostname != "" {
 			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", udcc.Hostname, mdcc.Hostname)

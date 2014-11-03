@@ -14,7 +14,6 @@ COVER=${COVER:-"-cover"}
 source ./build
 
 declare -a TESTPKGS=(
-	config
 	datasource
 	datasource/configdrive
 	datasource/file

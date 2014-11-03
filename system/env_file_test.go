@@ -23,8 +23,6 @@ import (
 	"strings"
 	"syscall"
 	"testing"
-
-	"github.com/coreos/coreos-cloudinit/config"
 )
 
 const (
@@ -66,9 +64,9 @@ func TestWriteEnvFileUpdate(t *testing.T) {
 	}
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueUpdate,
 	}
 
@@ -113,9 +111,9 @@ func TestWriteEnvFileUpdateNoNewline(t *testing.T) {
 	}
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueUpdate,
 	}
 
@@ -154,9 +152,9 @@ func TestWriteEnvFileCreate(t *testing.T) {
 	fullPath := path.Join(dir, name)
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueUpdate,
 	}
 
@@ -192,9 +190,9 @@ func TestWriteEnvFileNoop(t *testing.T) {
 	}
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueNoop,
 	}
 
@@ -239,9 +237,9 @@ func TestWriteEnvFileUpdateDos(t *testing.T) {
 	}
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueUpdate,
 	}
 
@@ -288,9 +286,9 @@ func TestWriteEnvFileDos2Unix(t *testing.T) {
 	}
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueNoop,
 	}
 
@@ -336,9 +334,9 @@ func TestWriteEnvFileEmpty(t *testing.T) {
 	}
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueEmpty,
 	}
 
@@ -378,9 +376,9 @@ func TestWriteEnvFileEmptyNoCreate(t *testing.T) {
 	fullPath := path.Join(dir, name)
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueEmpty,
 	}
 
@@ -409,9 +407,9 @@ func TestWriteEnvFilePermFailure(t *testing.T) {
 	ioutil.WriteFile(fullPath, []byte(base), 0000)
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueUpdate,
 	}
 
@@ -431,9 +429,9 @@ func TestWriteEnvFileNameFailure(t *testing.T) {
 	name := "foo.conf"
 
 	ef := EnvFile{
-		File: &File{config.File{
+		File: &File{
 			Path: name,
-		}},
+		},
 		Vars: valueInvalid,
 	}
 

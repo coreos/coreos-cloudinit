@@ -21,8 +21,6 @@ import (
 	"os"
 	"path"
 	"testing"
-
-	"github.com/coreos/coreos-cloudinit/config"
 )
 
 func TestWriteFileUnencodedContent(t *testing.T) {
@@ -35,11 +33,11 @@ func TestWriteFileUnencodedContent(t *testing.T) {
 	fn := "foo"
 	fullPath := path.Join(dir, fn)
 
-	wf := File{config.File{
+	wf := File{
 		Path:               fn,
 		Content:            "bar",
 		RawFilePermissions: "0644",
-	}}
+	}
 
 	path, err := WriteFile(&wf, dir)
 	if err != nil {
@@ -74,11 +72,11 @@ func TestWriteFileInvalidPermission(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	wf := File{config.File{
+	wf := File{
 		Path:               path.Join(dir, "tmp", "foo"),
 		Content:            "bar",
 		RawFilePermissions: "pants",
-	}}
+	}
 
 	if _, err := WriteFile(&wf, dir); err == nil {
 		t.Fatalf("Expected error to be raised when writing file with invalid permission")
@@ -95,10 +93,10 @@ func TestWriteFilePermissions(t *testing.T) {
 	fn := "foo"
 	fullPath := path.Join(dir, fn)
 
-	wf := File{config.File{
+	wf := File{
 		Path:               fn,
 		RawFilePermissions: "0755",
-	}}
+	}
 
 	path, err := WriteFile(&wf, dir)
 	if err != nil {
@@ -124,11 +122,11 @@ func TestWriteFileEncodedContent(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	wf := File{config.File{
+	wf := File{
 		Path:     path.Join(dir, "tmp", "foo"),
 		Content:  "",
 		Encoding: "base64",
-	}}
+	}
 
 	if _, err := WriteFile(&wf, dir); err == nil {
 		t.Fatalf("Expected error to be raised when writing file with encoding")

@@ -20,37 +20,37 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/initialize"
 )
 
 func TestMergeCloudConfig(t *testing.T) {
-	simplecc := config.CloudConfig{
+	simplecc := initialize.CloudConfig{
 		SSHAuthorizedKeys: []string{"abc", "def"},
 		Hostname:          "foobar",
 		NetworkConfigPath: "/path/somewhere",
 		NetworkConfig:     `{}`,
 	}
 	for i, tt := range []struct {
-		udcc config.CloudConfig
-		mdcc config.CloudConfig
-		want config.CloudConfig
+		udcc initialize.CloudConfig
+		mdcc initialize.CloudConfig
+		want initialize.CloudConfig
 	}{
 		{
 			// If mdcc is empty, udcc should be returned unchanged
 			simplecc,
-			config.CloudConfig{},
+			initialize.CloudConfig{},
 			simplecc,
 		},
 		{
 			// If udcc is empty, mdcc should be returned unchanged(overridden)
-			config.CloudConfig{},
+			initialize.CloudConfig{},
 			simplecc,
 			simplecc,
 		},
 		{
 			// user-data should override completely in the case of conflicts
 			simplecc,
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname:          "meta-hostname",
 				NetworkConfigPath: "/path/meta",
 				NetworkConfig:     `{"hostname":"test"}`,
@@ -59,17 +59,17 @@ func TestMergeCloudConfig(t *testing.T) {
 		},
 		{
 			// Mixed merge should succeed
-			config.CloudConfig{
+			initialize.CloudConfig{
 				SSHAuthorizedKeys: []string{"abc", "def"},
 				Hostname:          "user-hostname",
 				NetworkConfigPath: "/path/somewhere",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				SSHAuthorizedKeys: []string{"woof", "qux"},
 				Hostname:          "meta-hostname",
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				SSHAuthorizedKeys: []string{"abc", "def", "woof", "qux"},
 				Hostname:          "user-hostname",
 				NetworkConfigPath: "/path/somewhere",
@@ -78,15 +78,15 @@ func TestMergeCloudConfig(t *testing.T) {
 		},
 		{
 			// Completely non-conflicting merge should be fine
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname: "supercool",
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				SSHAuthorizedKeys: []string{"zaphod", "beeblebrox"},
 				NetworkConfigPath: "/dev/fun",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname:          "supercool",
 				SSHAuthorizedKeys: []string{"zaphod", "beeblebrox"},
 				NetworkConfigPath: "/dev/fun",
@@ -95,33 +95,33 @@ func TestMergeCloudConfig(t *testing.T) {
 		},
 		{
 			// Non-mergeable settings in user-data should not be affected
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname:       "mememe",
-				ManageEtcHosts: config.EtcHosts("lolz"),
+				ManageEtcHosts: initialize.EtcHosts("lolz"),
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname:          "youyouyou",
 				NetworkConfigPath: "meta-meta-yo",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname:          "mememe",
-				ManageEtcHosts:    config.EtcHosts("lolz"),
+				ManageEtcHosts:    initialize.EtcHosts("lolz"),
 				NetworkConfigPath: "meta-meta-yo",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},
 		},
 		{
 			// Non-mergeable (unexpected) settings in meta-data are ignored
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname: "mememe",
 			},
-			config.CloudConfig{
-				ManageEtcHosts:    config.EtcHosts("lolz"),
+			initialize.CloudConfig{
+				ManageEtcHosts:    initialize.EtcHosts("lolz"),
 				NetworkConfigPath: "meta-meta-yo",
 				NetworkConfig:     `{"hostname":"test"}`,
 			},
-			config.CloudConfig{
+			initialize.CloudConfig{
 				Hostname:          "mememe",
 				NetworkConfigPath: "meta-meta-yo",
 				NetworkConfig:     `{"hostname":"test"}`,

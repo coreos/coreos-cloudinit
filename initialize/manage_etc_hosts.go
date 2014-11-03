@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package system
+package initialize
 
 import (
 	"errors"
@@ -22,17 +22,15 @@ import (
 	"os"
 	"path"
 
-	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/system"
 )
 
 const DefaultIpv4Address = "127.0.0.1"
 
-type EtcHosts struct {
-	config.EtcHosts
-}
+type EtcHosts string
 
 func (eh EtcHosts) generateEtcHosts() (out string, err error) {
-	if eh.EtcHosts != "localhost" {
+	if eh != "localhost" {
 		return "", errors.New("Invalid option to manage_etc_hosts")
 	}
 
@@ -46,8 +44,8 @@ func (eh EtcHosts) generateEtcHosts() (out string, err error) {
 
 }
 
-func (eh EtcHosts) File() (*File, error) {
-	if eh.EtcHosts == "" {
+func (eh EtcHosts) File(root string) (*system.File, error) {
+	if eh == "" {
 		return nil, nil
 	}
 
@@ -56,9 +54,9 @@ func (eh EtcHosts) File() (*File, error) {
 		return nil, err
 	}
 
-	return &File{config.File{
+	return &system.File{
 		Path:               path.Join("etc", "hosts"),
 		RawFilePermissions: "0644",
 		Content:            etcHosts,
-	}}, nil
+	}, nil
 }

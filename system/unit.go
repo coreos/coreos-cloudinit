@@ -19,8 +19,8 @@ package system
 import (
 	"fmt"
 	"path"
-
-	"github.com/coreos/coreos-cloudinit/config"
+	"path/filepath"
+	"strings"
 )
 
 // Name for drop-in service configuration files created by cloudconfig
@@ -35,10 +35,33 @@ type UnitManager interface {
 	UnmaskUnit(unit *Unit) error
 }
 
-// Unit is a top-level structure which embeds its underlying configuration,
-// config.Unit, and provides the system-specific Destination().
 type Unit struct {
-	config.Unit
+	Name    string
+	Mask    bool
+	Enable  bool
+	Runtime bool
+	Content string
+	Command string
+
+	// For drop-in units, a cloudinit.conf is generated.
+	// This is currently unbound in YAML (and hence unsettable in cloud-config files)
+	// until the correct behaviour for multiple drop-in units is determined.
+	DropIn bool `yaml:"-"`
+}
+
+func (u *Unit) Type() string {
+	ext := filepath.Ext(u.Name)
+	return strings.TrimLeft(ext, ".")
+}
+
+func (u *Unit) Group() (group string) {
+	t := u.Type()
+	if t == "network" || t == "netdev" || t == "link" {
+		group = "network"
+	} else {
+		group = "system"
+	}
+	return
 }
 
 type Script []byte

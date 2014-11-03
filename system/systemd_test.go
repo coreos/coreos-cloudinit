@@ -21,12 +21,10 @@ import (
 	"os"
 	"path"
 	"testing"
-
-	"github.com/coreos/coreos-cloudinit/config"
 )
 
 func TestPlaceNetworkUnit(t *testing.T) {
-	u := Unit{config.Unit{
+	u := Unit{
 		Name:    "50-eth0.network",
 		Runtime: true,
 		Content: `[Match]
@@ -35,7 +33,7 @@ Name=eth47
 [Network]
 Address=10.209.171.177/19
 `,
-	}}
+	}
 
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
@@ -84,10 +82,10 @@ func TestUnitDestination(t *testing.T) {
 	dir := "/some/dir"
 	name := "foobar.service"
 
-	u := Unit{config.Unit{
+	u := Unit{
 		Name:   name,
 		DropIn: false,
-	}}
+	}
 
 	dst := u.Destination(dir)
 	expectDst := path.Join(dir, "etc", "systemd", "system", "foobar.service")
@@ -105,14 +103,14 @@ func TestUnitDestination(t *testing.T) {
 }
 
 func TestPlaceMountUnit(t *testing.T) {
-	u := Unit{config.Unit{
+	u := Unit{
 		Name:    "media-state.mount",
 		Runtime: false,
 		Content: `[Mount]
 What=/dev/sdb1
 Where=/media/state
 `,
-	}}
+	}
 
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
@@ -180,7 +178,7 @@ func TestMaskUnit(t *testing.T) {
 	sd := &systemd{dir}
 
 	// Ensure mask works with units that do not currently exist
-	uf := &Unit{config.Unit{Name: "foo.service"}}
+	uf := &Unit{Name: "foo.service"}
 	if err := sd.MaskUnit(uf); err != nil {
 		t.Fatalf("Unable to mask new unit: %v", err)
 	}
@@ -194,7 +192,7 @@ func TestMaskUnit(t *testing.T) {
 	}
 
 	// Ensure mask works with unit files that already exist
-	ub := &Unit{config.Unit{Name: "bar.service"}}
+	ub := &Unit{Name: "bar.service"}
 	barPath := path.Join(dir, "etc", "systemd", "system", "bar.service")
 	if _, err := os.Create(barPath); err != nil {
 		t.Fatalf("Error creating new unit file: %v", err)
@@ -220,12 +218,12 @@ func TestUnmaskUnit(t *testing.T) {
 
 	sd := &systemd{dir}
 
-	nilUnit := &Unit{config.Unit{Name: "null.service"}}
+	nilUnit := &Unit{Name: "null.service"}
 	if err := sd.UnmaskUnit(nilUnit); err != nil {
 		t.Errorf("unexpected error from unmasking nonexistent unit: %v", err)
 	}
 
-	uf := &Unit{config.Unit{Name: "foo.service", Content: "[Service]\nExecStart=/bin/true"}}
+	uf := &Unit{Name: "foo.service", Content: "[Service]\nExecStart=/bin/true"}
 	dst := uf.Destination(dir)
 	if err := os.MkdirAll(path.Dir(dst), os.FileMode(0755)); err != nil {
 		t.Fatalf("Unable to create unit directory: %v", err)
@@ -245,7 +243,7 @@ func TestUnmaskUnit(t *testing.T) {
 		t.Errorf("unmask of non-empty unit mutated unit contents unexpectedly")
 	}
 
-	ub := &Unit{config.Unit{Name: "bar.service"}}
+	ub := &Unit{Name: "bar.service"}
 	dst = ub.Destination(dir)
 	if err := os.Symlink("/dev/null", dst); err != nil {
 		t.Fatalf("Unable to create masked unit: %v", err)
