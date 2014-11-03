@@ -73,7 +73,7 @@ func TestUpdateUnits(t *testing.T) {
 			}}},
 		},
 		{
-			config: config.Update{RebootStrategy: "off"},
+			config: config.Update{RebootStrategy: "false"},
 			units: []Unit{{config.Unit{
 				Name:    "locksmithd.service",
 				Command: "stop",
@@ -101,7 +101,7 @@ func TestUpdateFile(t *testing.T) {
 		},
 		{
 			config: config.Update{RebootStrategy: "wizzlewazzle"},
-			err:    errors.New("invalid value \"wizzlewazzle\" for option \"RebootStrategy\" (valid options: \"best-effort,etcd-lock,reboot,off\")"),
+			err:    errors.New("invalid value \"wizzlewazzle\" for option \"RebootStrategy\" (valid options: \"best-effort,etcd-lock,reboot,false\")"),
 		},
 		{
 			config: config.Update{Group: "master", Server: "http://foo.com"},
@@ -136,9 +136,9 @@ func TestUpdateFile(t *testing.T) {
 			}},
 		},
 		{
-			config: config.Update{RebootStrategy: "off"},
+			config: config.Update{RebootStrategy: "false"},
 			file: &File{config.File{
-				Content:            "REBOOT_STRATEGY=off\n",
+				Content:            "REBOOT_STRATEGY=false\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
 			}},

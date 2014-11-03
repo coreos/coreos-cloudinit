@@ -19,15 +19,15 @@ package config
 type User struct {
 	Name                string   `yaml:"name"`
 	PasswordHash        string   `yaml:"passwd"`
-	SSHAuthorizedKeys   []string `yaml:"ssh-authorized-keys"`
-	SSHImportGithubUser string   `yaml:"coreos-ssh-import-github"`
-	SSHImportURL        string   `yaml:"coreos-ssh-import-url"`
+	SSHAuthorizedKeys   []string `yaml:"ssh_authorized_keys"`
+	SSHImportGithubUser string   `yaml:"coreos_ssh_import_github"`
+	SSHImportURL        string   `yaml:"coreos_ssh_import_url"`
 	GECOS               string   `yaml:"gecos"`
 	Homedir             string   `yaml:"homedir"`
-	NoCreateHome        bool     `yaml:"no-create-home"`
-	PrimaryGroup        string   `yaml:"primary-group"`
+	NoCreateHome        bool     `yaml:"no_create_home"`
+	PrimaryGroup        string   `yaml:"primary_group"`
 	Groups              []string `yaml:"groups"`
-	NoUserGroup         bool     `yaml:"no-user-group"`
+	NoUserGroup         bool     `yaml:"no_user_group"`
 	System              bool     `yaml:"system"`
-	NoLogInit           bool     `yaml:"no-log-init"`
+	NoLogInit           bool     `yaml:"no_log_init"`
 }
