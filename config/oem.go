@@ -19,7 +19,7 @@ package config
 type OEM struct {
 	ID           string `yaml:"id"`
 	Name         string `yaml:"name"`
-	VersionID    string `yaml:"version-id"`
-	HomeURL      string `yaml:"home-url"`
-	BugReportURL string `yaml:"bug-report-url"`
+	VersionID    string `yaml:"version_id"`
+	HomeURL      string `yaml:"home_url"`
+	BugReportURL string `yaml:"bug_report_url"`
 }

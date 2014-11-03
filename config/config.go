@@ -50,8 +50,11 @@ type CloudConfig struct {
 // fields but log encountering them.
 func NewCloudConfig(contents string) (*CloudConfig, error) {
 	var cfg CloudConfig
-	err := yaml.Unmarshal([]byte(contents), &cfg)
+	ncontents, err := normalizeConfig(contents)
 	if err != nil {
+		return &cfg, err
+	}
+	if err = yaml.Unmarshal(ncontents, &cfg); err != nil {
 		return &cfg, err
 	}
 	warnOnUnrecognizedKeys(contents, log.Printf)
@@ -211,4 +214,32 @@ func warnOnUnrecognizedKeys(contents string, warn warner) {
 			}
 		}
 	}
+}
+
+func normalizeConfig(config string) ([]byte, error) {
+	var cfg map[interface{}]interface{}
+	if err := yaml.Unmarshal([]byte(config), &cfg); err != nil {
+		return nil, err
+	}
+	return yaml.Marshal(normalizeKeys(cfg))
+}
+
+func normalizeKeys(m map[interface{}]interface{}) map[interface{}]interface{} {
+	for k, v := range m {
+		if m, ok := m[k].(map[interface{}]interface{}); ok {
+			normalizeKeys(m)
+		}
+
+		if s, ok := m[k].([]interface{}); ok {
+			for _, e := range s {
+				if m, ok := e.(map[interface{}]interface{}); ok {
+					normalizeKeys(m)
+				}
+			}
+		}
+
+		delete(m, k)
+		m[strings.Replace(fmt.Sprint(k), "-", "_", -1)] = v
+	}
+	return m
 }

@@ -200,7 +200,7 @@ coreos:
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
   update:
-    reboot-strategy: reboot
+    reboot_strategy: reboot
   units:
     - name: 50-eth0.network
       runtime: yes
@@ -217,9 +217,9 @@ coreos:
   oem:
     id: rackspace
     name: Rackspace Cloud Servers
-    version-id: 168.0.0
-    home-url: https://www.rackspace.com/cloud/servers/
-    bug-report-url: https://github.com/coreos/coreos-overlay
+    version_id: 168.0.0
+    home_url: https://www.rackspace.com/cloud/servers/
+    bug_report_url: https://github.com/coreos/coreos-overlay
 ssh_authorized_keys:
   - foobar
   - foobaz
@@ -354,18 +354,18 @@ func TestCloudConfigUsers(t *testing.T) {
 users:
   - name: elroy
     passwd: somehash
-    ssh-authorized-keys:
+    ssh_authorized_keys:
       - somekey
     gecos: arbitrary comment
     homedir: /home/place
-    no-create-home: yes
-    primary-group: things
+    no_create_home: yes
+    primary_group: things
     groups:
       - ping
       - pong
-    no-user-group: true
+    no_user_group: true
     system: y
-    no-log-init: True
+    no_log_init: True
 `
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
@@ -404,11 +404,11 @@ users:
 	}
 
 	if !user.NoCreateHome {
-		t.Errorf("Failed to parse no-create-home field")
+		t.Errorf("Failed to parse no_create_home field")
 	}
 
 	if user.PrimaryGroup != "things" {
-		t.Errorf("Failed to parse primary-group field, got %q", user.PrimaryGroup)
+		t.Errorf("Failed to parse primary_group field, got %q", user.PrimaryGroup)
 	}
 
 	if len(user.Groups) != 2 {
@@ -423,7 +423,7 @@ users:
 	}
 
 	if !user.NoUserGroup {
-		t.Errorf("Failed to parse no-user-group field")
+		t.Errorf("Failed to parse no_user_group field")
 	}
 
 	if !user.System {
@@ -431,7 +431,7 @@ users:
 	}
 
 	if !user.NoLogInit {
-		t.Errorf("Failed to parse no-log-init field")
+		t.Errorf("Failed to parse no_log_init field")
 	}
 }
 
@@ -440,7 +440,7 @@ func TestCloudConfigUsersGithubUser(t *testing.T) {
 	contents := `
 users:
   - name: elroy
-    coreos-ssh-import-github: bcwaldon
+    coreos_ssh_import_github: bcwaldon
 `
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
@@ -466,7 +466,7 @@ func TestCloudConfigUsersSSHImportURL(t *testing.T) {
 	contents := `
 users:
   - name: elroy
-    coreos-ssh-import-url: https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys
+    coreos_ssh_import_url: https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys
 `
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
@@ -485,5 +485,32 @@ users:
 
 	if user.SSHImportURL != "https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys" {
 		t.Errorf("ssh import url is %q, expected 'https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys'", user.SSHImportURL)
+	}
+}
+
+func TestNormalizeKeys(t *testing.T) {
+	for _, tt := range []struct {
+		in  string
+		out string
+	}{
+		{"my_key_name: the-value\n", "my_key_name: the-value\n"},
+		{"my-key_name: the-value\n", "my_key_name: the-value\n"},
+		{"my-key-name: the-value\n", "my_key_name: the-value\n"},
+
+		{"a:\n- key_name: the-value\n", "a:\n- key_name: the-value\n"},
+		{"a:\n- key-name: the-value\n", "a:\n- key_name: the-value\n"},
+
+		{"a:\n  b:\n  - key_name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
+		{"a:\n  b:\n  - key-name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
+
+		{"coreos:\n  update:\n    reboot-strategy: off\n", "coreos:\n  update:\n    reboot_strategy: false\n"},
+	} {
+		out, err := normalizeConfig(tt.in)
+		if err != nil {
+			t.Fatalf("bad error (%q): want nil, got %s", tt.in, err)
+		}
+		if string(out) != tt.out {
+			t.Fatalf("bad normalization (%q): want %q, got %q", tt.in, tt.out, out)
+		}
 	}
 }
