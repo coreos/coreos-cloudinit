@@ -27,7 +27,7 @@ type Unit struct {
 	Enable  bool   `yaml:"enable"`
 	Runtime bool   `yaml:"runtime"`
 	Content string `yaml:"content"`
-	Command string `yaml:"command"`
+	Command string `yaml:"command" valid:"start,stop,restart,reload,try-restart,reload-or-restart,reload-or-try-restart"`
 
 	// For drop-in units, a cloudinit.conf is generated.
 	// This is currently unbound in YAML (and hence unsettable in cloud-config files)

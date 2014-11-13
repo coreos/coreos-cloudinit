@@ -41,8 +41,6 @@ type Unit struct {
 	config.Unit
 }
 
-type Script []byte
-
 // Destination builds the appropriate absolute file path for
 // the Unit. The root argument indicates the effective base
 // directory of the system (similar to a chroot).

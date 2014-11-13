@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/config/validate"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
@@ -64,6 +65,7 @@ var (
 		workspace      string
 		sshKeyName     string
 		oem            string
+		validate       bool
 	}{}
 )
 
@@ -83,6 +85,7 @@ func init() {
 	flag.StringVar(&flags.convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files")
 	flag.StringVar(&flags.workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
 	flag.StringVar(&flags.sshKeyName, "ssh-key-name", initialize.DefaultSSHKeyName, "Add SSH keys to the system with the given name")
+	flag.BoolVar(&flags.validate, "validate", false, "[EXPERIMENTAL] Validate the user-data but do not apply it to the system")
 }
 
 type oemConfig map[string]string
@@ -158,6 +161,22 @@ func main() {
 		failure = true
 	}
 
+	if report, err := validate.Validate(userdataBytes); err == nil {
+		ret := 0
+		for _, e := range report.Entries() {
+			fmt.Println(e)
+			ret = 1
+		}
+		if flags.validate {
+			os.Exit(ret)
+		}
+	} else {
+		fmt.Printf("Failed while validating user_data (%q)\n", err)
+		if flags.validate {
+			os.Exit(1)
+		}
+	}
+
 	fmt.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
 	metadataBytes, err := ds.FetchMetadata()
 	if err != nil {
@@ -180,7 +199,7 @@ func main() {
 	userdata := env.Apply(string(userdataBytes))
 
 	var ccm, ccu *config.CloudConfig
-	var script *system.Script
+	var script *config.Script
 	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
 		fmt.Printf("Failed to parse meta-data: %v\n", err)
 		os.Exit(1)
@@ -203,7 +222,7 @@ func main() {
 		switch t := ud.(type) {
 		case *config.CloudConfig:
 			ccu = t
-		case system.Script:
+		case config.Script:
 			script = &t
 		}
 	}
@@ -362,7 +381,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 }
 
 // TODO(jonboulle): this should probably be refactored and moved into a different module
-func runScript(script system.Script, env *initialize.Environment) error {
+func runScript(script config.Script, env *initialize.Environment) error {
 	err := initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
 		fmt.Printf("Failed preparing workspace: %v\n", err)

@@ -17,8 +17,6 @@
 package config
 
 import (
-	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -43,7 +41,7 @@ func TestIsZero(t *testing.T) {
 	}
 }
 
-func TestAssertValid(t *testing.T) {
+func TestAssertStructValid(t *testing.T) {
 	for _, tt := range []struct {
 		c   interface{}
 		err error
@@ -60,7 +58,7 @@ func TestAssertValid(t *testing.T) {
 		}{A: "1", b: "hello"}, nil},
 		{struct {
 			A, b string `valid:"1,2"`
-		}{A: "hello", b: "2"}, errors.New("invalid value \"hello\" for option \"A\" (valid options: \"1,2\")")},
+		}{A: "hello", b: "2"}, &ErrorValid{Value: "hello", Field: "A", Valid: []string{"1", "2"}}},
 		{struct {
 			A, b int `valid:"1,2"`
 		}{}, nil},
@@ -72,9 +70,9 @@ func TestAssertValid(t *testing.T) {
 		}{A: 1, b: 9}, nil},
 		{struct {
 			A, b int `valid:"1,2"`
-		}{A: 9, b: 2}, errors.New("invalid value \"9\" for option \"A\" (valid options: \"1,2\")")},
+		}{A: 9, b: 2}, &ErrorValid{Value: "9", Field: "A", Valid: []string{"1", "2"}}},
 	} {
-		if err := AssertValid(tt.c); !reflect.DeepEqual(tt.err, err) {
+		if err := AssertStructValid(tt.c); !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad result (%q): want %q, got %q", tt.c, tt.err, err)
 		}
 	}
@@ -146,29 +144,6 @@ hostname:
 	}
 	if len(cfg.Users) < 1 || cfg.Users[0].Name != "fry" || cfg.Users[0].PasswordHash != "somehash" {
 		t.Fatalf("users section not correctly set when invalid keys are present")
-	}
-
-	var warnings string
-	catchWarn := func(f string, v ...interface{}) {
-		warnings += fmt.Sprintf(f, v...)
-	}
-
-	warnOnUnrecognizedKeys(contents, catchWarn)
-
-	if !strings.Contains(warnings, "coreos_unknown") {
-		t.Errorf("warnings did not catch unrecognized coreos option coreos_unknown")
-	}
-	if !strings.Contains(warnings, "bare_unknown") {
-		t.Errorf("warnings did not catch unrecognized key bare_unknown")
-	}
-	if !strings.Contains(warnings, "section_unknown") {
-		t.Errorf("warnings did not catch unrecognized key section_unknown")
-	}
-	if !strings.Contains(warnings, "user_unknown") {
-		t.Errorf("warnings did not catch unrecognized user key user_unknown")
-	}
-	if !strings.Contains(warnings, "file_unknown") {
-		t.Errorf("warnings did not catch unrecognized file key file_unknown")
 	}
 }
 

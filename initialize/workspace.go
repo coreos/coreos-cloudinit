@@ -38,7 +38,7 @@ func PrepWorkspace(workspace string) error {
 	return nil
 }
 
-func PersistScriptInWorkspace(script system.Script, workspace string) (string, error) {
+func PersistScriptInWorkspace(script config.Script, workspace string) (string, error) {
 	scriptsPath := path.Join(workspace, "scripts")
 	tmp, err := ioutil.TempFile(scriptsPath, "")
 	if err != nil {

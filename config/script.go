@@ -14,28 +14,19 @@
    limitations under the License.
 */
 
-package initialize
+package config
 
 import (
-	"errors"
-	"log"
-
-	"github.com/coreos/coreos-cloudinit/config"
+	"strings"
 )
 
-func ParseUserData(contents string) (interface{}, error) {
-	if len(contents) == 0 {
-		return nil, nil
-	}
+type Script []byte
 
-	switch {
-	case config.IsScript(contents):
-		log.Printf("Parsing user-data as script")
-		return config.NewScript(contents)
-	case config.IsCloudConfig(contents):
-		log.Printf("Parsing user-data as cloud-config")
-		return config.NewCloudConfig(contents)
-	default:
-		return nil, errors.New("Unrecognized user-data format")
-	}
+func IsScript(userdata string) bool {
+	header := strings.SplitN(userdata, "\n", 2)[0]
+	return strings.HasPrefix(header, "#!")
+}
+
+func NewScript(userdata string) (Script, error) {
+	return Script(userdata), nil
 }

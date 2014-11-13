@@ -61,7 +61,7 @@ func (uc Update) File() (*File, error) {
 	if config.IsZero(uc.Update) {
 		return nil, nil
 	}
-	if err := config.AssertValid(uc.Update); err != nil {
+	if err := config.AssertStructValid(uc.Update); err != nil {
 		return nil, err
 	}
 
