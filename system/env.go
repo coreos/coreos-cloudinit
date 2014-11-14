@@ -19,6 +19,8 @@ package system
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/coreos/coreos-cloudinit/config"
 )
 
 // dropinContents generates the contents for a drop-in unit given the config.
@@ -39,4 +41,17 @@ func dropinContents(e interface{}) string {
 		return ""
 	}
 	return "[Service]\n" + out
+}
+
+func dropinFromConfig(cfg interface{}, name string) []Unit {
+	content := dropinContents(cfg)
+	if content == "" {
+		return nil
+	}
+	return []Unit{{config.Unit{
+		Name:    name,
+		Runtime: true,
+		DropIn:  true,
+		Content: content,
+	}}}
 }

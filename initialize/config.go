@@ -131,6 +131,7 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 	for _, ccu := range []CloudConfigUnit{
 		system.Etcd{Etcd: cfg.Coreos.Etcd},
 		system.Fleet{Fleet: cfg.Coreos.Fleet},
+		system.Flannel{Flannel: cfg.Coreos.Flannel},
 		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
 	} {
 		units = append(units, ccu.Units()...)

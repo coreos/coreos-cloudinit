@@ -97,6 +97,29 @@ For more information on fleet configuration, see the [fleet documentation][fleet
 
 [fleet-config]: https://github.com/coreos/fleet/blob/master/Documentation/deployment-and-configuration.md#configuration
 
+#### flannel
+
+The `coreos.flannel.*` parameters also work very similarly to `coreos.etcd.*` and `coreos.fleet.*`. They can be used to set enviornment variables for flanneld. Given the following cloud-config...
+
+```yaml
+#cloud-config
+
+coreos:
+    flannel:
+        etcd-prefix: /coreos.com/network2
+```
+
+...will generate systemd unit drop-in like so:
+
+```
+[Service]
+Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network2"
+```
+
+For complete list of flannel configuraion parameters, see the [flannel documentation][flannel-readme].
+
+[flannel-readme]: https://github.com/coreos/flannel/blob/master/README.md
+
 #### update
 
 The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
