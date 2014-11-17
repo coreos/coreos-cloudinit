@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -54,7 +55,8 @@ func (_ *serverContextService) IsAvailable() bool {
 	}
 	productName := make([]byte, 10)
 	_, err = productNameFile.Read(productName)
-	return err == nil && string(productName) == "CloudSigma"
+
+	return err == nil && string(productName) == "CloudSigma" && hasDHCPLeases()
 }
 
 func (_ *serverContextService) AvailabilityChanges() bool {
@@ -85,7 +87,7 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 				} `json:"ip_v4_conf"`
 				VLAN struct {
 					UUID string `json:"uuid"`
-				} `json: "vlan"`
+				} `json:"vlan"`
 			} `json:"nics"`
 		}
 		outputMetadata struct {
@@ -196,4 +198,9 @@ func isBase64Encoded(field string, userdata map[string]string) bool {
 		}
 	}
 	return false
+}
+
+func hasDHCPLeases() bool {
+	files, err := ioutil.ReadDir("/run/systemd/netif/leases/")
+	return err == nil && len(files) > 0
 }
