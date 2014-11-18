@@ -103,7 +103,8 @@ func parseCloudConfig(config []byte, report *Report) (n node, err error) {
 // and makes a note of each replacement in the report.
 func normalizeNodeNames(node node, report *Report) node {
 	if strings.Contains(node.name, "-") {
-		report.Info(node.line, fmt.Sprintf("%q uses '-' instead of '_'", node.name))
+		// TODO(crawford): Enable this message once the new validator hits stable.
+		//report.Info(node.line, fmt.Sprintf("%q uses '-' instead of '_'", node.name))
 		node.name = strings.Replace(node.name, "-", "_", -1)
 	}
 	for i := range node.children {
