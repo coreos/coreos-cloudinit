@@ -326,7 +326,7 @@ Each item in the list may have the following keys:
 
 - **path**: Absolute location on disk where contents should be written
 - **content**: Data to write at the provided `path`
-- **permissions**: String representing file permissions in octal notation (i.e. '0644')
+- **permissions**: Integer representing file permissions, typically in octal notation (i.e. 0644)
 - **owner**: User and group that should own the file written to disk. This is equivalent to the `<user>:<group>` argument to `chown <user>:<group> <path>`.
 
 Explicitly not implemented is the **encoding** attribute.
