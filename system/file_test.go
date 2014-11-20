@@ -85,6 +85,38 @@ func TestWriteFileInvalidPermission(t *testing.T) {
 	}
 }
 
+func TestDecimalFilePermissions(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+	if err != nil {
+		t.Fatalf("Unable to create tempdir: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	fn := "foo"
+	fullPath := path.Join(dir, fn)
+
+	wf := File{config.File{
+		Path:               fn,
+		RawFilePermissions: "484", // Decimal representation of 0744
+	}}
+
+	path, err := WriteFile(&wf, dir)
+	if err != nil {
+		t.Fatalf("Processing of WriteFile failed: %v", err)
+	} else if path != fullPath {
+		t.Fatalf("WriteFile returned bad path: want %s, got %s", fullPath, path)
+	}
+
+	fi, err := os.Stat(fullPath)
+	if err != nil {
+		t.Fatalf("Unable to stat file: %v", err)
+	}
+
+	if fi.Mode() != os.FileMode(0744) {
+		t.Errorf("File has incorrect mode: %v", fi.Mode())
+	}
+}
+
 func TestWriteFilePermissions(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {
