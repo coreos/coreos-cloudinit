@@ -1,6 +1,8 @@
 # Using Cloud-Config
 
-CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime. Your cloud-config is processed during each boot.
+CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime.
+
+Your cloud-config is processed during each boot. Invalid cloud-config won't be processed but will be logged in the journal. You can validate your cloud-config with the [CoreOS validator]({{site.url}}/validate).
 
 ## Configuration File
 
