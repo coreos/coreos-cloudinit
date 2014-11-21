@@ -17,14 +17,15 @@
 package config
 
 type Fleet struct {
-	AgentTTL                string `yaml:"agent_ttl"                 env:"FLEET_AGENT_TTL"`
-	EngineReconcileInterval string `yaml:"engine_reconcile_interval" env:"FLEET_ENGINE_RECONCILE_INTERVAL"`
-	EtcdCAFile              string `yaml:"etcd_cafile"               env:"FLEET_ETCD_CAFILE"`
-	EtcdCertFile            string `yaml:"etcd_certfile"             env:"FLEET_ETCD_CERTFILE"`
-	EtcdKeyFile             string `yaml:"etcd_keyfile"              env:"FLEET_ETCD_KEYFILE"`
-	EtcdRequestTimeout      string `yaml:"etcd_request_timeout"      env:"FLEET_ETCD_REQUEST_TIMEOUT"`
-	EtcdServers             string `yaml:"etcd_servers"              env:"FLEET_ETCD_SERVERS"`
-	Metadata                string `yaml:"metadata"                  env:"FLEET_METADATA"`
-	PublicIP                string `yaml:"public_ip"                 env:"FLEET_PUBLIC_IP"`
-	Verbosity               string `yaml:"verbosity"                 env:"FLEET_VERBOSITY"`
+	AgentTTL                string  `yaml:"agent_ttl"                 env:"FLEET_AGENT_TTL"`
+	EngineReconcileInterval float64 `yaml:"engine_reconcile_interval" env:"FLEET_ENGINE_RECONCILE_INTERVAL"`
+	EtcdCAFile              string  `yaml:"etcd_cafile"               env:"FLEET_ETCD_CAFILE"`
+	EtcdCertFile            string  `yaml:"etcd_certfile"             env:"FLEET_ETCD_CERTFILE"`
+	EtcdKeyFile             string  `yaml:"etcd_keyfile"              env:"FLEET_ETCD_KEYFILE"`
+	EtcdKeyPrefix           string  `yaml:"etcd_key_prefix"           env:"FLEET_ETCD_KEY_PREFIX"`
+	EtcdRequestTimeout      float64 `yaml:"etcd_request_timeout"      env:"FLEET_ETCD_REQUEST_TIMEOUT"`
+	EtcdServers             string  `yaml:"etcd_servers"              env:"FLEET_ETCD_SERVERS"`
+	Metadata                string  `yaml:"metadata"                  env:"FLEET_METADATA"`
+	PublicIP                string  `yaml:"public_ip"                 env:"FLEET_PUBLIC_IP"`
+	Verbosity               int     `yaml:"verbosity"                 env:"FLEET_VERBOSITY"`
 }
