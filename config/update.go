@@ -17,7 +17,7 @@
 package config
 
 type Update struct {
-	RebootStrategy string `yaml:"reboot_strategy" env:"REBOOT_STRATEGY" valid:"best-effort,etcd-lock,reboot,false"`
+	RebootStrategy string `yaml:"reboot_strategy" env:"REBOOT_STRATEGY" valid:"best-effort,etcd-lock,reboot,off,false"`
 	Group          string `yaml:"group"           env:"GROUP"`
 	Server         string `yaml:"server"          env:"SERVER"`
 }
