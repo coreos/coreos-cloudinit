@@ -80,6 +80,15 @@ func TestUpdateUnits(t *testing.T) {
 				Mask:    true,
 			}}},
 		},
+		{
+			config: config.Update{RebootStrategy: "off"},
+			units: []Unit{{config.Unit{
+				Name:    "locksmithd.service",
+				Command: "stop",
+				Runtime: true,
+				Mask:    true,
+			}}},
+		},
 	} {
 		units := Update{Update: tt.config, ReadConfig: testReadConfig("")}.Units()
 		if !reflect.DeepEqual(tt.units, units) {
@@ -100,7 +109,7 @@ func TestUpdateFile(t *testing.T) {
 		},
 		{
 			config: config.Update{RebootStrategy: "wizzlewazzle"},
-			err:    &config.ErrorValid{Value: "wizzlewazzle", Field: "RebootStrategy", Valid: []string{"best-effort", "etcd-lock", "reboot", "false"}},
+			err:    &config.ErrorValid{Value: "wizzlewazzle", Field: "RebootStrategy", Valid: []string{"best-effort", "etcd-lock", "reboot", "off", "false"}},
 		},
 		{
 			config: config.Update{Group: "master", Server: "http://foo.com"},
@@ -138,6 +147,14 @@ func TestUpdateFile(t *testing.T) {
 			config: config.Update{RebootStrategy: "false"},
 			file: &File{config.File{
 				Content:            "REBOOT_STRATEGY=false\n",
+				Path:               "etc/coreos/update.conf",
+				RawFilePermissions: "0644",
+			}},
+		},
+		{
+			config: config.Update{RebootStrategy: "off"},
+			file: &File{config.File{
+				Content:            "REBOOT_STRATEGY=off\n",
 				Path:               "etc/coreos/update.conf",
 				RawFilePermissions: "0644",
 			}},

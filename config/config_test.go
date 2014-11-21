@@ -513,6 +513,7 @@ func TestNormalizeKeys(t *testing.T) {
 		{"a:\n  b:\n  - key-name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
 
 		{"coreos:\n  update:\n    reboot-strategy: off\n", "coreos:\n  update:\n    reboot_strategy: false\n"},
+		{"coreos:\n  update:\n    reboot-strategy: 'off'\n", "coreos:\n  update:\n    reboot_strategy: \"off\"\n"},
 	} {
 		out, err := normalizeConfig(tt.in)
 		if err != nil {
