@@ -61,7 +61,7 @@ func checkNodeStructure(n, g node, r *Report) {
 			toNode(reflect.New(c).Elem().Interface(), context{}, &cg)
 			checkNodeStructure(cn, cg, r)
 		}
-	case reflect.String, reflect.Int, reflect.Bool:
+	case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
 	default:
 		panic(fmt.Sprintf("checkNodeStructure(): unhandled kind %s", g.Kind()))
 	}
@@ -92,7 +92,7 @@ func checkNodeValidity(n, g node, r *Report) {
 			toNode(reflect.New(c).Elem().Interface(), context{}, &cg)
 			checkNodeValidity(cn, cg, r)
 		}
-	case reflect.String, reflect.Int, reflect.Bool:
+	case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
 	default:
 		panic(fmt.Sprintf("checkNodeValidity(): unhandled kind %s", g.Kind()))
 	}
@@ -104,10 +104,10 @@ func checkNodeValidity(n, g node, r *Report) {
 func isCompatible(n, g reflect.Kind) bool {
 	switch g {
 	case reflect.String:
-		return n == reflect.String || n == reflect.Int || n == reflect.Bool
+		return n == reflect.String || n == reflect.Int || n == reflect.Float64 || n == reflect.Bool
 	case reflect.Struct:
 		return n == reflect.Struct || n == reflect.Map
-	case reflect.Bool, reflect.Slice:
+	case reflect.Bool, reflect.Slice, reflect.Int, reflect.Float64:
 		return n == g
 	default:
 		panic(fmt.Sprintf("isCompatible(): unhandled kind %s", g))

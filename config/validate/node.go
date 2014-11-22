@@ -125,7 +125,7 @@ func toNode(v interface{}, c context, n *node) {
 			n.children = append(n.children, cn)
 			c.Increment()
 		}
-	case reflect.String, reflect.Int, reflect.Bool:
+	case reflect.String, reflect.Int, reflect.Bool, reflect.Float64:
 	default:
 		panic(fmt.Sprintf("toNode(): unhandled kind %s", vv.Kind()))
 	}

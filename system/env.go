@@ -31,9 +31,9 @@ func dropinContents(e interface{}) string {
 
 	var out string
 	for i := 0; i < et.NumField(); i++ {
-		if val := ev.Field(i).String(); val != "" {
+		if val := ev.Field(i).Interface(); !config.IsZero(val) {
 			key := et.Field(i).Tag.Get("env")
-			out += fmt.Sprintf("Environment=\"%s=%s\"\n", key, val)
+			out += fmt.Sprintf("Environment=\"%s=%v\"\n", key, val)
 		}
 	}
 
