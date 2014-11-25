@@ -32,29 +32,29 @@ type TestUnitManager struct {
 	reload   bool
 }
 
-func (tum *TestUnitManager) PlaceUnit(unit *system.Unit, dst string) error {
-	tum.placed = append(tum.placed, unit.Name)
+func (tum *TestUnitManager) PlaceUnit(u system.Unit) error {
+	tum.placed = append(tum.placed, u.Name)
 	return nil
 }
-func (tum *TestUnitManager) EnableUnitFile(unit string, runtime bool) error {
-	tum.enabled = append(tum.enabled, unit)
+func (tum *TestUnitManager) EnableUnitFile(u system.Unit) error {
+	tum.enabled = append(tum.enabled, u.Name)
 	return nil
 }
-func (tum *TestUnitManager) RunUnitCommand(command, unit string) (string, error) {
+func (tum *TestUnitManager) RunUnitCommand(u system.Unit, c string) (string, error) {
 	tum.commands = make(map[string]string)
-	tum.commands[unit] = command
+	tum.commands[u.Name] = c
 	return "", nil
 }
 func (tum *TestUnitManager) DaemonReload() error {
 	tum.reload = true
 	return nil
 }
-func (tum *TestUnitManager) MaskUnit(unit *system.Unit) error {
-	tum.masked = append(tum.masked, unit.Name)
+func (tum *TestUnitManager) MaskUnit(u system.Unit) error {
+	tum.masked = append(tum.masked, u.Name)
 	return nil
 }
-func (tum *TestUnitManager) UnmaskUnit(unit *system.Unit) error {
-	tum.unmasked = append(tum.unmasked, unit.Name)
+func (tum *TestUnitManager) UnmaskUnit(u system.Unit) error {
+	tum.unmasked = append(tum.unmasked, u.Name)
 	return nil
 }
 

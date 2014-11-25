@@ -27,12 +27,12 @@ import (
 const cloudConfigDropIn = "20-cloudinit.conf"
 
 type UnitManager interface {
-	PlaceUnit(unit *Unit, dst string) error
-	EnableUnitFile(unit string, runtime bool) error
-	RunUnitCommand(command, unit string) (string, error)
+	PlaceUnit(unit Unit) error
+	EnableUnitFile(unit Unit) error
+	RunUnitCommand(unit Unit, command string) (string, error)
+	MaskUnit(unit Unit) error
+	UnmaskUnit(unit Unit) error
 	DaemonReload() error
-	MaskUnit(unit *Unit) error
-	UnmaskUnit(unit *Unit) error
 }
 
 // Unit is a top-level structure which embeds its underlying configuration,
@@ -41,10 +41,10 @@ type Unit struct {
 	config.Unit
 }
 
-// Destination builds the appropriate absolute file path for
-// the Unit. The root argument indicates the effective base
-// directory of the system (similar to a chroot).
-func (u *Unit) Destination(root string) string {
+// Destination builds the appropriate absolute file path for the Unit. The root
+// argument indicates the effective base directory of the system (similar to a
+// chroot).
+func (u Unit) Destination(root string) string {
 	dir := "etc"
 	if u.Runtime {
 		dir = "run"

@@ -96,7 +96,8 @@ func maybeProbeBonding(interfaces []network.InterfaceGenerator) error {
 
 func restartNetworkd() error {
 	log.Printf("Restarting networkd.service\n")
-	_, err := NewUnitManager("").RunUnitCommand("restart", "systemd-networkd.service")
+	networkd := Unit{config.Unit{Name: "systemd-networkd.service"}}
+	_, err := NewUnitManager("").RunUnitCommand(networkd, "restart")
 	return err
 }
 

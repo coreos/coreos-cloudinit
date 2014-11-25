@@ -51,7 +51,7 @@ Address=10.209.171.177/19
 		t.Fatalf("unit.Destination returned %s, expected %s", dst, expectDst)
 	}
 
-	if err := sd.PlaceUnit(&u, dst); err != nil {
+	if err := sd.PlaceUnit(u); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
 	}
 
@@ -128,7 +128,7 @@ Where=/media/state
 		t.Fatalf("unit.Destination returned %s, expected %s", dst, expectDst)
 	}
 
-	if err := sd.PlaceUnit(&u, dst); err != nil {
+	if err := sd.PlaceUnit(u); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
 	}
 
@@ -180,7 +180,7 @@ func TestMaskUnit(t *testing.T) {
 	sd := &systemd{dir}
 
 	// Ensure mask works with units that do not currently exist
-	uf := &Unit{config.Unit{Name: "foo.service"}}
+	uf := Unit{config.Unit{Name: "foo.service"}}
 	if err := sd.MaskUnit(uf); err != nil {
 		t.Fatalf("Unable to mask new unit: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestMaskUnit(t *testing.T) {
 	}
 
 	// Ensure mask works with unit files that already exist
-	ub := &Unit{config.Unit{Name: "bar.service"}}
+	ub := Unit{config.Unit{Name: "bar.service"}}
 	barPath := path.Join(dir, "etc", "systemd", "system", "bar.service")
 	if _, err := os.Create(barPath); err != nil {
 		t.Fatalf("Error creating new unit file: %v", err)
@@ -220,12 +220,12 @@ func TestUnmaskUnit(t *testing.T) {
 
 	sd := &systemd{dir}
 
-	nilUnit := &Unit{config.Unit{Name: "null.service"}}
+	nilUnit := Unit{config.Unit{Name: "null.service"}}
 	if err := sd.UnmaskUnit(nilUnit); err != nil {
 		t.Errorf("unexpected error from unmasking nonexistent unit: %v", err)
 	}
 
-	uf := &Unit{config.Unit{Name: "foo.service", Content: "[Service]\nExecStart=/bin/true"}}
+	uf := Unit{config.Unit{Name: "foo.service", Content: "[Service]\nExecStart=/bin/true"}}
 	dst := uf.Destination(dir)
 	if err := os.MkdirAll(path.Dir(dst), os.FileMode(0755)); err != nil {
 		t.Fatalf("Unable to create unit directory: %v", err)
@@ -245,7 +245,7 @@ func TestUnmaskUnit(t *testing.T) {
 		t.Errorf("unmask of non-empty unit mutated unit contents unexpectedly")
 	}
 
-	ub := &Unit{config.Unit{Name: "bar.service"}}
+	ub := Unit{config.Unit{Name: "bar.service"}}
 	dst = ub.Destination(dir)
 	if err := os.Symlink("/dev/null", dst); err != nil {
 		t.Fatalf("Unable to create masked unit: %v", err)

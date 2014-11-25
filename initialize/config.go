@@ -195,66 +195,66 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 // commands against units. It returns any error encountered.
 func processUnits(units []system.Unit, root string, um system.UnitManager) error {
 	type action struct {
-		unit    string
+		unit    system.Unit
 		command string
 	}
 	actions := make([]action, 0, len(units))
 	reload := false
 	for _, unit := range units {
-		dst := unit.Destination(root)
 		if unit.Content != "" {
-			log.Printf("Writing unit %s to filesystem at path %s", unit.Name, dst)
-			if err := um.PlaceUnit(&unit, dst); err != nil {
+			log.Printf("Writing unit %q to filesystem", unit.Name)
+			if err := um.PlaceUnit(unit); err != nil {
 				return err
 			}
-			log.Printf("Placed unit %s at %s", unit.Name, dst)
+			log.Printf("Wrote unit %q", unit.Name)
 			reload = true
 		}
 
 		if unit.Mask {
-			log.Printf("Masking unit file %s", unit.Name)
-			if err := um.MaskUnit(&unit); err != nil {
+			log.Printf("Masking unit file %q", unit.Name)
+			if err := um.MaskUnit(unit); err != nil {
 				return err
 			}
 		} else if unit.Runtime {
-			log.Printf("Ensuring runtime unit file %s is unmasked", unit.Name)
-			if err := um.UnmaskUnit(&unit); err != nil {
+			log.Printf("Ensuring runtime unit file %q is unmasked", unit.Name)
+			if err := um.UnmaskUnit(unit); err != nil {
 				return err
 			}
 		}
 
 		if unit.Enable {
 			if unit.Group() != "network" {
-				log.Printf("Enabling unit file %s", unit.Name)
-				if err := um.EnableUnitFile(unit.Name, unit.Runtime); err != nil {
+				log.Printf("Enabling unit file %q", unit.Name)
+				if err := um.EnableUnitFile(unit); err != nil {
 					return err
 				}
-				log.Printf("Enabled unit %s", unit.Name)
+				log.Printf("Enabled unit %q", unit.Name)
 			} else {
-				log.Printf("Skipping enable for network-like unit %s", unit.Name)
+				log.Printf("Skipping enable for network-like unit %q", unit.Name)
 			}
 		}
 
 		if unit.Group() == "network" {
-			actions = append(actions, action{"systemd-networkd.service", "restart"})
+			networkd := system.Unit{Unit: config.Unit{Name: "systemd-networkd.service"}}
+			actions = append(actions, action{networkd, "restart"})
 		} else if unit.Command != "" {
-			actions = append(actions, action{unit.Name, unit.Command})
+			actions = append(actions, action{unit, unit.Command})
 		}
 	}
 
 	if reload {
 		if err := um.DaemonReload(); err != nil {
-			return errors.New(fmt.Sprintf("failed systemd daemon-reload: %v", err))
+			return errors.New(fmt.Sprintf("failed systemd daemon-reload: %s", err))
 		}
 	}
 
 	for _, action := range actions {
-		log.Printf("Calling unit command '%s %s'", action.command, action.unit)
-		res, err := um.RunUnitCommand(action.command, action.unit)
+		log.Printf("Calling unit command %q on %q'", action.command, action.unit.Name)
+		res, err := um.RunUnitCommand(action.unit, action.command)
 		if err != nil {
 			return err
 		}
-		log.Printf("Result of '%s %s': %s", action.command, action.unit, res)
+		log.Printf("Result of %q on %q': %s", action.command, action.unit.Name, res)
 	}
 
 	return nil

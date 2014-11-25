@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/coreos/go-systemd/dbus"
@@ -42,49 +41,38 @@ type systemd struct {
 // never be used as a true MachineID
 const fakeMachineID = "42000000000000000000000000000042"
 
-// PlaceUnit writes a unit file at the provided destination, creating
-// parent directories as necessary.
-func (s *systemd) PlaceUnit(u *Unit, dst string) error {
-	dir := filepath.Dir(dst)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, os.FileMode(0755)); err != nil {
-			return err
-		}
-	}
-
+// PlaceUnit writes a unit file at its desired destination, creating parent
+// directories as necessary.
+func (s *systemd) PlaceUnit(u Unit) error {
 	file := File{config.File{
-		Path:               filepath.Base(dst),
+		Path:               u.Destination(s.root),
 		Content:            u.Content,
 		RawFilePermissions: "0644",
 	}}
 
-	_, err := WriteFile(&file, dir)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := WriteFile(&file, "/")
+	return err
 }
 
-func (s *systemd) EnableUnitFile(unit string, runtime bool) error {
+func (s *systemd) EnableUnitFile(u Unit) error {
 	conn, err := dbus.New()
 	if err != nil {
 		return err
 	}
 
-	units := []string{unit}
-	_, _, err = conn.EnableUnitFiles(units, runtime, true)
+	units := []string{u.Name}
+	_, _, err = conn.EnableUnitFiles(units, u.Runtime, true)
 	return err
 }
 
-func (s *systemd) RunUnitCommand(command, unit string) (string, error) {
+func (s *systemd) RunUnitCommand(u Unit, c string) (string, error) {
 	conn, err := dbus.New()
 	if err != nil {
 		return "", err
 	}
 
 	var fn func(string, string) (string, error)
-	switch command {
+	switch c {
 	case "start":
 		fn = conn.StartUnit
 	case "stop":
@@ -100,10 +88,10 @@ func (s *systemd) RunUnitCommand(command, unit string) (string, error) {
 	case "reload-or-try-restart":
 		fn = conn.ReloadOrTryRestartUnit
 	default:
-		return "", fmt.Errorf("Unsupported systemd command %q", command)
+		return "", fmt.Errorf("Unsupported systemd command %q", c)
 	}
 
-	return fn(unit, "replace")
+	return fn(u.Name, "replace")
 }
 
 func (s *systemd) DaemonReload() error {
@@ -119,8 +107,8 @@ func (s *systemd) DaemonReload() error {
 // /dev/null, analogous to `systemctl mask`.
 // N.B.: Unlike `systemctl mask`, this function will *remove any existing unit
 // file at the location*, to ensure that the mask will succeed.
-func (s *systemd) MaskUnit(unit *Unit) error {
-	masked := unit.Destination(s.root)
+func (s *systemd) MaskUnit(u Unit) error {
+	masked := u.Destination(s.root)
 	if _, err := os.Stat(masked); os.IsNotExist(err) {
 		if err := os.MkdirAll(path.Dir(masked), os.FileMode(0755)); err != nil {
 			return err
@@ -134,8 +122,8 @@ func (s *systemd) MaskUnit(unit *Unit) error {
 // UnmaskUnit is analogous to systemd's unit_file_unmask. If the file
 // associated with the given Unit is empty or appears to be a symlink to
 // /dev/null, it is removed.
-func (s *systemd) UnmaskUnit(unit *Unit) error {
-	masked := unit.Destination(s.root)
+func (s *systemd) UnmaskUnit(u Unit) error {
+	masked := u.Destination(s.root)
 	ne, err := nullOrEmpty(masked)
 	if os.IsNotExist(err) {
 		return nil
