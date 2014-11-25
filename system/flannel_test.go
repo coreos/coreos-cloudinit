@@ -22,7 +22,7 @@ func TestFlannelUnits(t *testing.T) {
 				EtcdPrefix:   "/coreos.com/network/tenant1",
 			},
 			[]Unit{{config.Unit{
-				Name: "flannel.service",
+				Name: "flanneld.service",
 				Content: `[Service]
 Environment="FLANNELD_ETCD_ENDPOINT=http://12.34.56.78:4001"
 Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network/tenant1"

@@ -13,5 +13,5 @@ type Flannel struct {
 // Units generates a Unit file drop-in for flannel, if any flannel options were
 // configured in cloud-config
 func (fl Flannel) Units() []Unit {
-	return dropinFromConfig(fl.Flannel, "flannel.service")
+	return dropinFromConfig(fl.Flannel, "flanneld.service")
 }
