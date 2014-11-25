@@ -17,6 +17,7 @@
 package initialize
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/coreos/coreos-cloudinit/config"
@@ -59,72 +60,77 @@ func (tum *TestUnitManager) UnmaskUnit(u system.Unit) error {
 }
 
 func TestProcessUnits(t *testing.T) {
-	tum := &TestUnitManager{}
-	units := []system.Unit{
-		system.Unit{Unit: config.Unit{
-			Name: "foo",
-			Mask: true,
-		}},
-	}
-	if err := processUnits(units, "", tum); err != nil {
-		t.Fatalf("unexpected error calling processUnits: %v", err)
-	}
-	if len(tum.masked) != 1 || tum.masked[0] != "foo" {
-		t.Errorf("expected foo to be masked, but found %v", tum.masked)
+	tests := []struct {
+		units []system.Unit
+
+		result TestUnitManager
+	}{
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name: "foo",
+					Mask: true,
+				}},
+			},
+			result: TestUnitManager{
+				masked: []string{"foo"},
+			},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name: "bar.network",
+				}},
+			},
+			result: TestUnitManager{
+				commands: map[string]string{
+					"systemd-networkd.service": "restart",
+				},
+			},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name:    "baz.service",
+					Content: "[Service]\nExecStart=/bin/true",
+				}},
+			},
+			result: TestUnitManager{
+				placed: []string{"baz.service"},
+				reload: true,
+			},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name:    "locksmithd.service",
+					Runtime: true,
+				}},
+			},
+			result: TestUnitManager{
+				unmasked: []string{"locksmithd.service"},
+			},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name:   "woof",
+					Enable: true,
+				}},
+			},
+			result: TestUnitManager{
+				enabled: []string{"woof"},
+			},
+		},
 	}
 
-	tum = &TestUnitManager{}
-	units = []system.Unit{
-		system.Unit{Unit: config.Unit{
-			Name: "bar.network",
-		}},
-	}
-	if err := processUnits(units, "", tum); err != nil {
-		t.Fatalf("unexpected error calling processUnits: %v", err)
-	}
-	if _, ok := tum.commands["systemd-networkd.service"]; !ok {
-		t.Errorf("expected systemd-networkd.service to be reloaded!")
-	}
-
-	tum = &TestUnitManager{}
-	units = []system.Unit{
-		system.Unit{Unit: config.Unit{
-			Name:    "baz.service",
-			Content: "[Service]\nExecStart=/bin/true",
-		}},
-	}
-	if err := processUnits(units, "", tum); err != nil {
-		t.Fatalf("unexpected error calling processUnits: %v", err)
-	}
-	if len(tum.placed) != 1 || tum.placed[0] != "baz.service" {
-		t.Fatalf("expected baz.service to be written, but got %v", tum.placed)
-	}
-
-	tum = &TestUnitManager{}
-	units = []system.Unit{
-		system.Unit{Unit: config.Unit{
-			Name:    "locksmithd.service",
-			Runtime: true,
-		}},
-	}
-	if err := processUnits(units, "", tum); err != nil {
-		t.Fatalf("unexpected error calling processUnits: %v", err)
-	}
-	if len(tum.unmasked) != 1 || tum.unmasked[0] != "locksmithd.service" {
-		t.Fatalf("expected locksmithd.service to be unmasked, but got %v", tum.unmasked)
-	}
-
-	tum = &TestUnitManager{}
-	units = []system.Unit{
-		system.Unit{Unit: config.Unit{
-			Name:   "woof",
-			Enable: true,
-		}},
-	}
-	if err := processUnits(units, "", tum); err != nil {
-		t.Fatalf("unexpected error calling processUnits: %v", err)
-	}
-	if len(tum.enabled) != 1 || tum.enabled[0] != "woof" {
-		t.Fatalf("expected woof to be enabled, but got %v", tum.enabled)
+	for _, tt := range tests {
+		tum := &TestUnitManager{}
+		if err := processUnits(tt.units, "", tum); err != nil {
+			t.Errorf("bad error (%+v): want nil, got %s", tt.units, err)
+		}
+		if !reflect.DeepEqual(tt.result, *tum) {
+			t.Errorf("bad result (%+v): want %+v, got %+v", tt.units, tt.result, tum)
+		}
 	}
 }
