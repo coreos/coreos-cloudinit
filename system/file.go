@@ -19,6 +19,7 @@ package system
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -47,12 +48,13 @@ func (f *File) Permissions() (os.FileMode, error) {
 }
 
 func WriteFile(f *File, root string) (string, error) {
+	fullpath := path.Join(root, f.Path)
+	dir := path.Dir(fullpath)
+	log.Printf("Writing file to %q", fullpath)
+
 	if f.Encoding != "" {
 		return "", fmt.Errorf("Unable to write file with encoding %s", f.Encoding)
 	}
-
-	fullpath := path.Join(root, f.Path)
-	dir := path.Dir(fullpath)
 
 	if err := EnsureDirectoryExists(dir); err != nil {
 		return "", err
@@ -94,6 +96,7 @@ func WriteFile(f *File, root string) (string, error) {
 		return "", err
 	}
 
+	log.Printf("Wrote file to %q", fullpath)
 	return fullpath, nil
 }
 

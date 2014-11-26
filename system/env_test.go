@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestDropinContents(t *testing.T) {
+func TestServiceContents(t *testing.T) {
 	tests := []struct {
 		Config   interface{}
 		Contents string
@@ -48,7 +48,7 @@ Environment="D=0.1"
 	}
 
 	for _, tt := range tests {
-		if c := dropinContents(tt.Config); c != tt.Contents {
+		if c := serviceContents(tt.Config); c != tt.Contents {
 			t.Errorf("bad contents (%+v): want %q, got %q", tt, tt.Contents, c)
 		}
 	}

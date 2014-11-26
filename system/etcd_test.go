@@ -30,7 +30,11 @@ func TestEtcdUnits(t *testing.T) {
 	}{
 		{
 			config.Etcd{},
-			nil,
+			[]Unit{{config.Unit{
+				Name:    "etcd.service",
+				Runtime: true,
+				DropIns: []config.UnitDropIn{{Name: "20-cloudinit.conf"}},
+			}}},
 		},
 		{
 			config.Etcd{
@@ -40,11 +44,13 @@ func TestEtcdUnits(t *testing.T) {
 			[]Unit{{config.Unit{
 				Name:    "etcd.service",
 				Runtime: true,
-				DropIn:  true,
-				Content: `[Service]
+				DropIns: []config.UnitDropIn{{
+					Name: "20-cloudinit.conf",
+					Content: `[Service]
 Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `,
+				}},
 			}}},
 		},
 		{
@@ -56,12 +62,14 @@ Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 			[]Unit{{config.Unit{
 				Name:    "etcd.service",
 				Runtime: true,
-				DropIn:  true,
-				Content: `[Service]
+				DropIns: []config.UnitDropIn{{
+					Name: "20-cloudinit.conf",
+					Content: `[Service]
 Environment="ETCD_DISCOVERY=http://disco.example.com/foobar"
 Environment="ETCD_NAME=node001"
 Environment="ETCD_PEER_BIND_ADDR=127.0.0.1:7002"
 `,
+				}},
 			}}},
 		},
 	} {

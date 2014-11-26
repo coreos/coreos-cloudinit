@@ -29,5 +29,12 @@ type Fleet struct {
 // Units generates a Unit file drop-in for fleet, if any fleet options were
 // configured in cloud-config
 func (fe Fleet) Units() []Unit {
-	return dropinFromConfig(fe.Fleet, "fleet.service")
+	return []Unit{{config.Unit{
+		Name:    "fleet.service",
+		Runtime: true,
+		DropIns: []config.UnitDropIn{{
+			Name:    "20-cloudinit.conf",
+			Content: serviceContents(fe.Fleet),
+		}},
+	}}}
 }

@@ -30,19 +30,25 @@ func TestFleetUnits(t *testing.T) {
 	}{
 		{
 			config.Fleet{},
-			nil,
+			[]Unit{{config.Unit{
+				Name:    "fleet.service",
+				Runtime: true,
+				DropIns: []config.UnitDropIn{{Name: "20-cloudinit.conf"}},
+			}}},
 		},
 		{
 			config.Fleet{
 				PublicIP: "12.34.56.78",
 			},
 			[]Unit{{config.Unit{
-				Name: "fleet.service",
-				Content: `[Service]
+				Name:    "fleet.service",
+				Runtime: true,
+				DropIns: []config.UnitDropIn{{
+					Name: "20-cloudinit.conf",
+					Content: `[Service]
 Environment="FLEET_PUBLIC_IP=12.34.56.78"
 `,
-				Runtime: true,
-				DropIn:  true,
+				}},
 			}}},
 		},
 	} {

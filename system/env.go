@@ -25,7 +25,7 @@ import (
 
 // dropinContents generates the contents for a drop-in unit given the config.
 // The argument must be a struct from the 'config' package.
-func dropinContents(e interface{}) string {
+func serviceContents(e interface{}) string {
 	et := reflect.TypeOf(e)
 	ev := reflect.ValueOf(e)
 
@@ -41,17 +41,4 @@ func dropinContents(e interface{}) string {
 		return ""
 	}
 	return "[Service]\n" + out
-}
-
-func dropinFromConfig(cfg interface{}, name string) []Unit {
-	content := dropinContents(cfg)
-	if content == "" {
-		return nil
-	}
-	return []Unit{{config.Unit{
-		Name:    name,
-		Runtime: true,
-		DropIn:  true,
-		Content: content,
-	}}}
 }

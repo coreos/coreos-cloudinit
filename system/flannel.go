@@ -13,5 +13,12 @@ type Flannel struct {
 // Units generates a Unit file drop-in for flannel, if any flannel options were
 // configured in cloud-config
 func (fl Flannel) Units() []Unit {
-	return dropinFromConfig(fl.Flannel, "flanneld.service")
+	return []Unit{{config.Unit{
+		Name:    "flanneld.service",
+		Runtime: true,
+		DropIns: []config.UnitDropIn{{
+			Name:    "20-cloudinit.conf",
+			Content: serviceContents(fl.Flannel),
+		}},
+	}}}
 }

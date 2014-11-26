@@ -14,7 +14,11 @@ func TestFlannelUnits(t *testing.T) {
 	}{
 		{
 			config.Flannel{},
-			nil,
+			[]Unit{{config.Unit{
+				Name:    "flanneld.service",
+				Runtime: true,
+				DropIns: []config.UnitDropIn{{Name: "20-cloudinit.conf"}},
+			}}},
 		},
 		{
 			config.Flannel{
@@ -22,13 +26,15 @@ func TestFlannelUnits(t *testing.T) {
 				EtcdPrefix:   "/coreos.com/network/tenant1",
 			},
 			[]Unit{{config.Unit{
-				Name: "flanneld.service",
-				Content: `[Service]
+				Name:    "flanneld.service",
+				Runtime: true,
+				DropIns: []config.UnitDropIn{{
+					Name: "20-cloudinit.conf",
+					Content: `[Service]
 Environment="FLANNELD_ETCD_ENDPOINT=http://12.34.56.78:4001"
 Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network/tenant1"
 `,
-				Runtime: true,
-				DropIn:  true,
+				}},
 			}}},
 		},
 	} {

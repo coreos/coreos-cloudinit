@@ -17,6 +17,7 @@
 package system
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -25,133 +26,109 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
-func TestPlaceNetworkUnit(t *testing.T) {
-	u := Unit{config.Unit{
-		Name:    "50-eth0.network",
-		Runtime: true,
-		Content: `[Match]
-Name=eth47
-
-[Network]
-Address=10.209.171.177/19
-`,
-	}}
-
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer os.RemoveAll(dir)
-
-	sd := &systemd{dir}
-
-	dst := u.Destination(dir)
-	expectDst := path.Join(dir, "run", "systemd", "network", "50-eth0.network")
-	if dst != expectDst {
-		t.Fatalf("unit.Destination returned %s, expected %s", dst, expectDst)
+func TestPlaceUnit(t *testing.T) {
+	tests := []config.Unit{
+		{
+			Name:    "50-eth0.network",
+			Runtime: true,
+			Content: "[Match]\nName=eth47\n\n[Network]\nAddress=10.209.171.177/19\n",
+		},
+		{
+			Name:    "media-state.mount",
+			Content: "[Mount]\nWhat=/dev/sdb1\nWhere=/media/state\n",
+		},
 	}
 
-	if err := sd.PlaceUnit(&u, dst); err != nil {
-		t.Fatalf("PlaceUnit failed: %v", err)
-	}
+	for _, tt := range tests {
+		dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+		if err != nil {
+			panic(fmt.Sprintf("Unable to create tempdir: %v", err))
+		}
 
-	fi, err := os.Stat(dst)
-	if err != nil {
-		t.Fatalf("Unable to stat file: %v", err)
-	}
+		u := Unit{tt}
+		sd := &systemd{dir}
 
-	if fi.Mode() != os.FileMode(0644) {
-		t.Errorf("File has incorrect mode: %v", fi.Mode())
-	}
+		if err := sd.PlaceUnit(u); err != nil {
+			t.Fatalf("PlaceUnit(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	contents, err := ioutil.ReadFile(dst)
-	if err != nil {
-		t.Fatalf("Unable to read expected file: %v", err)
-	}
+		fi, err := os.Stat(u.Destination(dir))
+		if err != nil {
+			t.Fatalf("Stat(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	expectContents := `[Match]
-Name=eth47
+		if mode := fi.Mode(); mode != os.FileMode(0644) {
+			t.Errorf("bad filemode (%+v): want %v, got %v", tt, os.FileMode(0644), mode)
+		}
 
-[Network]
-Address=10.209.171.177/19
-`
-	if string(contents) != expectContents {
-		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expectContents)
+		c, err := ioutil.ReadFile(u.Destination(dir))
+		if err != nil {
+			t.Fatalf("ReadFile(): bad error (%+v): want nil, got %s", tt, err)
+		}
+
+		if string(c) != tt.Content {
+			t.Errorf("bad contents (%+v): want %q, got %q", tt, tt.Content, string(c))
+		}
+
+		os.RemoveAll(dir)
 	}
 }
 
-func TestUnitDestination(t *testing.T) {
-	dir := "/some/dir"
-	name := "foobar.service"
-
-	u := Unit{config.Unit{
-		Name:   name,
-		DropIn: false,
-	}}
-
-	dst := u.Destination(dir)
-	expectDst := path.Join(dir, "etc", "systemd", "system", "foobar.service")
-	if dst != expectDst {
-		t.Errorf("unit.Destination returned %s, expected %s", dst, expectDst)
+func TestPlaceUnitDropIn(t *testing.T) {
+	tests := []config.Unit{
+		{
+			Name:    "false.service",
+			Runtime: true,
+			DropIns: []config.UnitDropIn{
+				{
+					Name:    "00-true.conf",
+					Content: "[Service]\nExecStart=\nExecStart=/usr/bin/true\n",
+				},
+			},
+		},
+		{
+			Name: "true.service",
+			DropIns: []config.UnitDropIn{
+				{
+					Name:    "00-false.conf",
+					Content: "[Service]\nExecStart=\nExecStart=/usr/bin/false\n",
+				},
+			},
+		},
 	}
 
-	u.DropIn = true
+	for _, tt := range tests {
+		dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+		if err != nil {
+			panic(fmt.Sprintf("Unable to create tempdir: %v", err))
+		}
 
-	dst = u.Destination(dir)
-	expectDst = path.Join(dir, "etc", "systemd", "system", "foobar.service.d", cloudConfigDropIn)
-	if dst != expectDst {
-		t.Errorf("unit.Destination returned %s, expected %s", dst, expectDst)
-	}
-}
+		u := Unit{tt}
+		sd := &systemd{dir}
 
-func TestPlaceMountUnit(t *testing.T) {
-	u := Unit{config.Unit{
-		Name:    "media-state.mount",
-		Runtime: false,
-		Content: `[Mount]
-What=/dev/sdb1
-Where=/media/state
-`,
-	}}
+		if err := sd.PlaceUnitDropIn(u, u.DropIns[0]); err != nil {
+			t.Fatalf("PlaceUnit(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer os.RemoveAll(dir)
+		fi, err := os.Stat(u.DropInDestination(dir, u.DropIns[0]))
+		if err != nil {
+			t.Fatalf("Stat(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	sd := &systemd{dir}
+		if mode := fi.Mode(); mode != os.FileMode(0644) {
+			t.Errorf("bad filemode (%+v): want %v, got %v", tt, os.FileMode(0644), mode)
+		}
 
-	dst := u.Destination(dir)
-	expectDst := path.Join(dir, "etc", "systemd", "system", "media-state.mount")
-	if dst != expectDst {
-		t.Fatalf("unit.Destination returned %s, expected %s", dst, expectDst)
-	}
+		c, err := ioutil.ReadFile(u.DropInDestination(dir, u.DropIns[0]))
+		if err != nil {
+			t.Fatalf("ReadFile(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	if err := sd.PlaceUnit(&u, dst); err != nil {
-		t.Fatalf("PlaceUnit failed: %v", err)
-	}
+		if string(c) != u.DropIns[0].Content {
+			t.Errorf("bad contents (%+v): want %q, got %q", tt, u.DropIns[0].Content, string(c))
+		}
 
-	fi, err := os.Stat(dst)
-	if err != nil {
-		t.Fatalf("Unable to stat file: %v", err)
-	}
-
-	if fi.Mode() != os.FileMode(0644) {
-		t.Errorf("File has incorrect mode: %v", fi.Mode())
-	}
-
-	contents, err := ioutil.ReadFile(dst)
-	if err != nil {
-		t.Fatalf("Unable to read expected file: %v", err)
-	}
-
-	expectContents := `[Mount]
-What=/dev/sdb1
-Where=/media/state
-`
-	if string(contents) != expectContents {
-		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expectContents)
+		os.RemoveAll(dir)
 	}
 }
 
@@ -180,7 +157,7 @@ func TestMaskUnit(t *testing.T) {
 	sd := &systemd{dir}
 
 	// Ensure mask works with units that do not currently exist
-	uf := &Unit{config.Unit{Name: "foo.service"}}
+	uf := Unit{config.Unit{Name: "foo.service"}}
 	if err := sd.MaskUnit(uf); err != nil {
 		t.Fatalf("Unable to mask new unit: %v", err)
 	}
@@ -194,7 +171,7 @@ func TestMaskUnit(t *testing.T) {
 	}
 
 	// Ensure mask works with unit files that already exist
-	ub := &Unit{config.Unit{Name: "bar.service"}}
+	ub := Unit{config.Unit{Name: "bar.service"}}
 	barPath := path.Join(dir, "etc", "systemd", "system", "bar.service")
 	if _, err := os.Create(barPath); err != nil {
 		t.Fatalf("Error creating new unit file: %v", err)
@@ -220,12 +197,12 @@ func TestUnmaskUnit(t *testing.T) {
 
 	sd := &systemd{dir}
 
-	nilUnit := &Unit{config.Unit{Name: "null.service"}}
+	nilUnit := Unit{config.Unit{Name: "null.service"}}
 	if err := sd.UnmaskUnit(nilUnit); err != nil {
 		t.Errorf("unexpected error from unmasking nonexistent unit: %v", err)
 	}
 
-	uf := &Unit{config.Unit{Name: "foo.service", Content: "[Service]\nExecStart=/bin/true"}}
+	uf := Unit{config.Unit{Name: "foo.service", Content: "[Service]\nExecStart=/bin/true"}}
 	dst := uf.Destination(dir)
 	if err := os.MkdirAll(path.Dir(dst), os.FileMode(0755)); err != nil {
 		t.Fatalf("Unable to create unit directory: %v", err)
@@ -245,7 +222,7 @@ func TestUnmaskUnit(t *testing.T) {
 		t.Errorf("unmask of non-empty unit mutated unit contents unexpectedly")
 	}
 
-	ub := &Unit{config.Unit{Name: "bar.service"}}
+	ub := Unit{config.Unit{Name: "bar.service"}}
 	dst = ub.Destination(dir)
 	if err := os.Symlink("/dev/null", dst); err != nil {
 		t.Fatalf("Unable to create masked unit: %v", err)
