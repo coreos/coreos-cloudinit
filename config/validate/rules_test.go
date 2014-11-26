@@ -218,7 +218,7 @@ func TestCheckValidity(t *testing.T) {
 		},
 		{
 			config:  "coreos:\n  units:\n    - command: lol",
-			entries: []Entry{{entryWarning, "invalid value lol", 3}},
+			entries: []Entry{{entryError, "invalid value lol", 3}},
 		},
 
 		// struct
@@ -227,7 +227,7 @@ func TestCheckValidity(t *testing.T) {
 		},
 		{
 			config:  "coreos:\n  update:\n    reboot_strategy: always",
-			entries: []Entry{{entryWarning, "invalid value always", 3}},
+			entries: []Entry{{entryError, "invalid value always", 3}},
 		},
 
 		// unknown
