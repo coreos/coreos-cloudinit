@@ -98,3 +98,41 @@ func TestDestination(t *testing.T) {
 		}
 	}
 }
+
+func TestDropInDestination(t *testing.T) {
+	tests := []struct {
+		root       string
+		unitName   string
+		dropInName string
+		runtime    bool
+
+		destination string
+	}{
+		{
+			root:        "/some/dir",
+			unitName:    "foo.service",
+			dropInName:  "bar.conf",
+			destination: "/some/dir/etc/systemd/system/foo.service.d/bar.conf",
+		},
+		{
+			root:        "/some/dir",
+			unitName:    "foo.service",
+			dropInName:  "bar.conf",
+			runtime:     true,
+			destination: "/some/dir/run/systemd/system/foo.service.d/bar.conf",
+		},
+	}
+
+	for _, tt := range tests {
+		u := Unit{config.Unit{
+			Name:    tt.unitName,
+			Runtime: tt.runtime,
+			DropIns: []config.UnitDropIn{{
+				Name: tt.dropInName,
+			}},
+		}}
+		if d := u.DropInDestination(tt.root, u.DropIns[0]); tt.destination != d {
+			t.Errorf("bad destination (%+v): want %q, got %q", tt, tt.destination, d)
+		}
+	}
+}

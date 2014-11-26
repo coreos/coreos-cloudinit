@@ -25,11 +25,9 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
-// Name for drop-in service configuration files created by cloudconfig
-const cloudConfigDropIn = "20-cloudinit.conf"
-
 type UnitManager interface {
 	PlaceUnit(unit Unit) error
+	PlaceUnitDropIn(unit Unit, dropIn config.UnitDropIn) error
 	EnableUnitFile(unit Unit) error
 	RunUnitCommand(unit Unit, command string) (string, error)
 	MaskUnit(unit Unit) error
@@ -66,14 +64,21 @@ func (u Unit) Group() string {
 // argument indicates the effective base directory of the system (similar to a
 // chroot).
 func (u Unit) Destination(root string) string {
+	return path.Join(u.prefix(root), u.Name)
+}
+
+// DropInDestination builds the appropriate absolute file path for the
+// UnitDropIn. The root argument indicates the effective base directory of the
+// system (similar to a chroot) and the dropIn argument is the UnitDropIn for
+// which the destination is being calculated.
+func (u Unit) DropInDestination(root string, dropIn config.UnitDropIn) string {
+	return path.Join(u.prefix(root), fmt.Sprintf("%s.d", u.Name), dropIn.Name)
+}
+
+func (u Unit) prefix(root string) string {
 	dir := "etc"
 	if u.Runtime {
 		dir = "run"
 	}
-
-	if u.DropIn {
-		return path.Join(root, dir, "systemd", u.Group(), fmt.Sprintf("%s.d", u.Name), cloudConfigDropIn)
-	} else {
-		return path.Join(root, dir, "systemd", u.Group(), u.Name)
-	}
+	return path.Join(root, dir, "systemd", u.Group())
 }

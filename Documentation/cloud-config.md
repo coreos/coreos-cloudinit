@@ -16,7 +16,7 @@ We've designed our implementation to allow the same cloud-config file to work ac
 
 The cloud-config file uses the [YAML][yaml] file format, which uses whitespace and new-lines to delimit lists, associative arrays, and values.
 
-A cloud-config file should contain `#cloud-config`, followed by an associative array which has zero or more of the following keys:
+A cloud-config file must contain `#cloud-config`, followed by an associative array which has zero or more of the following keys:
 
 - `coreos`
 - `ssh_authorized_keys`
@@ -46,13 +46,13 @@ If the platform environment supports the templating feature of coreos-cloudinit 
 #cloud-config
 
 coreos:
-    etcd:
-        name: node001
-	# generate a new token for each unique cluster from https://discovery.etcd.io/new
-        discovery: https://discovery.etcd.io/<token>
-	# multi-region and multi-cloud deployments need to use $public_ipv4
-        addr: $public_ipv4:4001
-        peer-addr: $private_ipv4:7001
+  etcd:
+      name: node001
+      # generate a new token for each unique cluster from https://discovery.etcd.io/new
+      discovery: https://discovery.etcd.io/<token>
+      # multi-region and multi-cloud deployments need to use $public_ipv4
+      addr: $public_ipv4:4001
+      peer-addr: $private_ipv4:7001
 ```
 
 ...will generate a systemd unit drop-in like this:
@@ -66,7 +66,6 @@ Environment="ETCD_PEER_ADDR=192.0.2.13:7001"
 ```
 
 For more information about the available configuration parameters, see the [etcd documentation][etcd-config].
-Note that hyphens in the coreos.etcd.* keys are mapped to underscores.
 
 _Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced in other documents are only supported on Amazon EC2, Google Compute Engine, OpenStack, Rackspace, DigitalOcean, and Vagrant._
 
@@ -80,9 +79,9 @@ The `coreos.fleet.*` parameters work very similarly to `coreos.etcd.*`, and allo
 #cloud-config
 
 coreos:
-    fleet:
-        public-ip: $public_ipv4
-        metadata: region=us-west
+  fleet:
+      public-ip: $public_ipv4
+      metadata: region=us-west
 ```
 
 ...will generate a systemd unit drop-in like this:
@@ -105,8 +104,8 @@ The `coreos.flannel.*` parameters also work very similarly to `coreos.etcd.*` an
 #cloud-config
 
 coreos:
-    flannel:
-        etcd-prefix: /coreos.com/network2
+  flannel:
+      etcd-prefix: /coreos.com/network2
 ```
 
 ...will generate systemd unit drop-in like so:
@@ -158,6 +157,10 @@ Each item is an object with the following fields:
 - **content**: Plaintext string representing entire unit file. If no value is provided, the unit is assumed to exist already.
 - **command**: Command to execute on unit: start, stop, reload, restart, try-restart, reload-or-restart, reload-or-try-restart. The default behavior is to not execute any commands.
 - **mask**: Whether to mask the unit file by symlinking it to `/dev/null` (analogous to `systemctl mask <name>`). Note that unlike `systemctl mask`, **this will destructively remove any existing unit file** located at `/etc/systemd/system/<unit>`, to ensure that the mask succeeds. The default value is false.
+- **drop-ins**: A list of unit drop-ins with the following fields:
+  - **name**: String representing unit's name. Required.
+  - **content**: Plaintext string representing entire file. Required.
+
 
 **NOTE:** The command field is ignored for all network, netdev, and link units. The systemd-networkd.service unit will be restarted in their place.
 
@@ -169,19 +172,34 @@ Write a unit to disk, automatically starting it.
 #cloud-config
 
 coreos:
-    units:
-      - name: docker-redis.service
-        command: start
-        content: |
-          [Unit]
-          Description=Redis container
-          Author=Me
-          After=docker.service
+  units:
+    - name: docker-redis.service
+      command: start
+      content: |
+        [Unit]
+        Description=Redis container
+        Author=Me
+        After=docker.service
 
-          [Service]
-          Restart=always
-          ExecStart=/usr/bin/docker start -a redis_server
-          ExecStop=/usr/bin/docker stop -t 2 redis_server
+        [Service]
+        Restart=always
+        ExecStart=/usr/bin/docker start -a redis_server
+        ExecStop=/usr/bin/docker stop -t 2 redis_server
+```
+
+Add the DOCKER_OPTS environment variable to docker.service.
+
+```yaml
+#cloud-config
+
+coreos:
+  units:
+    - name: docker.service
+      drop-ins:
+        - name: 50-insecure-registry.conf
+          content: |
+            [Service]
+            Environment=DOCKER_OPTS='--insecure-registry="10.0.1.0/24"'
 ```
 
 Start the built-in `etcd` and `fleet` services:
@@ -190,11 +208,11 @@ Start the built-in `etcd` and `fleet` services:
 #cloud-config
 
 coreos:
-    units:
-      - name: etcd.service
-        command: start
-      - name: fleet.service
-        command: start
+  units:
+    - name: etcd.service
+      command: start
+    - name: fleet.service
+      command: start
 ```
 
 ### ssh_authorized_keys

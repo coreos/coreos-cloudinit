@@ -17,15 +17,16 @@
 package config
 
 type Unit struct {
-	Name    string `yaml:"name"`
-	Mask    bool   `yaml:"mask"`
-	Enable  bool   `yaml:"enable"`
-	Runtime bool   `yaml:"runtime"`
-	Content string `yaml:"content"`
-	Command string `yaml:"command" valid:"start,stop,restart,reload,try-restart,reload-or-restart,reload-or-try-restart"`
+	Name    string       `yaml:"name"`
+	Mask    bool         `yaml:"mask"`
+	Enable  bool         `yaml:"enable"`
+	Runtime bool         `yaml:"runtime"`
+	Content string       `yaml:"content"`
+	Command string       `yaml:"command" valid:"start,stop,restart,reload,try-restart,reload-or-restart,reload-or-try-restart"`
+	DropIns []UnitDropIn `yaml:"drop_ins"`
+}
 
-	// For drop-in units, a cloudinit.conf is generated.
-	// This is currently unbound in YAML (and hence unsettable in cloud-config files)
-	// until the correct behaviour for multiple drop-in units is determined.
-	DropIn bool `yaml:"-"`
+type UnitDropIn struct {
+	Name    string `yaml:"name"`
+	Content string `yaml:"content"`
 }

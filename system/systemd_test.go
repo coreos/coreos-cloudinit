@@ -74,6 +74,64 @@ func TestPlaceUnit(t *testing.T) {
 	}
 }
 
+func TestPlaceUnitDropIn(t *testing.T) {
+	tests := []config.Unit{
+		{
+			Name:    "false.service",
+			Runtime: true,
+			DropIns: []config.UnitDropIn{
+				{
+					Name:    "00-true.conf",
+					Content: "[Service]\nExecStart=\nExecStart=/usr/bin/true\n",
+				},
+			},
+		},
+		{
+			Name: "true.service",
+			DropIns: []config.UnitDropIn{
+				{
+					Name:    "00-false.conf",
+					Content: "[Service]\nExecStart=\nExecStart=/usr/bin/false\n",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+		if err != nil {
+			panic(fmt.Sprintf("Unable to create tempdir: %v", err))
+		}
+
+		u := Unit{tt}
+		sd := &systemd{dir}
+
+		if err := sd.PlaceUnitDropIn(u, u.DropIns[0]); err != nil {
+			t.Fatalf("PlaceUnit(): bad error (%+v): want nil, got %s", tt, err)
+		}
+
+		fi, err := os.Stat(u.DropInDestination(dir, u.DropIns[0]))
+		if err != nil {
+			t.Fatalf("Stat(): bad error (%+v): want nil, got %s", tt, err)
+		}
+
+		if mode := fi.Mode(); mode != os.FileMode(0644) {
+			t.Errorf("bad filemode (%+v): want %v, got %v", tt, os.FileMode(0644), mode)
+		}
+
+		c, err := ioutil.ReadFile(u.DropInDestination(dir, u.DropIns[0]))
+		if err != nil {
+			t.Fatalf("ReadFile(): bad error (%+v): want nil, got %s", tt, err)
+		}
+
+		if string(c) != u.DropIns[0].Content {
+			t.Errorf("bad contents (%+v): want %q, got %q", tt, u.DropIns[0].Content, string(c))
+		}
+
+		os.RemoveAll(dir)
+	}
+}
+
 func TestMachineID(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {

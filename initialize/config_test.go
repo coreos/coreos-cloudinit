@@ -37,6 +37,10 @@ func (tum *TestUnitManager) PlaceUnit(u system.Unit) error {
 	tum.placed = append(tum.placed, u.Name)
 	return nil
 }
+func (tum *TestUnitManager) PlaceUnitDropIn(u system.Unit, d config.UnitDropIn) error {
+	tum.placed = append(tum.placed, u.Name+".d/"+d.Name)
+	return nil
+}
 func (tum *TestUnitManager) EnableUnitFile(u system.Unit) error {
 	tum.enabled = append(tum.enabled, u.Name)
 	return nil
@@ -121,6 +125,69 @@ func TestProcessUnits(t *testing.T) {
 			result: TestUnitManager{
 				enabled: []string{"woof"},
 			},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name:    "hi.service",
+					Runtime: true,
+					Content: "[Service]\nExecStart=/bin/echo hi",
+					DropIns: []config.UnitDropIn{
+						{
+							Name:    "lo.conf",
+							Content: "[Service]\nExecStart=/bin/echo lo",
+						},
+						{
+							Name:    "bye.conf",
+							Content: "[Service]\nExecStart=/bin/echo bye",
+						},
+					},
+				}},
+			},
+			result: TestUnitManager{
+				placed:   []string{"hi.service", "hi.service.d/lo.conf", "hi.service.d/bye.conf"},
+				unmasked: []string{"hi.service"},
+				reload:   true,
+			},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					DropIns: []config.UnitDropIn{
+						{
+							Name:    "lo.conf",
+							Content: "[Service]\nExecStart=/bin/echo lo",
+						},
+					},
+				}},
+			},
+			result: TestUnitManager{},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name: "hi.service",
+					DropIns: []config.UnitDropIn{
+						{
+							Content: "[Service]\nExecStart=/bin/echo lo",
+						},
+					},
+				}},
+			},
+			result: TestUnitManager{},
+		},
+		{
+			units: []system.Unit{
+				system.Unit{Unit: config.Unit{
+					Name: "hi.service",
+					DropIns: []config.UnitDropIn{
+						{
+							Name: "lo.conf",
+						},
+					},
+				}},
+			},
+			result: TestUnitManager{},
 		},
 	}
 

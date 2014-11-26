@@ -54,6 +54,19 @@ func (s *systemd) PlaceUnit(u Unit) error {
 	return err
 }
 
+// PlaceUnitDropIn writes a unit drop-in file at its desired destination,
+// creating parent directories as necessary.
+func (s *systemd) PlaceUnitDropIn(u Unit, d config.UnitDropIn) error {
+	file := File{config.File{
+		Path:               u.DropInDestination(s.root, d),
+		Content:            d.Content,
+		RawFilePermissions: "0644",
+	}}
+
+	_, err := WriteFile(&file, "/")
+	return err
+}
+
 func (s *systemd) EnableUnitFile(u Unit) error {
 	conn, err := dbus.New()
 	if err != nil {

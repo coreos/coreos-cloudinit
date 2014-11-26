@@ -201,6 +201,11 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 	actions := make([]action, 0, len(units))
 	reload := false
 	for _, unit := range units {
+		if unit.Name == "" {
+			log.Printf("Skipping unit without name")
+			continue
+		}
+
 		if unit.Content != "" {
 			log.Printf("Writing unit %q to filesystem", unit.Name)
 			if err := um.PlaceUnit(unit); err != nil {
@@ -208,6 +213,17 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 			}
 			log.Printf("Wrote unit %q", unit.Name)
 			reload = true
+		}
+
+		for _, dropin := range unit.DropIns {
+			if dropin.Name != "" && dropin.Content != "" {
+				log.Printf("Writing drop-in unit %q to filesystem", dropin.Name)
+				if err := um.PlaceUnitDropIn(unit, dropin); err != nil {
+					return err
+				}
+				log.Printf("Wrote drop-in unit %q", dropin.Name)
+				reload = true
+			}
 		}
 
 		if unit.Mask {
