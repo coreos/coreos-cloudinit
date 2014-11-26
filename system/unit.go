@@ -19,6 +19,8 @@ package system
 import (
 	"fmt"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/coreos/coreos-cloudinit/config"
 )
@@ -36,9 +38,28 @@ type UnitManager interface {
 }
 
 // Unit is a top-level structure which embeds its underlying configuration,
-// config.Unit, and provides the system-specific Destination().
+// config.Unit, and provides the system-specific Destination(), Type(), and
+// Group().
 type Unit struct {
 	config.Unit
+}
+
+// Type returns the extension of the unit (everything that follows the final
+// period).
+func (u Unit) Type() string {
+	ext := filepath.Ext(u.Name)
+	return strings.TrimLeft(ext, ".")
+}
+
+// Group returns "network" or "system" depending on whether or not the unit is
+// a network unit or otherwise.
+func (u Unit) Group() string {
+	switch u.Type() {
+	case "network", "netdev", "link":
+		return "network"
+	default:
+		return "system"
+	}
 }
 
 // Destination builds the appropriate absolute file path for the Unit. The root

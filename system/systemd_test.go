@@ -46,10 +46,6 @@ Address=10.209.171.177/19
 	sd := &systemd{dir}
 
 	dst := u.Destination(dir)
-	expectDst := path.Join(dir, "run", "systemd", "network", "50-eth0.network")
-	if dst != expectDst {
-		t.Fatalf("unit.Destination returned %s, expected %s", dst, expectDst)
-	}
 
 	if err := sd.PlaceUnit(u); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)
@@ -80,30 +76,6 @@ Address=10.209.171.177/19
 	}
 }
 
-func TestUnitDestination(t *testing.T) {
-	dir := "/some/dir"
-	name := "foobar.service"
-
-	u := Unit{config.Unit{
-		Name:   name,
-		DropIn: false,
-	}}
-
-	dst := u.Destination(dir)
-	expectDst := path.Join(dir, "etc", "systemd", "system", "foobar.service")
-	if dst != expectDst {
-		t.Errorf("unit.Destination returned %s, expected %s", dst, expectDst)
-	}
-
-	u.DropIn = true
-
-	dst = u.Destination(dir)
-	expectDst = path.Join(dir, "etc", "systemd", "system", "foobar.service.d", cloudConfigDropIn)
-	if dst != expectDst {
-		t.Errorf("unit.Destination returned %s, expected %s", dst, expectDst)
-	}
-}
-
 func TestPlaceMountUnit(t *testing.T) {
 	u := Unit{config.Unit{
 		Name:    "media-state.mount",
@@ -123,10 +95,6 @@ Where=/media/state
 	sd := &systemd{dir}
 
 	dst := u.Destination(dir)
-	expectDst := path.Join(dir, "etc", "systemd", "system", "media-state.mount")
-	if dst != expectDst {
-		t.Fatalf("unit.Destination returned %s, expected %s", dst, expectDst)
-	}
 
 	if err := sd.PlaceUnit(u); err != nil {
 		t.Fatalf("PlaceUnit failed: %v", err)

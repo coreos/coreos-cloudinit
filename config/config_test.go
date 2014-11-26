@@ -261,9 +261,6 @@ Address=10.209.171.177/19
 		if u.Name != "50-eth0.network" {
 			t.Errorf("Unit has incorrect name %s", u.Name)
 		}
-		if u.Type() != "network" {
-			t.Errorf("Unit has incorrect type '%s'", u.Type())
-		}
 	}
 
 	if cfg.Coreos.OEM.ID != "rackspace" {
