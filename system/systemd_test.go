@@ -17,6 +17,7 @@
 package system
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -25,101 +26,51 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
-func TestPlaceNetworkUnit(t *testing.T) {
-	u := Unit{config.Unit{
-		Name:    "50-eth0.network",
-		Runtime: true,
-		Content: `[Match]
-Name=eth47
-
-[Network]
-Address=10.209.171.177/19
-`,
-	}}
-
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer os.RemoveAll(dir)
-
-	sd := &systemd{dir}
-
-	dst := u.Destination(dir)
-
-	if err := sd.PlaceUnit(u); err != nil {
-		t.Fatalf("PlaceUnit failed: %v", err)
+func TestPlaceUnit(t *testing.T) {
+	tests := []config.Unit{
+		{
+			Name:    "50-eth0.network",
+			Runtime: true,
+			Content: "[Match]\nName=eth47\n\n[Network]\nAddress=10.209.171.177/19\n",
+		},
+		{
+			Name:    "media-state.mount",
+			Content: "[Mount]\nWhat=/dev/sdb1\nWhere=/media/state\n",
+		},
 	}
 
-	fi, err := os.Stat(dst)
-	if err != nil {
-		t.Fatalf("Unable to stat file: %v", err)
-	}
+	for _, tt := range tests {
+		dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
+		if err != nil {
+			panic(fmt.Sprintf("Unable to create tempdir: %v", err))
+		}
 
-	if fi.Mode() != os.FileMode(0644) {
-		t.Errorf("File has incorrect mode: %v", fi.Mode())
-	}
+		u := Unit{tt}
+		sd := &systemd{dir}
 
-	contents, err := ioutil.ReadFile(dst)
-	if err != nil {
-		t.Fatalf("Unable to read expected file: %v", err)
-	}
+		if err := sd.PlaceUnit(u); err != nil {
+			t.Fatalf("PlaceUnit(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	expectContents := `[Match]
-Name=eth47
+		fi, err := os.Stat(u.Destination(dir))
+		if err != nil {
+			t.Fatalf("Stat(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-[Network]
-Address=10.209.171.177/19
-`
-	if string(contents) != expectContents {
-		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expectContents)
-	}
-}
+		if mode := fi.Mode(); mode != os.FileMode(0644) {
+			t.Errorf("bad filemode (%+v): want %v, got %v", tt, os.FileMode(0644), mode)
+		}
 
-func TestPlaceMountUnit(t *testing.T) {
-	u := Unit{config.Unit{
-		Name:    "media-state.mount",
-		Runtime: false,
-		Content: `[Mount]
-What=/dev/sdb1
-Where=/media/state
-`,
-	}}
+		c, err := ioutil.ReadFile(u.Destination(dir))
+		if err != nil {
+			t.Fatalf("ReadFile(): bad error (%+v): want nil, got %s", tt, err)
+		}
 
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer os.RemoveAll(dir)
+		if string(c) != tt.Content {
+			t.Errorf("bad contents (%+v): want %q, got %q", tt, tt.Content, string(c))
+		}
 
-	sd := &systemd{dir}
-
-	dst := u.Destination(dir)
-
-	if err := sd.PlaceUnit(u); err != nil {
-		t.Fatalf("PlaceUnit failed: %v", err)
-	}
-
-	fi, err := os.Stat(dst)
-	if err != nil {
-		t.Fatalf("Unable to stat file: %v", err)
-	}
-
-	if fi.Mode() != os.FileMode(0644) {
-		t.Errorf("File has incorrect mode: %v", fi.Mode())
-	}
-
-	contents, err := ioutil.ReadFile(dst)
-	if err != nil {
-		t.Fatalf("Unable to read expected file: %v", err)
-	}
-
-	expectContents := `[Mount]
-What=/dev/sdb1
-Where=/media/state
-`
-	if string(contents) != expectContents {
-		t.Fatalf("File has incorrect contents '%s'.\nExpected '%s'", string(contents), expectContents)
+		os.RemoveAll(dir)
 	}
 }
 
