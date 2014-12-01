@@ -17,8 +17,12 @@
 package cloudsigma
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net"
 	"os"
 	"strings"
 
@@ -51,7 +55,8 @@ func (_ *serverContextService) IsAvailable() bool {
 	}
 	productName := make([]byte, 10)
 	_, err = productNameFile.Read(productName)
-	return err == nil && string(productName) == "CloudSigma"
+
+	return err == nil && string(productName) == "CloudSigma" && hasDHCPLeases()
 }
 
 func (_ *serverContextService) AvailabilityChanges() bool {
@@ -73,12 +78,16 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 			UUID string            `json:"uuid"`
 			Meta map[string]string `json:"meta"`
 			Nics []struct {
-				Runtime struct {
+				Mac      string `json:"mac"`
+				IPv4Conf struct {
 					InterfaceType string `json:"interface_type"`
-					IPv4          struct {
-						IP string `json:"uuid"`
-					} `json:"ip_v4"`
-				} `json:"runtime"`
+					IP            struct {
+						UUID string `json:"uuid"`
+					} `json:"ip"`
+				} `json:"ip_v4_conf"`
+				VLAN struct {
+					UUID string `json:"uuid"`
+				} `json:"vlan"`
 			} `json:"nics"`
 		}
 		outputMetadata struct {
@@ -112,11 +121,12 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 	}
 
 	for _, nic := range inputMetadata.Nics {
-		if nic.Runtime.IPv4.IP != "" {
-			if nic.Runtime.InterfaceType == "public" {
-				outputMetadata.PublicIPv4 = nic.Runtime.IPv4.IP
-			} else {
-				outputMetadata.LocalIPv4 = nic.Runtime.IPv4.IP
+		if nic.IPv4Conf.IP.UUID != "" {
+			outputMetadata.PublicIPv4 = nic.IPv4Conf.IP.UUID
+		}
+		if nic.VLAN.UUID != "" {
+			if localIP, err := scs.findLocalIP(nic.Mac); err == nil {
+				outputMetadata.LocalIPv4 = localIP
 			}
 		}
 	}
@@ -146,6 +156,36 @@ func (scs *serverContextService) FetchNetworkConfig(a string) ([]byte, error) {
 	return nil, nil
 }
 
+func (scs *serverContextService) findLocalIP(mac string) (string, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+	ifaceMac, err := net.ParseMAC(mac)
+	if err != nil {
+		return "", err
+	}
+	for _, iface := range ifaces {
+		if !bytes.Equal(iface.HardwareAddr, ifaceMac) {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			switch ip := addr.(type) {
+			case *net.IPNet:
+				if ip.IP.To4() != nil {
+					return ip.IP.To4().String(), nil
+				}
+			}
+		}
+	}
+	return "", errors.New("Local IP not found")
+}
+
 func isBase64Encoded(field string, userdata map[string]string) bool {
 	base64Fields, ok := userdata["base64_fields"]
 	if !ok {
@@ -158,4 +198,9 @@ func isBase64Encoded(field string, userdata map[string]string) bool {
 		}
 	}
 	return false
+}
+
+func hasDHCPLeases() bool {
+	files, err := ioutil.ReadDir("/run/systemd/netif/leases/")
+	return err == nil && len(files) > 0
 }

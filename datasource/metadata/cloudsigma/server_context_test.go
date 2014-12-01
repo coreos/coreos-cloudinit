@@ -74,14 +74,41 @@ func TestServerContextFetchMetadata(t *testing.T) {
 		"name": "coreos",
 		"nics": [
 			{
-				"runtime": {
-					"interface_type": "public",
-					"ip_v4": {
+				"boot_order": null,
+				"ip_v4_conf": {
+					"conf": "dhcp",
+					"ip": {
+						"gateway": "31.171.244.1",
+						"meta": {},
+						"nameservers": [
+							"178.22.66.167",
+							"178.22.71.56",
+							"8.8.8.8"
+						],
+						"netmask": 22,
+						"tags": [],
 						"uuid": "31.171.251.74"
-					},
-					"ip_v6": null
+					}
 				},
+				"ip_v6_conf": null,
+				"mac": "22:3d:09:6b:90:f3",
+				"model": "virtio",
 				"vlan": null
+			},
+			{
+				"boot_order": null,
+				"ip_v4_conf": null,
+				"ip_v6_conf": null,
+				"mac": "22:ae:4a:fb:8f:31",
+				"model": "virtio",
+				"vlan": {
+					"meta": {
+						"description": "",
+						"name": "CoreOS"
+					},
+					"tags": [],
+					"uuid": "5dec030e-25b8-4621-a5a4-a3302c9d9619"
+				}
 			}
 		],
 		"smp": 2,
@@ -106,12 +133,8 @@ func TestServerContextFetchMetadata(t *testing.T) {
 		t.Error("Public SSH Keys are not being read properly")
 	}
 
-	if metadata.LocalIPv4 != "" {
-		t.Errorf("Local IP is not empty but %s instead", metadata.LocalIPv4)
-	}
-
 	if metadata.PublicIPv4 != "31.171.251.74" {
-		t.Errorf("Local IP is not 31.171.251.74 but %s instead", metadata.PublicIPv4)
+		t.Errorf("Public IP is not 31.171.251.74 but %s instead", metadata.PublicIPv4)
 	}
 }
 
