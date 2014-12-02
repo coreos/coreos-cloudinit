@@ -29,8 +29,13 @@ type TestUnitManager struct {
 	enabled  []string
 	masked   []string
 	unmasked []string
-	commands map[string]string
+	commands []UnitAction
 	reload   bool
+}
+
+type UnitAction struct {
+	unit    string
+	command string
 }
 
 func (tum *TestUnitManager) PlaceUnit(u system.Unit) error {
@@ -46,8 +51,7 @@ func (tum *TestUnitManager) EnableUnitFile(u system.Unit) error {
 	return nil
 }
 func (tum *TestUnitManager) RunUnitCommand(u system.Unit, c string) (string, error) {
-	tum.commands = make(map[string]string)
-	tum.commands[u.Name] = c
+	tum.commands = append(tum.commands, UnitAction{u.Name, c})
 	return "", nil
 }
 func (tum *TestUnitManager) DaemonReload() error {
@@ -83,12 +87,15 @@ func TestProcessUnits(t *testing.T) {
 		{
 			units: []system.Unit{
 				system.Unit{Unit: config.Unit{
+					Name: "foo.network",
+				}},
+				system.Unit{Unit: config.Unit{
 					Name: "bar.network",
 				}},
 			},
 			result: TestUnitManager{
-				commands: map[string]string{
-					"systemd-networkd.service": "restart",
+				commands: []UnitAction{
+					UnitAction{"systemd-networkd.service", "restart"},
 				},
 			},
 		},

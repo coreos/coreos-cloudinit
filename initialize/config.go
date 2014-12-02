@@ -200,6 +200,7 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 	}
 	actions := make([]action, 0, len(units))
 	reload := false
+	restartNetworkd := false
 	for _, unit := range units {
 		if unit.Name == "" {
 			log.Printf("Skipping unit without name")
@@ -251,8 +252,7 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 		}
 
 		if unit.Group() == "network" {
-			networkd := system.Unit{Unit: config.Unit{Name: "systemd-networkd.service"}}
-			actions = append(actions, action{networkd, "restart"})
+			restartNetworkd = true
 		} else if unit.Command != "" {
 			actions = append(actions, action{unit, unit.Command})
 		}
@@ -262,6 +262,11 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 		if err := um.DaemonReload(); err != nil {
 			return errors.New(fmt.Sprintf("failed systemd daemon-reload: %s", err))
 		}
+	}
+
+	if restartNetworkd {
+		networkd := system.Unit{Unit: config.Unit{Name: "systemd-networkd.service"}}
+		actions = append(actions, action{networkd, "restart"})
 	}
 
 	for _, action := range actions {
