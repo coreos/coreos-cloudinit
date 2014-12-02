@@ -384,8 +384,13 @@ type TestUnitManager struct {
 	enabled  []string
 	masked   []string
 	unmasked []string
-	commands map[string]string
+	commands []UnitAction
 	reload   bool
+}
+
+type UnitAction struct {
+	unit    string
+	command string
 }
 
 func (tum *TestUnitManager) PlaceUnit(unit *system.Unit, dst string) error {
@@ -397,8 +402,7 @@ func (tum *TestUnitManager) EnableUnitFile(unit string, runtime bool) error {
 	return nil
 }
 func (tum *TestUnitManager) RunUnitCommand(command, unit string) (string, error) {
-	tum.commands = make(map[string]string)
-	tum.commands[unit] = command
+	tum.commands = append(tum.commands, UnitAction{unit, command})
 	return "", nil
 }
 func (tum *TestUnitManager) DaemonReload() error {
@@ -438,7 +442,7 @@ func TestProcessUnits(t *testing.T) {
 	if err := processUnits(units, "", tum); err != nil {
 		t.Fatalf("unexpected error calling processUnits: %v", err)
 	}
-	if _, ok := tum.commands["systemd-networkd.service"]; !ok {
+	if len(tum.commands) != 1 || (tum.commands[0] != UnitAction{"systemd-networkd.service", "restart"}) {
 		t.Errorf("expected systemd-networkd.service to be reloaded!")
 	}
 
