@@ -363,7 +363,12 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 	}
 
 	if restartNetworkd {
-		actions = append(actions, action{"systemd-networkd.service", "restart"})
+		log.Printf("Restarting systemd-networkd")
+		res, err := um.RunUnitCommand("restart", "systemd-networkd.service")
+		if err != nil {
+			return err
+		}
+		log.Printf("Restarted systemd-networkd (%s)", res)
 	}
 
 	for _, action := range actions {
