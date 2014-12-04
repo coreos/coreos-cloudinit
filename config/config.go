@@ -30,12 +30,13 @@ import (
 type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
 	Coreos            struct {
-		Etcd    Etcd    `yaml:"etcd"`
-		Flannel Flannel `yaml:"flannel"`
-		Fleet   Fleet   `yaml:"fleet"`
-		OEM     OEM     `yaml:"oem"`
-		Update  Update  `yaml:"update"`
-		Units   []Unit  `yaml:"units"`
+		Etcd      Etcd      `yaml:"etcd"`
+		Flannel   Flannel   `yaml:"flannel"`
+		Fleet     Fleet     `yaml:"fleet"`
+		Locksmith Locksmith `yaml:"locksmith"`
+		OEM       OEM       `yaml:"oem"`
+		Update    Update    `yaml:"update"`
+		Units     []Unit    `yaml:"units"`
 	} `yaml:"coreos"`
 	WriteFiles        []File   `yaml:"write_files"`
 	Hostname          string   `yaml:"hostname"`

@@ -119,6 +119,30 @@ For complete list of flannel configuraion parameters, see the [flannel documenta
 
 [flannel-readme]: https://github.com/coreos/flannel/blob/master/README.md
 
+#### locksmith
+
+The `coreos.locksmith.*` parameters can be used to set environment variables
+for locksmith. For example, the following cloud-config...
+
+```yaml
+#cloud-config
+
+coreos:
+  locksmith:
+      endpoint: example.com:4001
+```
+
+...will generate a systemd unit drop-in like so:
+
+```
+[Service]
+Environment="LOCKSMITHD_ENDPOINT=example.com:4001"
+```
+
+For the complete list of locksmith configuraion parameters, see the [locksmith documentation][locksmith-readme].
+
+[locksmith-readme]: https://github.com/coreos/locksmith/blob/master/README.md
+
 #### update
 
 The `coreos.update.*` parameters manipulate settings related to how CoreOS instances are updated.
