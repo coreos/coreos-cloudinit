@@ -265,8 +265,13 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 	}
 
 	if restartNetworkd {
+		log.Printf("Restarting systemd-networkd")
 		networkd := system.Unit{Unit: config.Unit{Name: "systemd-networkd.service"}}
-		actions = append(actions, action{networkd, "restart"})
+		res, err := um.RunUnitCommand(networkd, "restart")
+		if err != nil {
+			return err
+		}
+		log.Printf("Restarted systemd-networkd (%s)", res)
 	}
 
 	for _, action := range actions {
@@ -275,7 +280,7 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 		if err != nil {
 			return err
 		}
-		log.Printf("Result of %q on %q': %s", action.command, action.unit.Name, res)
+		log.Printf("Result of %q on %q: %s", action.command, action.unit.Name, res)
 	}
 
 	return nil

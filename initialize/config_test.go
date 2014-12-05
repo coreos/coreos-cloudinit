@@ -87,16 +87,26 @@ func TestProcessUnits(t *testing.T) {
 		{
 			units: []system.Unit{
 				system.Unit{Unit: config.Unit{
-					Name: "foo.network",
+					Name:    "baz.service",
+					Content: "[Service]\nExecStart=/bin/baz",
+					Command: "start",
 				}},
 				system.Unit{Unit: config.Unit{
-					Name: "bar.network",
+					Name:    "foo.network",
+					Content: "[Network]\nFoo=true",
+				}},
+				system.Unit{Unit: config.Unit{
+					Name:    "bar.network",
+					Content: "[Network]\nBar=true",
 				}},
 			},
 			result: TestUnitManager{
+				placed: []string{"baz.service", "foo.network", "bar.network"},
 				commands: []UnitAction{
 					UnitAction{"systemd-networkd.service", "restart"},
+					UnitAction{"baz.service", "start"},
 				},
+				reload: true,
 			},
 		},
 		{
