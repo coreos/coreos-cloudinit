@@ -100,7 +100,9 @@ For more information on fleet configuration, see the [fleet documentation][fleet
 
 #### flannel
 
-The `coreos.flannel.*` parameters also work very similarly to `coreos.etcd.*` and `coreos.fleet.*`. They can be used to set enviornment variables for flanneld. Given the following cloud-config...
+The `coreos.flannel.*` parameters also work very similarly to `coreos.etcd.*`
+and `coreos.fleet.*`. They can be used to set environment variables for
+flanneld. For example, the following cloud-config...
 
 ```yaml
 #cloud-config
@@ -110,16 +112,40 @@ coreos:
       etcd-prefix: /coreos.com/network2
 ```
 
-...will generate systemd unit drop-in like so:
+...will generate a systemd unit drop-in like so:
 
 ```
 [Service]
 Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network2"
 ```
 
-For complete list of flannel configuraion parameters, see the [flannel documentation][flannel-readme].
+For the complete list of flannel configuraion parameters, see the [flannel documentation][flannel-readme].
 
 [flannel-readme]: https://github.com/coreos/flannel/blob/master/README.md
+
+#### locksmith
+
+The `coreos.locksmith.*` parameters can be used to set environment variables
+for locksmith. For example, the following cloud-config...
+
+```yaml
+#cloud-config
+
+coreos:
+  locksmith:
+      endpoint: example.com:4001
+```
+
+...will generate a systemd unit drop-in like so:
+
+```
+[Service]
+Environment="LOCKSMITHD_ENDPOINT=example.com:4001"
+```
+
+For the complete list of locksmith configuraion parameters, see the [locksmith documentation][locksmith-readme].
+
+[locksmith-readme]: https://github.com/coreos/locksmith/blob/master/README.md
 
 #### update
 
