@@ -17,7 +17,7 @@
 package config
 
 type File struct {
-	Encoding           string `yaml:"-"`
+	Encoding           string `yaml:"encoding" valid:"base64,b64,gz,gzip,gz+base64,gzip+base64,gz+b64,gzip+b64"`
 	Content            string `yaml:"content"`
 	Owner              string `yaml:"owner"`
 	Path               string `yaml:"path"`

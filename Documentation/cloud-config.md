@@ -374,9 +374,11 @@ Each item in the list may have the following keys:
 - **content**: Data to write at the provided `path`
 - **permissions**: Integer representing file permissions, typically in octal notation (i.e. 0644)
 - **owner**: User and group that should own the file written to disk. This is equivalent to the `<user>:<group>` argument to `chown <user>:<group> <path>`.
+- **encoding**: Optional. The encoding of the data in content. If not specified this defaults to the yaml document encoding (usually utf-8). Supported encoding types are:
+    - **b64, base64**: Base64 encoded content
+    - **gz, gzip**: gzip encoded content, for use with the !!binary tag
+    - **gz+b64, gz+base64, gzip+b64, gzip+base64**: Base64 encoded gzip content
 
-Explicitly not implemented is the **encoding** attribute.
-The **content** field must represent exactly what should be written to disk.
 
 ```yaml
 #cloud-config
@@ -391,6 +393,24 @@ write_files:
     owner: root
     content: |
       Good news, everyone!
+  - path: /tmp/like_this
+    permissions: 0644
+    owner: root
+    encoding: gzip
+    content: !!binary |
+      H4sIAKgdh1QAAwtITM5WyK1USMqvUCjPLMlQSMssS1VIya9KzVPIySwszS9SyCpNLwYARQFQ5CcAAAA=
+  - path: /tmp/or_like_this
+    permissions: 0644
+    owner: root
+    encoding: gzip+base64
+    content: |
+      H4sIAKgdh1QAAwtITM5WyK1USMqvUCjPLMlQSMssS1VIya9KzVPIySwszS9SyCpNLwYARQFQ5CcAAAA=
+  - path: /tmp/todolist
+    permissions: 0644
+    owner: root
+    encoding: base64
+    content: |
+      UGFjayBteSBib3ggd2l0aCBmaXZlIGRvemVuIGxpcXVvciBqdWdz
 ```
 
 ### manage_etc_hosts
