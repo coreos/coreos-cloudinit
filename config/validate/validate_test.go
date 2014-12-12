@@ -78,6 +78,29 @@ func TestValidateCloudConfig(t *testing.T) {
 	}
 }
 
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		config string
+
+		report Report
+	}{
+		{},
+		{
+			config: "#!/bin/bash\necho hey",
+		},
+	}
+
+	for i, tt := range tests {
+		r, err := Validate([]byte(tt.config))
+		if err != nil {
+			t.Errorf("bad error (case #%d): want %v, got %v", i, nil, err)
+		}
+		if !reflect.DeepEqual(tt.report, r) {
+			t.Errorf("bad report (case #%d): want %+v, got %+v", i, tt.report, r)
+		}
+	}
+}
+
 func BenchmarkValidate(b *testing.B) {
 	config := `#cloud-config
 hostname: test

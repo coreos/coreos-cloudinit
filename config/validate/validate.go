@@ -38,6 +38,8 @@ var (
 // can be validated.
 func Validate(userdataBytes []byte) (Report, error) {
 	switch {
+	case len(userdataBytes) == 0:
+		return Report{}, nil
 	case config.IsScript(string(userdataBytes)):
 		return Report{}, nil
 	case config.IsCloudConfig(string(userdataBytes)):
