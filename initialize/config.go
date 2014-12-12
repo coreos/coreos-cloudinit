@@ -113,6 +113,7 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		system.OEM{OEM: cfg.Coreos.OEM},
 		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
 		system.EtcHosts{EtcHosts: cfg.ManageEtcHosts},
+		system.Flannel{Flannel: cfg.Coreos.Flannel},
 	} {
 		f, err := ccf.File()
 		if err != nil {
@@ -132,7 +133,6 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		system.Etcd{Etcd: cfg.Coreos.Etcd},
 		system.Fleet{Fleet: cfg.Coreos.Fleet},
 		system.Locksmith{Locksmith: cfg.Coreos.Locksmith},
-		system.Flannel{Flannel: cfg.Coreos.Flannel},
 		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
 	} {
 		units = append(units, ccu.Units()...)
