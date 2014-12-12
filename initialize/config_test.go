@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -65,6 +66,86 @@ func (tum *TestUnitManager) MaskUnit(u system.Unit) error {
 func (tum *TestUnitManager) UnmaskUnit(u system.Unit) error {
 	tum.unmasked = append(tum.unmasked, u.Name)
 	return nil
+}
+
+type mockInterface struct {
+	name           string
+	filename       string
+	netdev         string
+	link           string
+	network        string
+	kind           string
+	modprobeParams string
+}
+
+func (i mockInterface) Name() string {
+	return i.name
+}
+
+func (i mockInterface) Filename() string {
+	return i.filename
+}
+
+func (i mockInterface) Netdev() string {
+	return i.netdev
+}
+
+func (i mockInterface) Link() string {
+	return i.link
+}
+
+func (i mockInterface) Network() string {
+	return i.network
+}
+
+func (i mockInterface) Type() string {
+	return i.kind
+}
+
+func (i mockInterface) ModprobeParams() string {
+	return i.modprobeParams
+}
+
+func TestCreateNetworkingUnits(t *testing.T) {
+	for _, tt := range []struct {
+		interfaces []network.InterfaceGenerator
+		expect     []system.Unit
+	}{
+		{nil, nil},
+		{
+			[]network.InterfaceGenerator{
+				network.InterfaceGenerator(mockInterface{filename: "test"}),
+			},
+			nil,
+		},
+		{
+			[]network.InterfaceGenerator{
+				network.InterfaceGenerator(mockInterface{filename: "test1", netdev: "test netdev"}),
+				network.InterfaceGenerator(mockInterface{filename: "test2", link: "test link"}),
+				network.InterfaceGenerator(mockInterface{filename: "test3", network: "test network"}),
+			},
+			[]system.Unit{
+				system.Unit{Unit: config.Unit{Name: "test1.netdev", Runtime: true, Content: "test netdev"}},
+				system.Unit{Unit: config.Unit{Name: "test2.link", Runtime: true, Content: "test link"}},
+				system.Unit{Unit: config.Unit{Name: "test3.network", Runtime: true, Content: "test network"}},
+			},
+		},
+		{
+			[]network.InterfaceGenerator{
+				network.InterfaceGenerator(mockInterface{filename: "test", netdev: "test netdev", link: "test link", network: "test network"}),
+			},
+			[]system.Unit{
+				system.Unit{Unit: config.Unit{Name: "test.netdev", Runtime: true, Content: "test netdev"}},
+				system.Unit{Unit: config.Unit{Name: "test.link", Runtime: true, Content: "test link"}},
+				system.Unit{Unit: config.Unit{Name: "test.network", Runtime: true, Content: "test network"}},
+			},
+		},
+	} {
+		units := createNetworkingUnits(tt.interfaces)
+		if !reflect.DeepEqual(tt.expect, units) {
+			t.Errorf("bad units (%+v): want %#v, got %#v", tt.interfaces, tt.expect, units)
+		}
+	}
 }
 
 func TestProcessUnits(t *testing.T) {

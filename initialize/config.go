@@ -170,16 +170,13 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		case "digitalocean":
 			interfaces, err = network.ProcessDigitalOceanNetconf(cfg.NetworkConfig)
 		default:
-			return fmt.Errorf("Unsupported network config format %q", env.NetconfType())
+			err = fmt.Errorf("Unsupported network config format %q", env.NetconfType())
 		}
-
 		if err != nil {
 			return err
 		}
 
-		if err := system.WriteNetworkdConfigs(interfaces); err != nil {
-			return err
-		}
+		units = append(units, createNetworkingUnits(interfaces)...)
 		if err := system.RestartNetwork(interfaces); err != nil {
 			return err
 		}
@@ -187,7 +184,25 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 
 	um := system.NewUnitManager(env.Root())
 	return processUnits(units, env.Root(), um)
+}
 
+func createNetworkingUnits(interfaces []network.InterfaceGenerator) (units []system.Unit) {
+	appendNewUnit := func(units []system.Unit, name, content string) []system.Unit {
+		if content == "" {
+			return units
+		}
+		return append(units, system.Unit{Unit: config.Unit{
+			Name:    name,
+			Runtime: true,
+			Content: content,
+		}})
+	}
+	for _, i := range interfaces {
+		units = appendNewUnit(units, fmt.Sprintf("%s.netdev", i.Filename()), i.Netdev())
+		units = appendNewUnit(units, fmt.Sprintf("%s.link", i.Filename()), i.Link())
+		units = appendNewUnit(units, fmt.Sprintf("%s.network", i.Filename()), i.Network())
+	}
+	return units
 }
 
 // processUnits takes a set of Units and applies them to the given root using
