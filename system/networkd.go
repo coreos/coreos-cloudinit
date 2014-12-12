@@ -33,40 +33,23 @@ const (
 	runtimeNetworkPath = "/run/systemd/network"
 )
 
-func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
-	defer func() {
-		if e := restartNetworkd(); e != nil {
-			err = e
-		}
-	}()
-
-	if err = downNetworkInterfaces(interfaces); err != nil {
-		return
-	}
-
-	if err = maybeProbe8012q(interfaces); err != nil {
-		return
+func ProbeModules(interfaces []network.InterfaceGenerator) error {
+	if err := maybeProbe8012q(interfaces); err != nil {
+		return err
 	}
 	return maybeProbeBonding(interfaces)
 }
 
-func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
-	sysInterfaceMap := make(map[string]*net.Interface)
-	if systemInterfaces, err := net.Interfaces(); err == nil {
-		for _, iface := range systemInterfaces {
-			iface := iface
-			sysInterfaceMap[iface.Name] = &iface
-		}
-	} else {
+func downNetworkInterfaces(units []Unit) error {
+	interfaces, err := net.Interfaces()
+	if err != nil {
 		return err
 	}
 
 	for _, iface := range interfaces {
-		if systemInterface, ok := sysInterfaceMap[iface.Name()]; ok {
-			log.Printf("Taking down interface %q\n", systemInterface.Name)
-			if err := netlink.NetworkLinkDown(systemInterface); err != nil {
-				fmt.Printf("Error while downing interface %q (%s). Continuing...\n", systemInterface.Name, err)
-			}
+		log.Printf("Taking down interface %q\n", iface.Name)
+		if err := netlink.NetworkLinkDown(&iface); err != nil {
+			fmt.Printf("Error while downing interface %q (%s). Continuing...\n", iface.Name, err)
 		}
 	}
 
@@ -94,36 +77,16 @@ func maybeProbeBonding(interfaces []network.InterfaceGenerator) error {
 	return nil
 }
 
-func restartNetworkd() error {
-	log.Printf("Restarting networkd.service\n")
+func stopNetworkd(um UnitManager) error {
+	log.Printf("Stopping networkd.service\n")
 	networkd := Unit{config.Unit{Name: "systemd-networkd.service"}}
-	_, err := NewUnitManager("").RunUnitCommand(networkd, "restart")
+	_, err := um.RunUnitCommand(networkd, "stop")
 	return err
 }
 
-func WriteNetworkdConfigs(interfaces []network.InterfaceGenerator) error {
-	for _, iface := range interfaces {
-		filename := fmt.Sprintf("%s.netdev", iface.Filename())
-		if err := writeConfig(filename, iface.Netdev()); err != nil {
-			return err
-		}
-		filename = fmt.Sprintf("%s.link", iface.Filename())
-		if err := writeConfig(filename, iface.Link()); err != nil {
-			return err
-		}
-		filename = fmt.Sprintf("%s.network", iface.Filename())
-		if err := writeConfig(filename, iface.Network()); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func writeConfig(filename string, content string) error {
-	if content == "" {
-		return nil
-	}
-	log.Printf("Writing networkd unit %q\n", filename)
-	_, err := WriteFile(&File{config.File{Content: content, Path: filename}}, runtimeNetworkPath)
+func restartNetworkd(um UnitManager) error {
+	log.Printf("Restarting networkd.service\n")
+	networkd := Unit{config.Unit{Name: "systemd-networkd.service"}}
+	_, err := um.RunUnitCommand(networkd, "restart")
 	return err
 }

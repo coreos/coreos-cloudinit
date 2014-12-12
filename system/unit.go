@@ -33,6 +33,7 @@ type UnitManager interface {
 	MaskUnit(unit Unit) error
 	UnmaskUnit(unit Unit) error
 	DaemonReload() error
+	RestartNetwork(units []Unit) error
 }
 
 // Unit is a top-level structure which embeds its underlying configuration,

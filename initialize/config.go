@@ -170,24 +170,39 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		case "digitalocean":
 			interfaces, err = network.ProcessDigitalOceanNetconf(cfg.NetworkConfig)
 		default:
-			return fmt.Errorf("Unsupported network config format %q", env.NetconfType())
+			err = fmt.Errorf("Unsupported network config format %q", env.NetconfType())
 		}
-
 		if err != nil {
 			return err
 		}
 
-		if err := system.WriteNetworkdConfigs(interfaces); err != nil {
-			return err
-		}
-		if err := system.RestartNetwork(interfaces); err != nil {
+		units = append(units, createNetworkingUnits(interfaces)...)
+		if err := system.ProbeModules(interfaces); err != nil {
 			return err
 		}
 	}
 
 	um := system.NewUnitManager(env.Root())
 	return processUnits(units, env.Root(), um)
+}
 
+func createNetworkingUnits(interfaces []network.InterfaceGenerator) (units []system.Unit) {
+	appendNewUnit := func(units []system.Unit, name, content string) []system.Unit {
+		if content == "" {
+			return units
+		}
+		return append(units, system.Unit{Unit: config.Unit{
+			Name:    name,
+			Runtime: true,
+			Content: content,
+		}})
+	}
+	for _, i := range interfaces {
+		units = appendNewUnit(units, fmt.Sprintf("%s.netdev", i.Filename()), i.Netdev())
+		units = appendNewUnit(units, fmt.Sprintf("%s.link", i.Filename()), i.Link())
+		units = appendNewUnit(units, fmt.Sprintf("%s.network", i.Filename()), i.Network())
+	}
+	return units
 }
 
 // processUnits takes a set of Units and applies them to the given root using
@@ -267,12 +282,10 @@ func processUnits(units []system.Unit, root string, um system.UnitManager) error
 
 	if restartNetworkd {
 		log.Printf("Restarting systemd-networkd")
-		networkd := system.Unit{Unit: config.Unit{Name: "systemd-networkd.service"}}
-		res, err := um.RunUnitCommand(networkd, "restart")
-		if err != nil {
+		if err := um.RestartNetwork(units); err != nil {
 			return err
 		}
-		log.Printf("Restarted systemd-networkd (%s)", res)
+		log.Printf("Restarted systemd-networkd")
 	}
 
 	for _, action := range actions {

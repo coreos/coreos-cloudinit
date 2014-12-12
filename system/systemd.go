@@ -150,6 +150,24 @@ func (s *systemd) UnmaskUnit(u Unit) error {
 	return os.Remove(masked)
 }
 
+// RestartNetwork stops the existing networking (including taking down
+// interfaces) and then restarts it. This is used to ensure that new
+// networking-related units take effect.
+func (s *systemd) RestartNetwork(units []Unit) (err error) {
+	defer func() {
+		if e := restartNetworkd(s); e != nil {
+			err = e
+			return
+		}
+	}()
+
+	if err := stopNetworkd(s); err != nil {
+		return err
+	}
+
+	return downNetworkInterfaces(units)
+}
+
 // nullOrEmpty checks whether a given path appears to be an empty regular file
 // or a symlink to /dev/null
 func nullOrEmpty(path string) (bool, error) {
