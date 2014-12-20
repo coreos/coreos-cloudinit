@@ -274,37 +274,49 @@ Address=10.209.171.177/19
 		t.Errorf("Failed to parse locksmith strategy")
 	}
 
-	contents = `
-coreos:
+	for _, contents := range []string{`
 write_files:
   - path: /home/me/notes
     permissions: 0744
-`
-	cfg, err = NewCloudConfig(contents)
-	if err != nil {
-		t.Fatalf("Encountered unexpected error :%v", err)
-	}
+`, `
+write_files:
+  - path: /home/me/notes
+    permissions: 744
+`, `
+write_files:
+  - path: /home/me/notes
+    permissions: "0744"
+`, `
+write_files:
+  - path: /home/me/notes
+    permissions: "744"
+`} {
+		cfg, err = NewCloudConfig(contents)
+		if err != nil {
+			t.Fatalf("Encountered unexpected error :%v", err)
+		}
 
-	if len(cfg.WriteFiles) != 1 {
-		t.Error("Failed to parse correct number of write_files")
-	} else {
-		wf := cfg.WriteFiles[0]
-		if wf.Content != "" {
-			t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
-		}
-		if wf.Encoding != "" {
-			t.Errorf("WriteFile has incorrect encoding %s", wf.Encoding)
-		}
-		// Verify that the normalization of the config converted 0744 to its decimal
-		// representation, 484.
-		if wf.RawFilePermissions != "484" {
-			t.Errorf("WriteFile has incorrect permissions %s", wf.RawFilePermissions)
-		}
-		if wf.Path != "/home/me/notes" {
-			t.Errorf("WriteFile has incorrect path %s", wf.Path)
-		}
-		if wf.Owner != "" {
-			t.Errorf("WriteFile has incorrect owner %s", wf.Owner)
+		if len(cfg.WriteFiles) != 1 {
+			t.Error("Failed to parse correct number of write_files")
+		} else {
+			wf := cfg.WriteFiles[0]
+			if wf.Content != "" {
+				t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
+			}
+			if wf.Encoding != "" {
+				t.Errorf("WriteFile has incorrect encoding %s", wf.Encoding)
+			}
+			// Verify that the normalization of the config converted 0744 to its decimal
+			// representation, 484.
+			if wf.RawFilePermissions != "484" {
+				t.Errorf("WriteFile has incorrect permissions %s", wf.RawFilePermissions)
+			}
+			if wf.Path != "/home/me/notes" {
+				t.Errorf("WriteFile has incorrect path %s", wf.Path)
+			}
+			if wf.Owner != "" {
+				t.Errorf("WriteFile has incorrect owner %s", wf.Owner)
+			}
 		}
 	}
 }
