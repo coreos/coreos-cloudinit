@@ -76,7 +76,7 @@ func checkValidity(cfg node, report *Report) {
 
 func checkNodeValidity(n, g node, r *Report) {
 	if err := config.AssertValid(n.Value, g.field.Tag.Get("valid")); err != nil {
-		r.Error(n.line, fmt.Sprintf("invalid value %v", n.Value))
+		r.Error(n.line, fmt.Sprintf("invalid value %v", n.Value.Interface()))
 	}
 	switch g.Kind() {
 	case reflect.Struct:
