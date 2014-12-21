@@ -21,5 +21,5 @@ type File struct {
 	Content            string `yaml:"content"`
 	Owner              string `yaml:"owner"`
 	Path               string `yaml:"path"`
-	RawFilePermissions string `yaml:"permissions"`
+	RawFilePermissions string `yaml:"permissions" valid:"^0?[0-7]{3,4}$"`
 }

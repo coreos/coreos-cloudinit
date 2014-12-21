@@ -46,3 +46,26 @@ func TestEncodingValid(t *testing.T) {
 		}
 	}
 }
+
+func TestRawFilePermissionsValid(t *testing.T) {
+	tests := []struct {
+		value string
+
+		isValid bool
+	}{
+		{value: "744", isValid: true},
+		{value: "0744", isValid: true},
+		{value: "1744", isValid: true},
+		{value: "01744", isValid: true},
+		{value: "11744", isValid: false},
+		{value: "rwxr--r--", isValid: false},
+		{value: "800", isValid: false},
+	}
+
+	for _, tt := range tests {
+		isValid := (nil == AssertStructValid(File{RawFilePermissions: tt.value}))
+		if tt.isValid != isValid {
+			t.Errorf("bad assert (%s): want %t, got %t", tt.value, tt.isValid, isValid)
+		}
+	}
+}
