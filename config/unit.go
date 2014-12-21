@@ -22,7 +22,7 @@ type Unit struct {
 	Enable  bool         `yaml:"enable"`
 	Runtime bool         `yaml:"runtime"`
 	Content string       `yaml:"content"`
-	Command string       `yaml:"command" valid:"start,stop,restart,reload,try-restart,reload-or-restart,reload-or-try-restart"`
+	Command string       `yaml:"command" valid:"^(start|stop|restart|reload|try-restart|reload-or-restart|reload-or-try-restart)$"`
 	DropIns []UnitDropIn `yaml:"drop_ins"`
 }
 

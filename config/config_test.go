@@ -18,6 +18,7 @@ package config
 
 import (
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -88,34 +89,61 @@ func TestAssertStructValid(t *testing.T) {
 	}{
 		{struct{}{}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
+			A, b string `valid:"^1|2$"`
 		}{}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
+			A, b string `valid:"^1|2$"`
 		}{A: "1", b: "2"}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
+			A, b string `valid:"^1|2$"`
 		}{A: "1", b: "hello"}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
-		}{A: "hello", b: "2"}, &ErrorValid{Value: "hello", Field: "A", Valid: []string{"1", "2"}}},
+			A, b string `valid:"^1|2$"`
+		}{A: "hello", b: "2"}, &ErrorValid{Value: "hello", Field: "A", Valid: "^1|2$"}},
 		{struct {
-			A, b int `valid:"1,2"`
+			A, b int `valid:"^1|2$"`
 		}{}, nil},
 		{struct {
-			A, b int `valid:"1,2"`
+			A, b int `valid:"^1|2$"`
 		}{A: 1, b: 2}, nil},
 		{struct {
-			A, b int `valid:"1,2"`
+			A, b int `valid:"^1|2$"`
 		}{A: 1, b: 9}, nil},
 		{struct {
-			A, b int `valid:"1,2"`
-		}{A: 9, b: 2}, &ErrorValid{Value: "9", Field: "A", Valid: []string{"1", "2"}}},
+			A, b int `valid:"^1|2$"`
+		}{A: 9, b: 2}, &ErrorValid{Value: "9", Field: "A", Valid: "^1|2$"}},
 	}
 
 	for _, tt := range tests {
 		if err := AssertStructValid(tt.c); !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad result (%q): want %q, got %q", tt.c, tt.err, err)
+		}
+	}
+}
+
+func TestConfigCompile(t *testing.T) {
+	tests := []interface{}{
+		Etcd{},
+		File{},
+		Flannel{},
+		Fleet{},
+		Locksmith{},
+		OEM{},
+		Unit{},
+		Update{},
+	}
+
+	for _, tt := range tests {
+		ttt := reflect.TypeOf(tt)
+		for i := 0; i < ttt.NumField(); i++ {
+			ft := ttt.Field(i)
+			if !isFieldExported(ft) {
+				continue
+			}
+
+			if _, err := regexp.Compile(ft.Tag.Get("valid")); err != nil {
+				t.Errorf("bad regexp(%s.%s): want %v, got %s", ttt.Name(), ft.Name, nil, err)
+			}
 		}
 	}
 }

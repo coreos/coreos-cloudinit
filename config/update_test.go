@@ -16,10 +16,28 @@
 
 package config
 
-type File struct {
-	Encoding           string `yaml:"encoding" valid:"^(base64|b64|gz|gzip|gz\\+base64|gzip\\+base64|gz\\+b64|gzip\\+b64)$"`
-	Content            string `yaml:"content"`
-	Owner              string `yaml:"owner"`
-	Path               string `yaml:"path"`
-	RawFilePermissions string `yaml:"permissions"`
+import (
+	"testing"
+)
+
+func TestRebootStrategyValid(t *testing.T) {
+	tests := []struct {
+		value string
+
+		isValid bool
+	}{
+		{value: "best-effort", isValid: true},
+		{value: "etcd-lock", isValid: true},
+		{value: "reboot", isValid: true},
+		{value: "off", isValid: true},
+		{value: "besteffort", isValid: false},
+		{value: "unknown", isValid: false},
+	}
+
+	for _, tt := range tests {
+		isValid := (nil == AssertStructValid(Update{RebootStrategy: tt.value}))
+		if tt.isValid != isValid {
+			t.Errorf("bad assert (%s): want %t, got %t", tt.value, tt.isValid, isValid)
+		}
+	}
 }

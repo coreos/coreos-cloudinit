@@ -100,7 +100,7 @@ func TestUpdateFile(t *testing.T) {
 		},
 		{
 			config: config.Update{RebootStrategy: "wizzlewazzle"},
-			err:    &config.ErrorValid{Value: "wizzlewazzle", Field: "RebootStrategy", Valid: []string{"best-effort", "etcd-lock", "reboot", "off"}},
+			err:    &config.ErrorValid{Value: "wizzlewazzle", Field: "RebootStrategy", Valid: "^(best-effort|etcd-lock|reboot|off)$"},
 		},
 		{
 			config: config.Update{Group: "master", Server: "http://foo.com"},

@@ -19,6 +19,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/coreos/yaml"
@@ -91,7 +92,7 @@ func IsZero(c interface{}) bool {
 
 type ErrorValid struct {
 	Value string
-	Valid []string
+	Valid string
 	Field string
 }
 
@@ -125,16 +126,15 @@ func AssertValid(value reflect.Value, valid string) *ErrorValid {
 	if valid == "" || isZero(value) {
 		return nil
 	}
+
 	vs := fmt.Sprintf("%v", value.Interface())
-	valids := strings.Split(valid, ",")
-	for _, valid := range valids {
-		if vs == valid {
-			return nil
-		}
+	if m, _ := regexp.MatchString(valid, vs); m {
+		return nil
 	}
+
 	return &ErrorValid{
 		Value: vs,
-		Valid: valids,
+		Valid: valid,
 	}
 }
 
