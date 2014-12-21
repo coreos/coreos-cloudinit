@@ -65,6 +65,31 @@ func TestValidateCloudConfig(t *testing.T) {
 			rules: []rule{func(_ node, _ *Report) { panic("something happened") }},
 			err:   errors.New("something happened"),
 		},
+		{
+			config: "write_files:\n  - permissions: 0744",
+			rules:  Rules,
+		},
+		{
+			config: "write_files:\n  - permissions: '0744'",
+			rules:  Rules,
+		},
+		{
+			config: "write_files:\n  - permissions: 744",
+			rules:  Rules,
+		},
+		{
+			config: "write_files:\n  - permissions: '744'",
+			rules:  Rules,
+		},
+		{
+			config: "coreos:\n  update:\n    reboot-strategy: off",
+			rules:  Rules,
+		},
+		{
+			config: "coreos:\n  update:\n    reboot-strategy: false",
+			rules:  Rules,
+			report: Report{entries: []Entry{{entryError, "invalid value false", 3}}},
+		},
 	}
 
 	for _, tt := range tests {

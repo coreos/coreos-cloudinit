@@ -46,6 +46,22 @@ func TestNewCloudConfig(t *testing.T) {
 			contents: "#cloud-config\ncoreos:\n  update:\n    reboot-strategy: false",
 			config:   CloudConfig{CoreOS: CoreOS{Update: Update{RebootStrategy: "false"}}},
 		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: 0744",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "0744"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: 744",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "744"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: '0744'",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "0744"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: '744'",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "744"}}},
+		},
 	}
 
 	for i, tt := range tests {

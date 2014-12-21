@@ -97,7 +97,7 @@ func TestDecimalFilePermissions(t *testing.T) {
 
 	wf := File{config.File{
 		Path:               fn,
-		RawFilePermissions: "484", // Decimal representation of 0744
+		RawFilePermissions: "744",
 	}}
 
 	path, err := WriteFile(&wf, dir)

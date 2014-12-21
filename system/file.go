@@ -43,7 +43,7 @@ func (f *File) Permissions() (os.FileMode, error) {
 	}
 
 	// Parse string representation of file mode as integer
-	perm, err := strconv.ParseInt(f.RawFilePermissions, 0, 32)
+	perm, err := strconv.ParseInt(f.RawFilePermissions, 8, 32)
 	if err != nil {
 		return 0, fmt.Errorf("Unable to parse file permissions %q as integer", f.RawFilePermissions)
 	}
