@@ -114,7 +114,7 @@ hostname:
 	if cfg.Hostname != "foo" {
 		t.Fatalf("hostname not correctly set when invalid keys are present")
 	}
-	if cfg.Coreos.Etcd.Discovery != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
+	if cfg.CoreOS.Etcd.Discovery != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
 		t.Fatalf("etcd section not correctly set when invalid keys are present")
 	}
 	if len(cfg.WriteFiles) < 1 || cfg.WriteFiles[0].Content != "fun" || cfg.WriteFiles[0].Path != "/var/party" {
@@ -220,10 +220,10 @@ hostname: trontastic
 		}
 	}
 
-	if len(cfg.Coreos.Units) != 1 {
+	if len(cfg.CoreOS.Units) != 1 {
 		t.Error("Failed to parse correct number of units")
 	} else {
-		u := cfg.Coreos.Units[0]
+		u := cfg.CoreOS.Units[0]
 		expect := `[Match]
 Name=eth47
 
@@ -241,14 +241,14 @@ Address=10.209.171.177/19
 		}
 	}
 
-	if cfg.Coreos.OEM.ID != "rackspace" {
-		t.Errorf("Failed parsing coreos.oem. Expected ID 'rackspace', got %q.", cfg.Coreos.OEM.ID)
+	if cfg.CoreOS.OEM.ID != "rackspace" {
+		t.Errorf("Failed parsing coreos.oem. Expected ID 'rackspace', got %q.", cfg.CoreOS.OEM.ID)
 	}
 
 	if cfg.Hostname != "trontastic" {
 		t.Errorf("Failed to parse hostname")
 	}
-	if cfg.Coreos.Update.RebootStrategy != "reboot" {
+	if cfg.CoreOS.Update.RebootStrategy != "reboot" {
 		t.Errorf("Failed to parse locksmith strategy")
 	}
 

@@ -29,21 +29,23 @@ import (
 // used for internal use) have the YAML tag '-' so that they aren't marshalled.
 type CloudConfig struct {
 	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
-	Coreos            struct {
-		Etcd      Etcd      `yaml:"etcd"`
-		Flannel   Flannel   `yaml:"flannel"`
-		Fleet     Fleet     `yaml:"fleet"`
-		Locksmith Locksmith `yaml:"locksmith"`
-		OEM       OEM       `yaml:"oem"`
-		Update    Update    `yaml:"update"`
-		Units     []Unit    `yaml:"units"`
-	} `yaml:"coreos"`
+	CoreOS            CoreOS   `yaml:"coreos"`
 	WriteFiles        []File   `yaml:"write_files"`
 	Hostname          string   `yaml:"hostname"`
 	Users             []User   `yaml:"users"`
 	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
 	NetworkConfigPath string   `yaml:"-"`
 	NetworkConfig     string   `yaml:"-"`
+}
+
+type CoreOS struct {
+	Etcd      Etcd      `yaml:"etcd"`
+	Flannel   Flannel   `yaml:"flannel"`
+	Fleet     Fleet     `yaml:"fleet"`
+	Locksmith Locksmith `yaml:"locksmith"`
+	OEM       OEM       `yaml:"oem"`
+	Update    Update    `yaml:"update"`
+	Units     []Unit    `yaml:"units"`
 }
 
 func IsCloudConfig(userdata string) bool {
