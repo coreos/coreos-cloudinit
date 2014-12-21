@@ -22,6 +22,42 @@ import (
 	"testing"
 )
 
+func TestNewCloudConfig(t *testing.T) {
+	tests := []struct {
+		contents string
+
+		config CloudConfig
+	}{
+		{},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - path: underscore",
+			config:   CloudConfig{WriteFiles: []File{File{Path: "underscore"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite-files:\n  - path: hyphen",
+			config:   CloudConfig{WriteFiles: []File{File{Path: "hyphen"}}},
+		},
+		{
+			contents: "#cloud-config\ncoreos:\n  update:\n    reboot-strategy: off",
+			config:   CloudConfig{CoreOS: CoreOS{Update: Update{RebootStrategy: "off"}}},
+		},
+		{
+			contents: "#cloud-config\ncoreos:\n  update:\n    reboot-strategy: false",
+			config:   CloudConfig{CoreOS: CoreOS{Update: Update{RebootStrategy: "false"}}},
+		},
+	}
+
+	for i, tt := range tests {
+		config, err := NewCloudConfig(tt.contents)
+		if err != nil {
+			t.Errorf("bad error (test case #%d): want %v, got %s", i, nil, err)
+		}
+		if !reflect.DeepEqual(&tt.config, config) {
+			t.Errorf("bad config (test case #%d): want %#v, got %#v", i, tt.config, config)
+		}
+	}
+}
+
 func TestIsZero(t *testing.T) {
 	tests := []struct {
 		c interface{}
@@ -251,40 +287,6 @@ Address=10.209.171.177/19
 	if cfg.CoreOS.Update.RebootStrategy != "reboot" {
 		t.Errorf("Failed to parse locksmith strategy")
 	}
-
-	contents = `
-coreos:
-write_files:
-  - path: /home/me/notes
-    permissions: 0744
-`
-	cfg, err = NewCloudConfig(contents)
-	if err != nil {
-		t.Fatalf("Encountered unexpected error :%v", err)
-	}
-
-	if len(cfg.WriteFiles) != 1 {
-		t.Error("Failed to parse correct number of write_files")
-	} else {
-		wf := cfg.WriteFiles[0]
-		if wf.Content != "" {
-			t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
-		}
-		if wf.Encoding != "" {
-			t.Errorf("WriteFile has incorrect encoding %s", wf.Encoding)
-		}
-		// Verify that the normalization of the config converted 0744 to its decimal
-		// representation, 484.
-		if wf.RawFilePermissions != "484" {
-			t.Errorf("WriteFile has incorrect permissions %s", wf.RawFilePermissions)
-		}
-		if wf.Path != "/home/me/notes" {
-			t.Errorf("WriteFile has incorrect path %s", wf.Path)
-		}
-		if wf.Owner != "" {
-			t.Errorf("WriteFile has incorrect owner %s", wf.Owner)
-		}
-	}
 }
 
 // Assert that our interface conversion doesn't panic
@@ -449,33 +451,5 @@ users:
 
 	if user.SSHImportURL != "https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys" {
 		t.Errorf("ssh import url is %q, expected 'https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys'", user.SSHImportURL)
-	}
-}
-
-func TestNormalizeKeys(t *testing.T) {
-	for _, tt := range []struct {
-		in  string
-		out string
-	}{
-		{"my_key_name: the-value\n", "my_key_name: the-value\n"},
-		{"my-key_name: the-value\n", "my_key_name: the-value\n"},
-		{"my-key-name: the-value\n", "my_key_name: the-value\n"},
-
-		{"a:\n- key_name: the-value\n", "a:\n- key_name: the-value\n"},
-		{"a:\n- key-name: the-value\n", "a:\n- key_name: the-value\n"},
-
-		{"a:\n  b:\n  - key_name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
-		{"a:\n  b:\n  - key-name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
-
-		{"coreos:\n  update:\n    reboot-strategy: off\n", "coreos:\n  update:\n    reboot_strategy: false\n"},
-		{"coreos:\n  update:\n    reboot-strategy: 'off'\n", "coreos:\n  update:\n    reboot_strategy: \"off\"\n"},
-	} {
-		out, err := normalizeConfig(tt.in)
-		if err != nil {
-			t.Fatalf("bad error (%q): want nil, got %s", tt.in, err)
-		}
-		if string(out) != tt.out {
-			t.Fatalf("bad normalization (%q): want %q, got %q", tt.in, tt.out, out)
-		}
 	}
 }
