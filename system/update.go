@@ -126,7 +126,7 @@ func (uc Update) Units() []Unit {
 			Runtime: true,
 		}}
 
-		if uc.Update.RebootStrategy == "false" || uc.Update.RebootStrategy == "off" {
+		if uc.Update.RebootStrategy == "off" {
 			ls.Command = "stop"
 			ls.Mask = true
 		}
