@@ -1,8 +1,8 @@
 package yaml_test
 
 import (
+	"github.com/coreos/yaml"
 	. "gopkg.in/check.v1"
-	"gopkg.in/yaml.v1"
 	"math"
 	"reflect"
 	"strings"
@@ -555,6 +555,23 @@ func (s *S) TestUnmarshalWithFalseSetterIgnoresValue(c *C) {
 
 	c.Assert(m["abc"].value, Equals, 1)
 	c.Assert(m["ghi"].value, Equals, 3)
+}
+
+func (s *S) TestUnmarshalWithTransform(c *C) {
+	data := `{a_b: 1, c-d: 2, e-f_g: 3, h_i-j: 4}`
+	expect := map[string]int{
+		"a_b":   1,
+		"c_d":   2,
+		"e_f_g": 3,
+		"h_i_j": 4,
+	}
+	m := map[string]int{}
+	yaml.UnmarshalMappingKeyTransform = func(i string) string {
+		return strings.Replace(i, "-", "_", -1)
+	}
+	err := yaml.Unmarshal([]byte(data), m)
+	c.Assert(err, IsNil)
+	c.Assert(m, DeepEquals, expect)
 }
 
 // From http://yaml.org/type/merge.html
