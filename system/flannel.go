@@ -1,6 +1,9 @@
 package system
 
 import (
+	"path"
+	"strings"
+
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
@@ -10,15 +13,18 @@ type Flannel struct {
 	config.Flannel
 }
 
-// Units generates a Unit file drop-in for flannel, if any flannel options were
-// configured in cloud-config
-func (fl Flannel) Units() []Unit {
-	return []Unit{{config.Unit{
-		Name:    "flanneld.service",
-		Runtime: true,
-		DropIns: []config.UnitDropIn{{
-			Name:    "20-cloudinit.conf",
-			Content: serviceContents(fl.Flannel),
-		}},
-	}}}
+func (fl Flannel) envVars() string {
+	return strings.Join(getEnvVars(fl.Flannel), "\n")
+}
+
+func (fl Flannel) File() (*File, error) {
+	vars := fl.envVars()
+	if vars == "" {
+		return nil, nil
+	}
+	return &File{config.File{
+		Path:               path.Join("run", "flannel", "options.env"),
+		RawFilePermissions: "0644",
+		Content:            vars,
+	}}, nil
 }

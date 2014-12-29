@@ -23,22 +23,32 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
-// dropinContents generates the contents for a drop-in unit given the config.
+// serviceContents generates the contents for a drop-in unit given the config.
 // The argument must be a struct from the 'config' package.
 func serviceContents(e interface{}) string {
+	vars := getEnvVars(e)
+	if len(vars) == 0 {
+		return ""
+	}
+
+	out := "[Service]\n"
+	for _, v := range vars {
+		out += fmt.Sprintf("Environment=\"%s\"\n", v)
+	}
+	return out
+}
+
+func getEnvVars(e interface{}) []string {
 	et := reflect.TypeOf(e)
 	ev := reflect.ValueOf(e)
 
-	var out string
+	vars := []string{}
 	for i := 0; i < et.NumField(); i++ {
 		if val := ev.Field(i).Interface(); !config.IsZero(val) {
 			key := et.Field(i).Tag.Get("env")
-			out += fmt.Sprintf("Environment=\"%s=%v\"\n", key, val)
+			vars = append(vars, fmt.Sprintf("%s=%v", key, val))
 		}
 	}
 
-	if out == "" {
-		return ""
-	}
-	return "[Service]\n" + out
+	return vars
 }
