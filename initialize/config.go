@@ -110,10 +110,10 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 	}
 
 	for _, ccf := range []CloudConfigFile{
-		system.OEM{OEM: cfg.Coreos.OEM},
-		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
+		system.OEM{OEM: cfg.CoreOS.OEM},
+		system.Update{Update: cfg.CoreOS.Update, ReadConfig: system.DefaultReadConfig},
 		system.EtcHosts{EtcHosts: cfg.ManageEtcHosts},
-		system.Flannel{Flannel: cfg.Coreos.Flannel},
+		system.Flannel{Flannel: cfg.CoreOS.Flannel},
 	} {
 		f, err := ccf.File()
 		if err != nil {
@@ -125,15 +125,15 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 	}
 
 	var units []system.Unit
-	for _, u := range cfg.Coreos.Units {
+	for _, u := range cfg.CoreOS.Units {
 		units = append(units, system.Unit{Unit: u})
 	}
 
 	for _, ccu := range []CloudConfigUnit{
-		system.Etcd{Etcd: cfg.Coreos.Etcd},
-		system.Fleet{Fleet: cfg.Coreos.Fleet},
-		system.Locksmith{Locksmith: cfg.Coreos.Locksmith},
-		system.Update{Update: cfg.Coreos.Update, ReadConfig: system.DefaultReadConfig},
+		system.Etcd{Etcd: cfg.CoreOS.Etcd},
+		system.Fleet{Fleet: cfg.CoreOS.Fleet},
+		system.Locksmith{Locksmith: cfg.CoreOS.Locksmith},
+		system.Update{Update: cfg.CoreOS.Update, ReadConfig: system.DefaultReadConfig},
 	} {
 		units = append(units, ccu.Units()...)
 	}

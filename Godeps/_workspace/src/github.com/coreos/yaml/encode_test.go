@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/yaml"
 	. "gopkg.in/check.v1"
-	"gopkg.in/yaml.v1"
 )
 
 var marshalIntTest = 123

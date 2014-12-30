@@ -18,13 +18,67 @@ package config
 
 import (
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 )
 
+func TestNewCloudConfig(t *testing.T) {
+	tests := []struct {
+		contents string
+
+		config CloudConfig
+	}{
+		{},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - path: underscore",
+			config:   CloudConfig{WriteFiles: []File{File{Path: "underscore"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite-files:\n  - path: hyphen",
+			config:   CloudConfig{WriteFiles: []File{File{Path: "hyphen"}}},
+		},
+		{
+			contents: "#cloud-config\ncoreos:\n  update:\n    reboot-strategy: off",
+			config:   CloudConfig{CoreOS: CoreOS{Update: Update{RebootStrategy: "off"}}},
+		},
+		{
+			contents: "#cloud-config\ncoreos:\n  update:\n    reboot-strategy: false",
+			config:   CloudConfig{CoreOS: CoreOS{Update: Update{RebootStrategy: "false"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: 0744",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "0744"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: 744",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "744"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: '0744'",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "0744"}}},
+		},
+		{
+			contents: "#cloud-config\nwrite_files:\n  - permissions: '744'",
+			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "744"}}},
+		},
+	}
+
+	for i, tt := range tests {
+		config, err := NewCloudConfig(tt.contents)
+		if err != nil {
+			t.Errorf("bad error (test case #%d): want %v, got %s", i, nil, err)
+		}
+		if !reflect.DeepEqual(&tt.config, config) {
+			t.Errorf("bad config (test case #%d): want %#v, got %#v", i, tt.config, config)
+		}
+	}
+}
+
 func TestIsZero(t *testing.T) {
-	for _, tt := range []struct {
-		c     interface{}
+	tests := []struct {
+		c interface{}
+
 		empty bool
 	}{
 		{struct{}{}, true},
@@ -34,7 +88,9 @@ func TestIsZero(t *testing.T) {
 		{struct{ A string }{A: "hello"}, false},
 		{struct{ A int }{}, true},
 		{struct{ A int }{A: 1}, false},
-	} {
+	}
+
+	for _, tt := range tests {
 		if empty := IsZero(tt.c); tt.empty != empty {
 			t.Errorf("bad result (%q): want %t, got %t", tt.c, tt.empty, empty)
 		}
@@ -42,66 +98,68 @@ func TestIsZero(t *testing.T) {
 }
 
 func TestAssertStructValid(t *testing.T) {
-	for _, tt := range []struct {
-		c   interface{}
+	tests := []struct {
+		c interface{}
+
 		err error
 	}{
 		{struct{}{}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
+			A, b string `valid:"^1|2$"`
 		}{}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
+			A, b string `valid:"^1|2$"`
 		}{A: "1", b: "2"}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
+			A, b string `valid:"^1|2$"`
 		}{A: "1", b: "hello"}, nil},
 		{struct {
-			A, b string `valid:"1,2"`
-		}{A: "hello", b: "2"}, &ErrorValid{Value: "hello", Field: "A", Valid: []string{"1", "2"}}},
+			A, b string `valid:"^1|2$"`
+		}{A: "hello", b: "2"}, &ErrorValid{Value: "hello", Field: "A", Valid: "^1|2$"}},
 		{struct {
-			A, b int `valid:"1,2"`
+			A, b int `valid:"^1|2$"`
 		}{}, nil},
 		{struct {
-			A, b int `valid:"1,2"`
+			A, b int `valid:"^1|2$"`
 		}{A: 1, b: 2}, nil},
 		{struct {
-			A, b int `valid:"1,2"`
+			A, b int `valid:"^1|2$"`
 		}{A: 1, b: 9}, nil},
 		{struct {
-			A, b int `valid:"1,2"`
-		}{A: 9, b: 2}, &ErrorValid{Value: "9", Field: "A", Valid: []string{"1", "2"}}},
-	} {
+			A, b int `valid:"^1|2$"`
+		}{A: 9, b: 2}, &ErrorValid{Value: "9", Field: "A", Valid: "^1|2$"}},
+	}
+
+	for _, tt := range tests {
 		if err := AssertStructValid(tt.c); !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad result (%q): want %q, got %q", tt.c, tt.err, err)
 		}
 	}
 }
 
-func TestCloudConfigInvalidKeys(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Fatalf("panic while instantiating CloudConfig with nil keys: %v", r)
-		}
-	}()
+func TestConfigCompile(t *testing.T) {
+	tests := []interface{}{
+		Etcd{},
+		File{},
+		Flannel{},
+		Fleet{},
+		Locksmith{},
+		OEM{},
+		Unit{},
+		Update{},
+	}
 
-	for _, tt := range []struct {
-		contents string
-	}{
-		{"coreos:"},
-		{"ssh_authorized_keys:"},
-		{"ssh_authorized_keys:\n  -"},
-		{"ssh_authorized_keys:\n  - 0:"},
-		{"write_files:"},
-		{"write_files:\n  -"},
-		{"write_files:\n  - 0:"},
-		{"users:"},
-		{"users:\n  -"},
-		{"users:\n  - 0:"},
-	} {
-		_, err := NewCloudConfig(tt.contents)
-		if err != nil {
-			t.Fatalf("error instantiating CloudConfig with invalid keys: %v", err)
+	for _, tt := range tests {
+		ttt := reflect.TypeOf(tt)
+		for i := 0; i < ttt.NumField(); i++ {
+			ft := ttt.Field(i)
+			if !isFieldExported(ft) {
+				continue
+			}
+
+			if _, err := regexp.Compile(ft.Tag.Get("valid")); err != nil {
+				t.Errorf("bad regexp(%s.%s): want %v, got %s", ttt.Name(), ft.Name, nil, err)
+			}
 		}
 	}
 }
@@ -136,7 +194,7 @@ hostname:
 	if cfg.Hostname != "foo" {
 		t.Fatalf("hostname not correctly set when invalid keys are present")
 	}
-	if cfg.Coreos.Etcd.Discovery != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
+	if cfg.CoreOS.Etcd.Discovery != "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877" {
 		t.Fatalf("etcd section not correctly set when invalid keys are present")
 	}
 	if len(cfg.WriteFiles) < 1 || cfg.WriteFiles[0].Content != "fun" || cfg.WriteFiles[0].Path != "/var/party" {
@@ -242,10 +300,10 @@ hostname: trontastic
 		}
 	}
 
-	if len(cfg.Coreos.Units) != 1 {
+	if len(cfg.CoreOS.Units) != 1 {
 		t.Error("Failed to parse correct number of units")
 	} else {
-		u := cfg.Coreos.Units[0]
+		u := cfg.CoreOS.Units[0]
 		expect := `[Match]
 Name=eth47
 
@@ -263,49 +321,15 @@ Address=10.209.171.177/19
 		}
 	}
 
-	if cfg.Coreos.OEM.ID != "rackspace" {
-		t.Errorf("Failed parsing coreos.oem. Expected ID 'rackspace', got %q.", cfg.Coreos.OEM.ID)
+	if cfg.CoreOS.OEM.ID != "rackspace" {
+		t.Errorf("Failed parsing coreos.oem. Expected ID 'rackspace', got %q.", cfg.CoreOS.OEM.ID)
 	}
 
 	if cfg.Hostname != "trontastic" {
 		t.Errorf("Failed to parse hostname")
 	}
-	if cfg.Coreos.Update.RebootStrategy != "reboot" {
+	if cfg.CoreOS.Update.RebootStrategy != "reboot" {
 		t.Errorf("Failed to parse locksmith strategy")
-	}
-
-	contents = `
-coreos:
-write_files:
-  - path: /home/me/notes
-    permissions: 0744
-`
-	cfg, err = NewCloudConfig(contents)
-	if err != nil {
-		t.Fatalf("Encountered unexpected error :%v", err)
-	}
-
-	if len(cfg.WriteFiles) != 1 {
-		t.Error("Failed to parse correct number of write_files")
-	} else {
-		wf := cfg.WriteFiles[0]
-		if wf.Content != "" {
-			t.Errorf("WriteFile has incorrect contents '%s'", wf.Content)
-		}
-		if wf.Encoding != "" {
-			t.Errorf("WriteFile has incorrect encoding %s", wf.Encoding)
-		}
-		// Verify that the normalization of the config converted 0744 to its decimal
-		// representation, 484.
-		if wf.RawFilePermissions != "484" {
-			t.Errorf("WriteFile has incorrect permissions %s", wf.RawFilePermissions)
-		}
-		if wf.Path != "/home/me/notes" {
-			t.Errorf("WriteFile has incorrect path %s", wf.Path)
-		}
-		if wf.Owner != "" {
-			t.Errorf("WriteFile has incorrect owner %s", wf.Owner)
-		}
 	}
 }
 
@@ -471,33 +495,5 @@ users:
 
 	if user.SSHImportURL != "https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys" {
 		t.Errorf("ssh import url is %q, expected 'https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys'", user.SSHImportURL)
-	}
-}
-
-func TestNormalizeKeys(t *testing.T) {
-	for _, tt := range []struct {
-		in  string
-		out string
-	}{
-		{"my_key_name: the-value\n", "my_key_name: the-value\n"},
-		{"my-key_name: the-value\n", "my_key_name: the-value\n"},
-		{"my-key-name: the-value\n", "my_key_name: the-value\n"},
-
-		{"a:\n- key_name: the-value\n", "a:\n- key_name: the-value\n"},
-		{"a:\n- key-name: the-value\n", "a:\n- key_name: the-value\n"},
-
-		{"a:\n  b:\n  - key_name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
-		{"a:\n  b:\n  - key-name: the-value\n", "a:\n  b:\n  - key_name: the-value\n"},
-
-		{"coreos:\n  update:\n    reboot-strategy: off\n", "coreos:\n  update:\n    reboot_strategy: false\n"},
-		{"coreos:\n  update:\n    reboot-strategy: 'off'\n", "coreos:\n  update:\n    reboot_strategy: \"off\"\n"},
-	} {
-		out, err := normalizeConfig(tt.in)
-		if err != nil {
-			t.Fatalf("bad error (%q): want nil, got %s", tt.in, err)
-		}
-		if string(out) != tt.out {
-			t.Fatalf("bad normalization (%q): want %q, got %q", tt.in, tt.out, out)
-		}
 	}
 }

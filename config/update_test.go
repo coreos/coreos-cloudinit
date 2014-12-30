@@ -16,8 +16,28 @@
 
 package config
 
-type Update struct {
-	RebootStrategy string `yaml:"reboot_strategy" env:"REBOOT_STRATEGY" valid:"^(best-effort|etcd-lock|reboot|off)$"`
-	Group          string `yaml:"group"           env:"GROUP"`
-	Server         string `yaml:"server"          env:"SERVER"`
+import (
+	"testing"
+)
+
+func TestRebootStrategyValid(t *testing.T) {
+	tests := []struct {
+		value string
+
+		isValid bool
+	}{
+		{value: "best-effort", isValid: true},
+		{value: "etcd-lock", isValid: true},
+		{value: "reboot", isValid: true},
+		{value: "off", isValid: true},
+		{value: "besteffort", isValid: false},
+		{value: "unknown", isValid: false},
+	}
+
+	for _, tt := range tests {
+		isValid := (nil == AssertStructValid(Update{RebootStrategy: tt.value}))
+		if tt.isValid != isValid {
+			t.Errorf("bad assert (%s): want %t, got %t", tt.value, tt.isValid, isValid)
+		}
+	}
 }

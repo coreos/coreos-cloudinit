@@ -65,7 +65,6 @@ func validateCloudConfig(config []byte, rules []rule) (report Report, err error)
 		return report, err
 	}
 
-	c = normalizeNodeNames(c, &report)
 	for _, r := range rules {
 		r(c, &report)
 	}
@@ -75,30 +74,79 @@ func validateCloudConfig(config []byte, rules []rule) (report Report, err error)
 // parseCloudConfig parses the provided config into a node structure and logs
 // any parsing issues into the provided report. Unrecoverable errors are
 // returned as an error.
-func parseCloudConfig(config []byte, report *Report) (n node, err error) {
-	var raw map[interface{}]interface{}
-	if err := yaml.Unmarshal(config, &raw); err != nil {
+func parseCloudConfig(cfg []byte, report *Report) (node, error) {
+	yaml.UnmarshalMappingKeyTransform = func(nameIn string) (nameOut string) {
+		return nameIn
+	}
+	// unmarshal the config into an implicitly-typed form. The yaml library
+	// will implicitly convert types into their normalized form
+	// (e.g. 0744 -> 484, off -> false).
+	var weak map[interface{}]interface{}
+	if err := yaml.Unmarshal(cfg, &weak); err != nil {
 		matches := yamlLineError.FindStringSubmatch(err.Error())
 		if len(matches) == 3 {
 			line, err := strconv.Atoi(matches[1])
 			if err != nil {
-				return n, err
+				return node{}, err
 			}
 			msg := matches[2]
 			report.Error(line, msg)
-			return n, nil
+			return node{}, nil
 		}
 
 		matches = yamlError.FindStringSubmatch(err.Error())
 		if len(matches) == 2 {
 			report.Error(1, matches[1])
-			return n, nil
+			return node{}, nil
 		}
 
-		return n, errors.New("couldn't parse yaml error")
+		return node{}, errors.New("couldn't parse yaml error")
+	}
+	w := NewNode(weak, NewContext(cfg))
+	w = normalizeNodeNames(w, report)
+
+	// unmarshal the config into the explicitly-typed form.
+	yaml.UnmarshalMappingKeyTransform = func(nameIn string) (nameOut string) {
+		return strings.Replace(nameIn, "-", "_", -1)
+	}
+	var strong config.CloudConfig
+	if err := yaml.Unmarshal([]byte(cfg), &strong); err != nil {
+		return node{}, err
+	}
+	s := NewNode(strong, NewContext(cfg))
+
+	// coerceNodes weak nodes and strong nodes. strong nodes replace weak nodes
+	// if they are compatible types (this happens when the yaml library
+	// converts the input).
+	// (e.g. weak 484 is replaced by strong 0744, weak 4 is not replaced by
+	// strong false)
+	return coerceNodes(w, s), nil
+}
+
+// coerceNodes recursively evaluates two nodes, returning a new node containing
+// either the weak or strong node's value and its recursively processed
+// children. The strong node's value is used if the two nodes are leafs, are
+// both valid, and are compatible types (defined by isCompatible()). The weak
+// node is returned in all other cases. coerceNodes is used to counteract the
+// effects of yaml's automatic type conversion. The weak node is the one
+// resulting from unmarshalling into an empty interface{} (the type is
+// inferred). The strong node is the one resulting from unmarshalling into a
+// struct. If the two nodes are of compatible types, the yaml library correctly
+// parsed the value into the strongly typed unmarshalling. In this case, we
+// prefer the strong node because its actually the type we are expecting.
+func coerceNodes(w, s node) node {
+	n := w
+	n.children = nil
+	if len(w.children) == 0 && len(s.children) == 0 &&
+		w.IsValid() && s.IsValid() &&
+		isCompatible(w.Kind(), s.Kind()) {
+		n.Value = s.Value
 	}
 
-	return NewNode(raw, NewContext(config)), nil
+	for _, cw := range w.children {
+		n.children = append(n.children, coerceNodes(cw, s.Child(cw.name)))
+	}
+	return n
 }
 
 // normalizeNodeNames replaces all occurences of '-' with '_' within key names
