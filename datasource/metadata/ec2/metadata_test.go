@@ -174,6 +174,20 @@ func TestFetchMetadata(t *testing.T) {
 			expect: []byte(`{"hostname":"host","local-ipv4":"1.2.3.4","network_config":{"content_path":"path"},"public-ipv4":"5.6.7.8","public_keys":{"test1":"key"}}`),
 		},
 		{
+			root:         "/",
+			metadataPath: "2009-04-04/meta-data",
+			resources: map[string]string{
+				"/2009-04-04/meta-data/hostname":                    "host domain another_domain",
+				"/2009-04-04/meta-data/local-ipv4":                  "1.2.3.4",
+				"/2009-04-04/meta-data/public-ipv4":                 "5.6.7.8",
+				"/2009-04-04/meta-data/public-keys":                 "0=test1\n",
+				"/2009-04-04/meta-data/public-keys/0":               "openssh-key",
+				"/2009-04-04/meta-data/public-keys/0/openssh-key":   "key",
+				"/2009-04-04/meta-data/network_config/content_path": "path",
+			},
+			expect: []byte(`{"hostname":"host","local-ipv4":"1.2.3.4","network_config":{"content_path":"path"},"public-ipv4":"5.6.7.8","public_keys":{"test1":"key"}}`),
+		},
+		{
 			clientErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 		},
