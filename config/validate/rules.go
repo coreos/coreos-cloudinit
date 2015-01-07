@@ -51,7 +51,7 @@ func checkNodeStructure(n, g node, r *Report) {
 			if cg := g.Child(cn.name); cg.IsValid() {
 				checkNodeStructure(cn, cg, r)
 			} else {
-				r.Warning(cn.line, fmt.Sprintf("unrecognized key %q", cn.name))
+				r.Warning(cn.line, fmt.Sprintf("unrecognized key %q. Your indentation may be wrong.", cn.name))
 			}
 		}
 	case reflect.Slice:
