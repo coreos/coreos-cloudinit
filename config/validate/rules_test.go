@@ -21,6 +21,39 @@ import (
 	"testing"
 )
 
+func TestCheckDiscoveryUrl(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "coreos:\n  etcd:\n    discovery: https://discovery.etcd.io/00000000000000000000000000000000",
+		},
+		{
+			config: "coreos:\n  etcd:\n    discovery: http://custom.domain/mytoken",
+		},
+		{
+			config:  "coreos:\n  etcd:\n    discovery: disco",
+			entries: []Entry{{entryWarning, "discovery URL is not valid", 3}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkDiscoveryUrl(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
+
 func TestCheckStructure(t *testing.T) {
 	tests := []struct {
 		config string

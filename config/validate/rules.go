@@ -18,6 +18,7 @@ package validate
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"reflect"
 	"strings"
@@ -29,9 +30,22 @@ type rule func(config node, report *Report)
 
 // Rules contains all of the validation rules.
 var Rules []rule = []rule{
+	checkDiscoveryUrl,
 	checkStructure,
 	checkValidity,
 	checkWriteFiles,
+}
+
+// checkDiscoveryUrl verifies that the string is a valid url.
+func checkDiscoveryUrl(cfg node, report *Report) {
+	c := cfg.Child("coreos").Child("etcd").Child("discovery")
+	if !c.IsValid() {
+		return
+	}
+
+	if _, err := url.ParseRequestURI(c.String()); err != nil {
+		report.Warning(c.line, "discovery URL is not valid")
+	}
 }
 
 // checkStructure compares the provided config to the empty config.CloudConfig
