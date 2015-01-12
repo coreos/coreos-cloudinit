@@ -249,3 +249,40 @@ func TestCheckValidity(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckWriteFiles(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "write_files:\n  - path: /valid",
+		},
+		{
+			config: "write_files:\n  - path: /tmp/usr/valid",
+		},
+		{
+			config:  "write_files:\n  - path: /usr/invalid",
+			entries: []Entry{{entryError, "file cannot be written to a read-only filesystem", 2}},
+		},
+		{
+			config:  "write-files:\n  - path: /tmp/../usr/invalid",
+			entries: []Entry{{entryError, "file cannot be written to a read-only filesystem", 2}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkWriteFiles(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}

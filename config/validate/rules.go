@@ -18,7 +18,9 @@ package validate
 
 import (
 	"fmt"
+	"path"
 	"reflect"
+	"strings"
 
 	"github.com/coreos/coreos-cloudinit/config"
 )
@@ -29,6 +31,7 @@ type rule func(config node, report *Report)
 var Rules []rule = []rule{
 	checkStructure,
 	checkValidity,
+	checkWriteFiles,
 }
 
 // checkStructure compares the provided config to the empty config.CloudConfig
@@ -67,6 +70,24 @@ func checkNodeStructure(n, g node, r *Report) {
 	}
 }
 
+// isCompatible determines if the type of kind n can be converted to the type
+// of kind g in the context of YAML. This is not an exhaustive list, but its
+// enough for the purposes of cloud-config validation.
+func isCompatible(n, g reflect.Kind) bool {
+	switch g {
+	case reflect.String:
+		return n == reflect.String || n == reflect.Int || n == reflect.Float64 || n == reflect.Bool
+	case reflect.Struct:
+		return n == reflect.Struct || n == reflect.Map
+	case reflect.Float64:
+		return n == reflect.Float64 || n == reflect.Int
+	case reflect.Bool, reflect.Slice, reflect.Int:
+		return n == g
+	default:
+		panic(fmt.Sprintf("isCompatible(): unhandled kind %s", g))
+	}
+}
+
 // checkValidity checks the value of every node in the provided config by
 // running config.AssertValid() on it.
 func checkValidity(cfg node, report *Report) {
@@ -98,20 +119,20 @@ func checkNodeValidity(n, g node, r *Report) {
 	}
 }
 
-// isCompatible determines if the type of kind n can be converted to the type
-// of kind g in the context of YAML. This is not an exhaustive list, but its
-// enough for the purposes of cloud-config validation.
-func isCompatible(n, g reflect.Kind) bool {
-	switch g {
-	case reflect.String:
-		return n == reflect.String || n == reflect.Int || n == reflect.Float64 || n == reflect.Bool
-	case reflect.Struct:
-		return n == reflect.Struct || n == reflect.Map
-	case reflect.Float64:
-		return n == reflect.Float64 || n == reflect.Int
-	case reflect.Bool, reflect.Slice, reflect.Int:
-		return n == g
-	default:
-		panic(fmt.Sprintf("isCompatible(): unhandled kind %s", g))
+// checkWriteFiles checks to make sure that the target file can actually be
+// written. Note that this check is approximate (it only checks to see if the file
+// is under /usr).
+func checkWriteFiles(cfg node, report *Report) {
+	for _, f := range cfg.Child("write_files").children {
+		c := f.Child("path")
+		if !c.IsValid() {
+			continue
+		}
+
+		d := path.Dir(c.String())
+		switch {
+		case strings.HasPrefix(d, "/usr"):
+			report.Error(c.line, "file cannot be written to a read-only filesystem")
+		}
 	}
 }
