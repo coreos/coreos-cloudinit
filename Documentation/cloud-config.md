@@ -109,7 +109,7 @@ flanneld. For example, the following cloud-config...
 
 coreos:
   flannel:
-      etcd-prefix: /coreos.com/network2
+      etcd_prefix: /coreos.com/network2
 ```
 
 ...will generate a systemd unit drop-in like so:
@@ -119,7 +119,15 @@ coreos:
 Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network2"
 ```
 
-For the complete list of flannel configuraion parameters, see the [flannel documentation][flannel-readme].
+List of flannel configuration parameters:
+- **etcd_endpoints**: Comma separated list of etcd endpoints
+- **etcd_cafile**: Path to CA file used for TLS communication with etcd
+- **etcd_certfile**: Path to certificate file used for TLS communication with etcd
+- **etcd_keyfile**: Path to private key file used for TLS communication with etcd
+- **etcd_prefix**: Etcd prefix path to be used for flannel keys
+- **ip_masq**: Install IP masquerade rules for traffic outside of flannel subnet
+- **subnet_file**: Path to flannel subnet file to write out
+- **interface**: Interface (name or IP) that should be used for inter-host communication
 
 [flannel-readme]: https://github.com/coreos/flannel/blob/master/README.md
 

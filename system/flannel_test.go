@@ -18,10 +18,10 @@ func TestFlannelEnvVars(t *testing.T) {
 		},
 		{
 			config.Flannel{
-				EtcdEndpoint: "http://12.34.56.78:4001",
-				EtcdPrefix:   "/coreos.com/network/tenant1",
+				EtcdEndpoints: "http://12.34.56.78:4001",
+				EtcdPrefix:    "/coreos.com/network/tenant1",
 			},
-			`FLANNELD_ETCD_ENDPOINT=http://12.34.56.78:4001
+			`FLANNELD_ETCD_ENDPOINTS=http://12.34.56.78:4001
 FLANNELD_ETCD_PREFIX=/coreos.com/network/tenant1`,
 		},
 	} {
@@ -43,13 +43,13 @@ func TestFlannelFile(t *testing.T) {
 		},
 		{
 			config.Flannel{
-				EtcdEndpoint: "http://12.34.56.78:4001",
-				EtcdPrefix:   "/coreos.com/network/tenant1",
+				EtcdEndpoints: "http://12.34.56.78:4001",
+				EtcdPrefix:    "/coreos.com/network/tenant1",
 			},
 			&File{config.File{
 				Path:               "run/flannel/options.env",
 				RawFilePermissions: "0644",
-				Content: `FLANNELD_ETCD_ENDPOINT=http://12.34.56.78:4001
+				Content: `FLANNELD_ETCD_ENDPOINTS=http://12.34.56.78:4001
 FLANNELD_ETCD_PREFIX=/coreos.com/network/tenant1`,
 			}},
 		},
