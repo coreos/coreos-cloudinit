@@ -34,6 +34,7 @@ var Rules []rule = []rule{
 	checkStructure,
 	checkValidity,
 	checkWriteFiles,
+	checkWriteFilesUnderCoreos,
 }
 
 // checkDiscoveryUrl verifies that the string is a valid url.
@@ -148,5 +149,14 @@ func checkWriteFiles(cfg node, report *Report) {
 		case strings.HasPrefix(d, "/usr"):
 			report.Error(c.line, "file cannot be written to a read-only filesystem")
 		}
+	}
+}
+
+// checkWriteFilesUnderCoreos checks to see if the 'write_files' node is a
+// child of 'coreos' (it shouldn't be).
+func checkWriteFilesUnderCoreos(cfg node, report *Report) {
+	c := cfg.Child("coreos").Child("write_files")
+	if c.IsValid() {
+		report.Info(c.line, "write_files doesn't belong under coreos")
 	}
 }

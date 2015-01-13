@@ -319,3 +319,37 @@ func TestCheckWriteFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckWriteFilesUnderCoreos(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "write_files:\n  - path: /hi",
+		},
+		{
+			config:  "coreos:\n  write_files:\n    - path: /hi",
+			entries: []Entry{{entryInfo, "write_files doesn't belong under coreos", 2}},
+		},
+		{
+			config:  "coreos:\n  write-files:\n    - path: /hyphen",
+			entries: []Entry{{entryInfo, "write_files doesn't belong under coreos", 2}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkWriteFilesUnderCoreos(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
