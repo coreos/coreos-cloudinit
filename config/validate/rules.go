@@ -31,6 +31,7 @@ type rule func(config node, report *Report)
 // Rules contains all of the validation rules.
 var Rules []rule = []rule{
 	checkDiscoveryUrl,
+	checkEncoding,
 	checkStructure,
 	checkValidity,
 	checkWriteFiles,
@@ -46,6 +47,22 @@ func checkDiscoveryUrl(cfg node, report *Report) {
 
 	if _, err := url.ParseRequestURI(c.String()); err != nil {
 		report.Warning(c.line, "discovery URL is not valid")
+	}
+}
+
+// checkEncoding validates that, for each file under 'write_files', the
+// content can be decoded given the specified encoding.
+func checkEncoding(cfg node, report *Report) {
+	for _, f := range cfg.Child("write_files").children {
+		e := f.Child("encoding")
+		if !e.IsValid() {
+			continue
+		}
+
+		c := f.Child("contents")
+		if _, err := config.DecodeContent(c.String(), e.String()); err != nil {
+			report.Error(c.line, fmt.Sprintf("contents cannot be decoded as %q", e.String()))
+		}
 	}
 }
 

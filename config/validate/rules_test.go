@@ -54,6 +54,52 @@ func TestCheckDiscoveryUrl(t *testing.T) {
 	}
 }
 
+func TestCheckEncoding(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "write_files:\n  - encoding: base64\n    contents: aGVsbG8K",
+		},
+		{
+			config: "write_files:\n  - contents: !!binary aGVsbG8K",
+		},
+		{
+			config:  "write_files:\n  - encoding: base64\n    contents: !!binary aGVsbG8K",
+			entries: []Entry{{entryError, `contents cannot be decoded as "base64"`, 3}},
+		},
+		{
+			config: "write_files:\n  - encoding: base64\n    contents: !!binary YUdWc2JHOEsK",
+		},
+		{
+			config: "write_files:\n  - encoding: gzip\n    contents: !!binary H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
+		},
+		{
+			config: "write_files:\n  - encoding: gzip+base64\n    contents: H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
+		},
+		{
+			config:  "write_files:\n  - encoding: custom\n    contents: hello",
+			entries: []Entry{{entryError, `contents cannot be decoded as "custom"`, 3}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkEncoding(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
+
 func TestCheckStructure(t *testing.T) {
 	tests := []struct {
 		config string
