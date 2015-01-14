@@ -17,9 +17,6 @@
 package system
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -50,61 +47,12 @@ func (f *File) Permissions() (os.FileMode, error) {
 	return os.FileMode(perm), nil
 }
 
-func DecodeBase64Content(content string) ([]byte, error) {
-	output, err := base64.StdEncoding.DecodeString(content)
-
-	if err != nil {
-		return nil, fmt.Errorf("Unable to decode base64: %v", err)
-	}
-
-	return output, nil
-}
-
-func DecodeGzipContent(content string) ([]byte, error) {
-	gzr, err := gzip.NewReader(bytes.NewReader([]byte(content)))
-
-	if err != nil {
-		return nil, fmt.Errorf("Unable to decode gzip: %v", err)
-	}
-	defer gzr.Close()
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(gzr)
-
-	return buf.Bytes(), nil
-}
-
-func DecodeContent(content string, encoding string) ([]byte, error) {
-	switch encoding {
-	case "":
-		return []byte(content), nil
-
-	case "b64", "base64":
-		return DecodeBase64Content(content)
-
-	case "gz", "gzip":
-		return DecodeGzipContent(content)
-
-	case "gz+base64", "gzip+base64", "gz+b64", "gzip+b64":
-		gz, err := DecodeBase64Content(content)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return DecodeGzipContent(string(gz))
-	}
-
-	return nil, fmt.Errorf("Unsupported encoding %s", encoding)
-
-}
-
 func WriteFile(f *File, root string) (string, error) {
 	fullpath := path.Join(root, f.Path)
 	dir := path.Dir(fullpath)
 	log.Printf("Writing file to %q", fullpath)
 
-	content, err := DecodeContent(f.Content, f.Encoding)
+	content, err := config.DecodeContent(f.Content, f.Encoding)
 
 	if err != nil {
 		return "", fmt.Errorf("Unable to decode %s (%v)", f.Path, err)
