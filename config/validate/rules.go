@@ -107,7 +107,9 @@ func isCompatible(n, g reflect.Kind) bool {
 		return n == reflect.String || n == reflect.Int || n == reflect.Float64 || n == reflect.Bool
 	case reflect.Struct:
 		return n == reflect.Struct || n == reflect.Map
-	case reflect.Bool, reflect.Slice, reflect.Int, reflect.Float64:
+	case reflect.Float64:
+		return n == reflect.Float64 || n == reflect.Int
+	case reflect.Bool, reflect.Slice, reflect.Int:
 		return n == g
 	default:
 		panic(fmt.Sprintf("isCompatible(): unhandled kind %s", g))
