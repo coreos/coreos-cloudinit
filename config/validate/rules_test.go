@@ -21,6 +21,85 @@ import (
 	"testing"
 )
 
+func TestCheckDiscoveryUrl(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "coreos:\n  etcd:\n    discovery: https://discovery.etcd.io/00000000000000000000000000000000",
+		},
+		{
+			config: "coreos:\n  etcd:\n    discovery: http://custom.domain/mytoken",
+		},
+		{
+			config:  "coreos:\n  etcd:\n    discovery: disco",
+			entries: []Entry{{entryWarning, "discovery URL is not valid", 3}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkDiscoveryUrl(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
+
+func TestCheckEncoding(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "write_files:\n  - encoding: base64\n    contents: aGVsbG8K",
+		},
+		{
+			config: "write_files:\n  - contents: !!binary aGVsbG8K",
+		},
+		{
+			config:  "write_files:\n  - encoding: base64\n    contents: !!binary aGVsbG8K",
+			entries: []Entry{{entryError, `contents cannot be decoded as "base64"`, 3}},
+		},
+		{
+			config: "write_files:\n  - encoding: base64\n    contents: !!binary YUdWc2JHOEsK",
+		},
+		{
+			config: "write_files:\n  - encoding: gzip\n    contents: !!binary H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
+		},
+		{
+			config: "write_files:\n  - encoding: gzip+base64\n    contents: H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
+		},
+		{
+			config:  "write_files:\n  - encoding: custom\n    contents: hello",
+			entries: []Entry{{entryError, `contents cannot be decoded as "custom"`, 3}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkEncoding(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
+
 func TestCheckStructure(t *testing.T) {
 	tests := []struct {
 		config string
@@ -243,6 +322,77 @@ func TestCheckValidity(t *testing.T) {
 			panic(err)
 		}
 		checkValidity(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
+
+func TestCheckWriteFiles(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "write_files:\n  - path: /valid",
+		},
+		{
+			config: "write_files:\n  - path: /tmp/usr/valid",
+		},
+		{
+			config:  "write_files:\n  - path: /usr/invalid",
+			entries: []Entry{{entryError, "file cannot be written to a read-only filesystem", 2}},
+		},
+		{
+			config:  "write-files:\n  - path: /tmp/../usr/invalid",
+			entries: []Entry{{entryError, "file cannot be written to a read-only filesystem", 2}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkWriteFiles(n, &r)
+
+		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
+			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
+		}
+	}
+}
+
+func TestCheckWriteFilesUnderCoreos(t *testing.T) {
+	tests := []struct {
+		config string
+
+		entries []Entry
+	}{
+		{},
+		{
+			config: "write_files:\n  - path: /hi",
+		},
+		{
+			config:  "coreos:\n  write_files:\n    - path: /hi",
+			entries: []Entry{{entryInfo, "write_files doesn't belong under coreos", 2}},
+		},
+		{
+			config:  "coreos:\n  write-files:\n    - path: /hyphen",
+			entries: []Entry{{entryInfo, "write_files doesn't belong under coreos", 2}},
+		},
+	}
+
+	for i, tt := range tests {
+		r := Report{}
+		n, err := parseCloudConfig([]byte(tt.config), &r)
+		if err != nil {
+			panic(err)
+		}
+		checkWriteFilesUnderCoreos(n, &r)
 
 		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
 			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)
