@@ -87,6 +87,12 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 				return err
 			}
 		}
+		for _, u := range user.SSHImportGithubUsers {
+			log.Printf("Authorizing github user %s SSH keys for CoreOS user '%s'", u, user.Name)
+			if err := SSHImportGithubUser(user.Name, u); err != nil {
+				return err
+			}
+		}
 		if user.SSHImportURL != "" {
 			log.Printf("Authorizing SSH keys for CoreOS user '%s' from '%s'", user.Name, user.SSHImportURL)
 			if err := SSHImportKeysFromURL(user.Name, user.SSHImportURL); err != nil {
