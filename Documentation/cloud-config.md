@@ -291,6 +291,7 @@ All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the use
 - **no-user-group**: Boolean. Skip default group creation.
 - **ssh-authorized-keys**: List of public SSH keys to authorize for this user
 - **coreos-ssh-import-github**: Authorize SSH keys from Github user
+- **coreos-ssh-import-github-users**: Authorize SSH keys from a list of Github users
 - **coreos-ssh-import-url**: Authorize SSH keys imported from a url endpoint.
 - **system**: Create the user as a system user. No home directory will be created.
 - **no-log-init**: Boolean. Skip initialization of lastlog and faillog databases.
