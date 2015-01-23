@@ -16,44 +16,36 @@ package waagent
 
 import (
 	"encoding/json"
-	"os"
 	"reflect"
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/datasource/test"
 )
-
-type mockFilesystem map[string][]byte
-
-func (m mockFilesystem) readFile(filename string) ([]byte, error) {
-	if contents := m[filename]; contents != nil {
-		return contents, nil
-	}
-	return nil, os.ErrNotExist
-}
 
 func TestFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		root     string
-		files    mockFilesystem
+		files    test.MockFilesystem
 		metadata map[string]string
 	}{
 		{
 			"/",
-			mockFilesystem{},
+			test.MockFilesystem{},
 			nil,
 		},
 		{
 			"/",
-			mockFilesystem{"/SharedConfig.xml": []byte("")},
+			test.MockFilesystem{"/SharedConfig.xml": ""},
 			nil,
 		},
 		{
 			"/var/lib/waagent",
-			mockFilesystem{"/var/lib/waagent/SharedConfig.xml": []byte("")},
+			test.MockFilesystem{"/var/lib/waagent/SharedConfig.xml": ""},
 			nil,
 		},
 		{
 			"/var/lib/waagent",
-			mockFilesystem{"/var/lib/waagent/SharedConfig.xml": []byte(`<?xml version="1.0" encoding="utf-8"?>
+			test.MockFilesystem{"/var/lib/waagent/SharedConfig.xml": `<?xml version="1.0" encoding="utf-8"?>
 <SharedConfig version="1.0.0.0" goalStateIncarnation="1">
   <Deployment name="c8f9e4c9c18948e1bebf57c5685da756" guid="{1d10394f-c741-4a1a-a6bb-278f213c5a5e}" incarnation="0" isNonCancellableTopologyChangeEnabled="false">
     <Service name="core-test-1" guid="{00000000-0000-0000-0000-000000000000}" />
@@ -89,14 +81,14 @@ func TestFetchMetadata(t *testing.T) {
       </InputEndpoints>
     </Instance>
   </Instances>
-</SharedConfig>`)},
+</SharedConfig>`},
 			map[string]string{
 				"local-ipv4":  "100.73.202.64",
 				"public-ipv4": "191.239.39.77",
 			},
 		},
 	} {
-		a := waagent{tt.root, tt.files.readFile}
+		a := waagent{tt.root, tt.files.ReadFile}
 		metadataBytes, err := a.FetchMetadata()
 		if err != nil {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
@@ -116,22 +108,22 @@ func TestFetchMetadata(t *testing.T) {
 func TestFetchUserdata(t *testing.T) {
 	for _, tt := range []struct {
 		root  string
-		files mockFilesystem
+		files test.MockFilesystem
 	}{
 		{
 			"/",
-			mockFilesystem{},
+			test.MockFilesystem{},
 		},
 		{
 			"/",
-			mockFilesystem{"/CustomData": []byte{}},
+			test.MockFilesystem{"/CustomData": ""},
 		},
 		{
 			"/var/lib/waagent/",
-			mockFilesystem{"/var/lib/waagent/CustomData": []byte{}},
+			test.MockFilesystem{"/var/lib/waagent/CustomData": ""},
 		},
 	} {
-		a := waagent{tt.root, tt.files.readFile}
+		a := waagent{tt.root, tt.files.ReadFile}
 		_, err := a.FetchUserdata()
 		if err != nil {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)

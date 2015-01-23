@@ -15,83 +15,75 @@
 package configdrive
 
 import (
-	"os"
 	"testing"
+
+	"github.com/coreos/coreos-cloudinit/datasource/test"
 )
-
-type mockFilesystem []string
-
-func (m mockFilesystem) readFile(filename string) ([]byte, error) {
-	for _, file := range m {
-		if file == filename {
-			return []byte(filename), nil
-		}
-	}
-	return nil, os.ErrNotExist
-}
 
 func TestFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
-		root     string
-		filename string
-		files    mockFilesystem
+		root  string
+		files test.MockFilesystem
+
+		metadata string
 	}{
 		{
 			"/",
+			test.MockFilesystem{},
 			"",
-			mockFilesystem{},
 		},
 		{
 			"/",
-			"/openstack/latest/meta_data.json",
-			mockFilesystem([]string{"/openstack/latest/meta_data.json"}),
+			test.MockFilesystem{"/openstack/latest/meta_data.json": "metadata"},
+			"metadata",
 		},
 		{
 			"/media/configdrive",
-			"/media/configdrive/openstack/latest/meta_data.json",
-			mockFilesystem([]string{"/media/configdrive/openstack/latest/meta_data.json"}),
+			test.MockFilesystem{"/media/configdrive/openstack/latest/meta_data.json": "metadata"},
+			"metadata",
 		},
 	} {
-		cd := configDrive{tt.root, tt.files.readFile}
-		filename, err := cd.FetchMetadata()
+		cd := configDrive{tt.root, tt.files.ReadFile}
+		metadata, err := cd.FetchMetadata()
 		if err != nil {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
-		if string(filename) != tt.filename {
-			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.filename, filename)
+		if string(metadata) != tt.metadata {
+			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.metadata, metadata)
 		}
 	}
 }
 
 func TestFetchUserdata(t *testing.T) {
 	for _, tt := range []struct {
-		root     string
-		filename string
-		files    mockFilesystem
+		root  string
+		files test.MockFilesystem
+
+		userdata string
 	}{
 		{
 			"/",
+			test.MockFilesystem{},
 			"",
-			mockFilesystem{},
 		},
 		{
 			"/",
-			"/openstack/latest/user_data",
-			mockFilesystem([]string{"/openstack/latest/user_data"}),
+			test.MockFilesystem{"/openstack/latest/user_data": "userdata"},
+			"userdata",
 		},
 		{
 			"/media/configdrive",
-			"/media/configdrive/openstack/latest/user_data",
-			mockFilesystem([]string{"/media/configdrive/openstack/latest/user_data"}),
+			test.MockFilesystem{"/media/configdrive/openstack/latest/user_data": "userdata"},
+			"userdata",
 		},
 	} {
-		cd := configDrive{tt.root, tt.files.readFile}
-		filename, err := cd.FetchUserdata()
+		cd := configDrive{tt.root, tt.files.ReadFile}
+		userdata, err := cd.FetchUserdata()
 		if err != nil {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
-		if string(filename) != tt.filename {
-			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.filename, filename)
+		if string(userdata) != tt.userdata {
+			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.userdata, userdata)
 		}
 	}
 }
