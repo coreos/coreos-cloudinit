@@ -145,10 +145,6 @@ func (scs *serverContextService) FetchUserdata() ([]byte, error) {
 	return []byte(userData), nil
 }
 
-func (scs *serverContextService) FetchNetworkConfig(a string) ([]byte, error) {
-	return nil, nil
-}
-
 func (scs *serverContextService) findLocalIP(mac string) (net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {

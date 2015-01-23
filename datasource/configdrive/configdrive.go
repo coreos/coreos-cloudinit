@@ -69,20 +69,13 @@ func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error)
 
 	metadata.SSHPublicKeys = m.SSHAuthorizedKeyMap
 	metadata.Hostname = m.Hostname
-	metadata.NetworkConfigPath = m.NetworkConfig.ContentPath
+	metadata.NetworkConfig, err = cd.tryReadFile(path.Join(cd.openstackRoot(), m.NetworkConfig.ContentPath))
 
 	return
 }
 
 func (cd *configDrive) FetchUserdata() ([]byte, error) {
 	return cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "user_data"))
-}
-
-func (cd *configDrive) FetchNetworkConfig(filename string) ([]byte, error) {
-	if filename == "" {
-		return []byte{}, nil
-	}
-	return cd.tryReadFile(path.Join(cd.openstackRoot(), filename))
 }
 
 func (cd *configDrive) Type() string {

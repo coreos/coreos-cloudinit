@@ -85,12 +85,6 @@ func (ms metadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
-	if contentPath, err := ms.fetchAttribute(fmt.Sprintf("%s/network_config/content_path", ms.MetadataUrl())); err == nil {
-		metadata.NetworkConfigPath = contentPath
-	} else if _, ok := err.(pkg.ErrNotFound); !ok {
-		return metadata, err
-	}
-
 	return metadata, nil
 }
 

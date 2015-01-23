@@ -188,7 +188,6 @@ func main() {
 
 	var ccu *config.CloudConfig
 	var script *config.Script
-
 	if ud, err := initialize.ParseUserData(userdata); err != nil {
 		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
 		failure = true
@@ -203,16 +202,6 @@ func main() {
 
 	fmt.Println("Merging cloud-config from meta-data and user-data")
 	cc := mergeConfigs(ccu, metadata)
-
-	if flags.convertNetconf != "" {
-		fmt.Printf("Fetching network config from datasource of type %q\n", ds.Type())
-		netconfBytes, err := ds.FetchNetworkConfig(metadata.NetworkConfigPath)
-		if err != nil {
-			fmt.Printf("Failed fetching network config from datasource: %v\n", err)
-			os.Exit(1)
-		}
-		cc.Internal.NetworkConfig = netconfBytes
-	}
 
 	if err = initialize.Apply(cc, env); err != nil {
 		fmt.Printf("Failed to apply cloud-config: %v\n", err)
@@ -249,6 +238,7 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 	for _, key := range md.SSHPublicKeys {
 		out.SSHAuthorizedKeys = append(out.SSHAuthorizedKeys, key)
 	}
+	out.Internal.NetworkConfig = md.NetworkConfig
 	return
 }
 

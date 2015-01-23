@@ -39,11 +39,14 @@ func TestFetchMetadata(t *testing.T) {
 			metadata: datasource.Metadata{Hostname: "host"},
 		},
 		{
-			root:  "/media/configdrive",
-			files: test.MockFilesystem{"/media/configdrive/openstack/latest/meta_data.json": `{"hostname": "host", "network_config": {"content_path": "path"}, "public_keys":{"1": "key1", "2": "key2"}}`},
+			root: "/media/configdrive",
+			files: test.MockFilesystem{
+				"/media/configdrive/openstack/latest/meta_data.json": `{"hostname": "host", "network_config": {"content_path": "config_file.json"}, "public_keys":{"1": "key1", "2": "key2"}}`,
+				"/media/configdrive/openstack/config_file.json":      "make it work",
+			},
 			metadata: datasource.Metadata{
-				Hostname:          "host",
-				NetworkConfigPath: "path",
+				Hostname:      "host",
+				NetworkConfig: []byte("make it work"),
 				SSHPublicKeys: map[string]string{
 					"1": "key1",
 					"2": "key2",

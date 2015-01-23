@@ -90,6 +90,34 @@ func TestFetchMetadata(t *testing.T) {
 					"0": "publickey1",
 					"1": "publickey2",
 				},
+				NetworkConfig: []byte(`{
+  "droplet_id": 1,
+  "user_data": "hello",
+  "vendor_data": "hello",
+  "public_keys": [
+    "publickey1",
+    "publickey2"
+  ],
+  "region": "nyc2",
+  "interfaces": {
+    "public": [
+      {
+        "ipv4": {
+          "ip_address": "192.168.1.2",
+          "netmask": "255.255.255.0",
+          "gateway": "192.168.1.1"
+        },
+        "ipv6": {
+          "ip_address": "fe00::",
+          "cidr": 126,
+          "gateway": "fe00::"
+        },
+        "mac": "ab:cd:ef:gh:ij",
+        "type": "public"
+      }
+    ]
+  }
+}`),
 			},
 		},
 		{

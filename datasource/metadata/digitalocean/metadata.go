@@ -61,8 +61,6 @@ type Metadata struct {
 }
 
 type metadataService struct {
-	interfaces Interfaces
-	dns        DNS
 	metadata.MetadataService
 }
 
@@ -80,9 +78,6 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	if err = json.Unmarshal(data, &m); err != nil {
 		return
 	}
-
-	ms.interfaces = m.Interfaces
-	ms.dns = m.DNS
 
 	if len(m.Interfaces.Public) > 0 {
 		if m.Interfaces.Public[0].IPv4 != nil {
@@ -105,15 +100,9 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	for i, key := range m.PublicKeys {
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
+	metadata.NetworkConfig = data
 
 	return
-}
-
-func (ms metadataService) FetchNetworkConfig(filename string) ([]byte, error) {
-	return json.Marshal(Metadata{
-		Interfaces: ms.interfaces,
-		DNS:        ms.dns,
-	})
 }
 
 func (ms metadataService) Type() string {

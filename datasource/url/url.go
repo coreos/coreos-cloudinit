@@ -50,10 +50,6 @@ func (f *remoteFile) FetchUserdata() ([]byte, error) {
 	return client.GetRetry(f.url)
 }
 
-func (f *remoteFile) FetchNetworkConfig(filename string) ([]byte, error) {
-	return nil, nil
-}
-
 func (f *remoteFile) Type() string {
 	return "url"
 }

@@ -52,10 +52,6 @@ func (ms MetadataService) FetchUserdata() ([]byte, error) {
 	return ms.FetchData(ms.UserdataUrl())
 }
 
-func (ms MetadataService) FetchNetworkConfig(filename string) ([]byte, error) {
-	return nil, nil
-}
-
 func (ms MetadataService) FetchData(url string) ([]byte, error) {
 	if data, err := ms.Client.GetRetry(url); err == nil {
 		return data, err

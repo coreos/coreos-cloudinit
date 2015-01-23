@@ -103,10 +103,6 @@ func (a *waagent) FetchUserdata() ([]byte, error) {
 	return a.tryReadFile(path.Join(a.root, "CustomData"))
 }
 
-func (a *waagent) FetchNetworkConfig(filename string) ([]byte, error) {
-	return nil, nil
-}
-
 func (a *waagent) Type() string {
 	return "waagent"
 }
