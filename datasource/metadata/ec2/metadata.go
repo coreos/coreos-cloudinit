@@ -17,10 +17,11 @@ package ec2
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata"
 	"github.com/coreos/coreos-cloudinit/pkg"
 )
@@ -40,59 +41,57 @@ func NewDatasource(root string) *metadataService {
 	return &metadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath)}
 }
 
-func (ms metadataService) FetchMetadata() ([]byte, error) {
-	attrs := make(map[string]interface{})
+func (ms metadataService) FetchMetadata() (datasource.Metadata, error) {
+	metadata := datasource.Metadata{}
+
 	if keynames, err := ms.fetchAttributes(fmt.Sprintf("%s/public-keys", ms.MetadataUrl())); err == nil {
 		keyIDs := make(map[string]string)
 		for _, keyname := range keynames {
 			tokens := strings.SplitN(keyname, "=", 2)
 			if len(tokens) != 2 {
-				return nil, fmt.Errorf("malformed public key: %q", keyname)
+				return metadata, fmt.Errorf("malformed public key: %q", keyname)
 			}
 			keyIDs[tokens[1]] = tokens[0]
 		}
 
-		keys := make(map[string]string)
+		metadata.SSHPublicKeys = map[string]string{}
 		for name, id := range keyIDs {
 			sshkey, err := ms.fetchAttribute(fmt.Sprintf("%s/public-keys/%s/openssh-key", ms.MetadataUrl(), id))
 			if err != nil {
-				return nil, err
+				return metadata, err
 			}
-			keys[name] = sshkey
+			metadata.SSHPublicKeys[name] = sshkey
 			fmt.Printf("Found SSH key for %q\n", name)
 		}
-		attrs["public_keys"] = keys
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
-		return nil, err
+		return metadata, err
 	}
 
 	if hostname, err := ms.fetchAttribute(fmt.Sprintf("%s/hostname", ms.MetadataUrl())); err == nil {
-		attrs["hostname"] = strings.Split(hostname, " ")[0]
+		metadata.Hostname = strings.Split(hostname, " ")[0]
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
-		return nil, err
+		return metadata, err
 	}
 
 	if localAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/local-ipv4", ms.MetadataUrl())); err == nil {
-		attrs["local-ipv4"] = localAddr
+		metadata.PrivateIPv4 = net.ParseIP(localAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
-		return nil, err
+		return metadata, err
 	}
 
 	if publicAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/public-ipv4", ms.MetadataUrl())); err == nil {
-		attrs["public-ipv4"] = publicAddr
+		metadata.PublicIPv4 = net.ParseIP(publicAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
-		return nil, err
+		return metadata, err
 	}
 
-	if content_path, err := ms.fetchAttribute(fmt.Sprintf("%s/network_config/content_path", ms.MetadataUrl())); err == nil {
-		attrs["network_config"] = map[string]string{
-			"content_path": content_path,
-		}
+	if contentPath, err := ms.fetchAttribute(fmt.Sprintf("%s/network_config/content_path", ms.MetadataUrl())); err == nil {
+		metadata.NetworkConfigPath = contentPath
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
-		return nil, err
+		return metadata, err
 	}
 
-	return json.Marshal(attrs)
+	return metadata, nil
 }
 
 func (ms metadataService) Type() string {

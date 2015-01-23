@@ -15,10 +15,12 @@
 package digitalocean
 
 import (
-	"bytes"
 	"fmt"
+	"net"
+	"reflect"
 	"testing"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/test"
 	"github.com/coreos/coreos-cloudinit/pkg"
@@ -36,7 +38,7 @@ func TestFetchMetadata(t *testing.T) {
 		root         string
 		metadataPath string
 		resources    map[string]string
-		expect       []byte
+		expect       datasource.Metadata
 		clientErr    error
 		expectErr    error
 	}{
@@ -81,7 +83,14 @@ func TestFetchMetadata(t *testing.T) {
   }
 }`,
 			},
-			expect: []byte(`{"hostname":"","public-ipv4":"192.168.1.2","public-ipv6":"fe00::","public_keys":{"0":"publickey1","1":"publickey2"}}`),
+			expect: datasource.Metadata{
+				PublicIPv4: net.ParseIP("192.168.1.2"),
+				PublicIPv6: net.ParseIP("fe00::"),
+				SSHPublicKeys: map[string]string{
+					"0": "publickey1",
+					"1": "publickey2",
+				},
+			},
 		},
 		{
 			clientErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
@@ -99,8 +108,8 @@ func TestFetchMetadata(t *testing.T) {
 		if Error(err) != Error(tt.expectErr) {
 			t.Fatalf("bad error (%q): want %q, got %q", tt.resources, tt.expectErr, err)
 		}
-		if !bytes.Equal(metadata, tt.expect) {
-			t.Fatalf("bad fetch (%q): want %q, got %q", tt.resources, tt.expect, metadata)
+		if !reflect.DeepEqual(tt.expect, metadata) {
+			t.Fatalf("bad fetch (%q): want %#q, got %#q", tt.resources, tt.expect, metadata)
 		}
 	}
 }

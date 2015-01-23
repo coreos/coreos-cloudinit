@@ -15,10 +15,13 @@
 package configdrive
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/coreos/coreos-cloudinit/datasource"
 )
 
 const (
@@ -47,8 +50,28 @@ func (cd *configDrive) ConfigRoot() string {
 	return cd.openstackRoot()
 }
 
-func (cd *configDrive) FetchMetadata() ([]byte, error) {
-	return cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "meta_data.json"))
+func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error) {
+	var data []byte
+	var m struct {
+		SSHAuthorizedKeyMap map[string]string `json:"public_keys"`
+		Hostname            string            `json:"hostname"`
+		NetworkConfig       struct {
+			ContentPath string `json:"content_path"`
+		} `json:"network_config"`
+	}
+
+	if data, err = cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "meta_data.json")); err != nil {
+		return
+	}
+	if err = json.Unmarshal([]byte(data), &m); err != nil {
+		return
+	}
+
+	metadata.SSHPublicKeys = m.SSHAuthorizedKeyMap
+	metadata.Hostname = m.Hostname
+	metadata.NetworkConfigPath = m.NetworkConfig.ContentPath
+
+	return
 }
 
 func (cd *configDrive) FetchUserdata() ([]byte, error) {

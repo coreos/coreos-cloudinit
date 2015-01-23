@@ -20,6 +20,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/pkg"
 )
 
@@ -55,8 +56,8 @@ func (c *procCmdline) ConfigRoot() string {
 	return ""
 }
 
-func (c *procCmdline) FetchMetadata() ([]byte, error) {
-	return []byte{}, nil
+func (c *procCmdline) FetchMetadata() (datasource.Metadata, error) {
+	return datasource.Metadata{}, nil
 }
 
 func (c *procCmdline) FetchUserdata() ([]byte, error) {

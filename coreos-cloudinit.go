@@ -176,21 +176,14 @@ func main() {
 	}
 
 	fmt.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
-	metadataBytes, err := ds.FetchMetadata()
+	metadata, err := ds.FetchMetadata()
 	if err != nil {
 		fmt.Printf("Failed fetching meta-data from datasource: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Extract IPv4 addresses from metadata if possible
-	var subs map[string]string
-	if len(metadataBytes) > 0 {
-		subs, err = initialize.ExtractIPsFromMetadata(metadataBytes)
-		if err != nil {
-			fmt.Printf("Failed extracting IPs from meta-data: %v\n", err)
-			os.Exit(1)
-		}
-	}
+	// Extract IPv4 addresses from metadata
+	subs := initialize.ExtractIPsFromMetadata(metadata)
 
 	// Apply environment to user-data
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, subs)
@@ -198,10 +191,7 @@ func main() {
 
 	var ccm, ccu *config.CloudConfig
 	var script *config.Script
-	if ccm, err = initialize.ParseMetaData(string(metadataBytes)); err != nil {
-		fmt.Printf("Failed to parse meta-data: %v\n", err)
-		os.Exit(1)
-	}
+	ccm = initialize.ParseMetaData(metadata)
 
 	if ccm != nil && flags.convertNetconf != "" {
 		fmt.Printf("Fetching network config from datasource of type %q\n", ds.Type())

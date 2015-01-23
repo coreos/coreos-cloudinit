@@ -14,12 +14,26 @@
 
 package datasource
 
+import (
+	"net"
+)
+
 type Datasource interface {
 	IsAvailable() bool
 	AvailabilityChanges() bool
 	ConfigRoot() string
-	FetchMetadata() ([]byte, error)
+	FetchMetadata() (Metadata, error)
 	FetchUserdata() ([]byte, error)
 	FetchNetworkConfig(string) ([]byte, error)
 	Type() string
+}
+
+type Metadata struct {
+	PublicIPv4        net.IP
+	PublicIPv6        net.IP
+	PrivateIPv4       net.IP
+	PrivateIPv6       net.IP
+	Hostname          string
+	SSHPublicKeys     map[string]string
+	NetworkConfigPath string
 }

@@ -15,8 +15,10 @@
 package configdrive
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/test"
 )
 
@@ -25,22 +27,28 @@ func TestFetchMetadata(t *testing.T) {
 		root  string
 		files test.MockFilesystem
 
-		metadata string
+		metadata datasource.Metadata
 	}{
 		{
-			"/",
-			test.MockFilesystem{},
-			"",
+			root:  "/",
+			files: test.MockFilesystem{"/openstack/latest/meta_data.json": `{"ignore": "me"}`},
 		},
 		{
-			"/",
-			test.MockFilesystem{"/openstack/latest/meta_data.json": "metadata"},
-			"metadata",
+			root:     "/",
+			files:    test.MockFilesystem{"/openstack/latest/meta_data.json": `{"hostname": "host"}`},
+			metadata: datasource.Metadata{Hostname: "host"},
 		},
 		{
-			"/media/configdrive",
-			test.MockFilesystem{"/media/configdrive/openstack/latest/meta_data.json": "metadata"},
-			"metadata",
+			root:  "/media/configdrive",
+			files: test.MockFilesystem{"/media/configdrive/openstack/latest/meta_data.json": `{"hostname": "host", "network_config": {"content_path": "path"}, "public_keys":{"1": "key1", "2": "key2"}}`},
+			metadata: datasource.Metadata{
+				Hostname:          "host",
+				NetworkConfigPath: "path",
+				SSHPublicKeys: map[string]string{
+					"1": "key1",
+					"2": "key2",
+				},
+			},
 		},
 	} {
 		cd := configDrive{tt.root, tt.files.ReadFile}
@@ -48,8 +56,8 @@ func TestFetchMetadata(t *testing.T) {
 		if err != nil {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
-		if string(metadata) != tt.metadata {
-			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.metadata, metadata)
+		if !reflect.DeepEqual(tt.metadata, metadata) {
+			t.Fatalf("bad metadata for %q: want %#v, got %#v", tt, tt.metadata, metadata)
 		}
 	}
 }
@@ -83,7 +91,7 @@ func TestFetchUserdata(t *testing.T) {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
 		if string(userdata) != tt.userdata {
-			t.Fatalf("bad path for %q: want %q, got %q", tt, tt.userdata, userdata)
+			t.Fatalf("bad userdata for %q: want %q, got %q", tt, tt.userdata, userdata)
 		}
 	}
 }

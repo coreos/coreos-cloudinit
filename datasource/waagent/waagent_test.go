@@ -15,10 +15,11 @@
 package waagent
 
 import (
-	"encoding/json"
+	"net"
 	"reflect"
 	"testing"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/test"
 )
 
@@ -26,26 +27,23 @@ func TestFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		root     string
 		files    test.MockFilesystem
-		metadata map[string]string
+		metadata datasource.Metadata
 	}{
 		{
-			"/",
-			test.MockFilesystem{},
-			nil,
+			root:  "/",
+			files: test.MockFilesystem{},
 		},
 		{
-			"/",
-			test.MockFilesystem{"/SharedConfig.xml": ""},
-			nil,
+			root:  "/",
+			files: test.MockFilesystem{"/SharedConfig.xml": ""},
 		},
 		{
-			"/var/lib/waagent",
-			test.MockFilesystem{"/var/lib/waagent/SharedConfig.xml": ""},
-			nil,
+			root:  "/var/lib/waagent",
+			files: test.MockFilesystem{"/var/lib/waagent/SharedConfig.xml": ""},
 		},
 		{
-			"/var/lib/waagent",
-			test.MockFilesystem{"/var/lib/waagent/SharedConfig.xml": `<?xml version="1.0" encoding="utf-8"?>
+			root: "/var/lib/waagent",
+			files: test.MockFilesystem{"/var/lib/waagent/SharedConfig.xml": `<?xml version="1.0" encoding="utf-8"?>
 <SharedConfig version="1.0.0.0" goalStateIncarnation="1">
   <Deployment name="c8f9e4c9c18948e1bebf57c5685da756" guid="{1d10394f-c741-4a1a-a6bb-278f213c5a5e}" incarnation="0" isNonCancellableTopologyChangeEnabled="false">
     <Service name="core-test-1" guid="{00000000-0000-0000-0000-000000000000}" />
@@ -82,25 +80,19 @@ func TestFetchMetadata(t *testing.T) {
     </Instance>
   </Instances>
 </SharedConfig>`},
-			map[string]string{
-				"local-ipv4":  "100.73.202.64",
-				"public-ipv4": "191.239.39.77",
+			metadata: datasource.Metadata{
+				PrivateIPv4: net.ParseIP("100.73.202.64"),
+				PublicIPv4:  net.ParseIP("191.239.39.77"),
 			},
 		},
 	} {
 		a := waagent{tt.root, tt.files.ReadFile}
-		metadataBytes, err := a.FetchMetadata()
+		metadata, err := a.FetchMetadata()
 		if err != nil {
 			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
 		}
-		var metadata map[string]string
-		if len(metadataBytes) > 0 {
-			if err := json.Unmarshal(metadataBytes, &metadata); err != nil {
-				panic(err)
-			}
-		}
 		if !reflect.DeepEqual(tt.metadata, metadata) {
-			t.Fatalf("bad metadata for %q: want %q, got %q", tt, tt.metadata, metadata)
+			t.Fatalf("bad metadata for %q: want %#v, got %#v", tt, tt.metadata, metadata)
 		}
 	}
 }

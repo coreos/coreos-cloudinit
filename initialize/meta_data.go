@@ -15,68 +15,46 @@
 package initialize
 
 import (
-	"encoding/json"
 	"sort"
 
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/datasource"
 )
 
 // ParseMetaData parses a JSON blob in the OpenStack metadata service format,
 // and converts it to a partially hydrated CloudConfig.
-func ParseMetaData(contents string) (*config.CloudConfig, error) {
-	if len(contents) == 0 {
-		return nil, nil
-	}
-	var metadata struct {
-		SSHAuthorizedKeyMap map[string]string `json:"public_keys"`
-		Hostname            string            `json:"hostname"`
-		NetworkConfig       struct {
-			ContentPath string `json:"content_path"`
-		} `json:"network_config"`
-	}
-	if err := json.Unmarshal([]byte(contents), &metadata); err != nil {
-		return nil, err
-	}
-
+func ParseMetaData(metadata datasource.Metadata) *config.CloudConfig {
 	var cfg config.CloudConfig
-	if len(metadata.SSHAuthorizedKeyMap) > 0 {
-		cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHAuthorizedKeyMap))
-		for _, name := range sortedKeys(metadata.SSHAuthorizedKeyMap) {
-			cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, metadata.SSHAuthorizedKeyMap[name])
+	if len(metadata.SSHPublicKeys) > 0 {
+		cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHPublicKeys))
+		for _, name := range sortedKeys(metadata.SSHPublicKeys) {
+			cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, metadata.SSHPublicKeys[name])
 		}
 	}
 	cfg.Hostname = metadata.Hostname
-	cfg.NetworkConfigPath = metadata.NetworkConfig.ContentPath
-	return &cfg, nil
+	cfg.NetworkConfigPath = metadata.NetworkConfigPath
+	return &cfg
 }
 
 // ExtractIPsFromMetaData parses a JSON blob in the OpenStack metadata service
 // format and returns a substitution map possibly containing private_ipv4,
 // public_ipv4, private_ipv6, and public_ipv6 addresses.
-func ExtractIPsFromMetadata(contents []byte) (map[string]string, error) {
-	var ips struct {
-		PublicIPv4  string `json:"public-ipv4"`
-		PrivateIPv4 string `json:"local-ipv4"`
-		PublicIPv6  string `json:"public-ipv6"`
-		PrivateIPv6 string `json:"local-ipv6"`
+func ExtractIPsFromMetadata(metadata datasource.Metadata) map[string]string {
+	subs := map[string]string{}
+	if metadata.PrivateIPv4 != nil {
+		subs["$private_ipv4"] = metadata.PrivateIPv4.String()
 	}
-	if err := json.Unmarshal(contents, &ips); err != nil {
-		return nil, err
+	if metadata.PublicIPv4 != nil {
+		subs["$public_ipv4"] = metadata.PublicIPv4.String()
 	}
-	m := make(map[string]string)
-	if ips.PrivateIPv4 != "" {
-		m["$private_ipv4"] = ips.PrivateIPv4
+	if metadata.PrivateIPv6 != nil {
+		subs["$private_ipv6"] = metadata.PrivateIPv6.String()
 	}
-	if ips.PublicIPv4 != "" {
-		m["$public_ipv4"] = ips.PublicIPv4
+	if metadata.PublicIPv6 != nil {
+		subs["$public_ipv6"] = metadata.PublicIPv6.String()
 	}
-	if ips.PrivateIPv6 != "" {
-		m["$private_ipv6"] = ips.PrivateIPv6
-	}
-	if ips.PublicIPv6 != "" {
-		m["$public_ipv6"] = ips.PublicIPv6
-	}
-	return m, nil
+
+	return subs
 }
 
 func sortedKeys(m map[string]string) (keys []string) {

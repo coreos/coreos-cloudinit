@@ -17,6 +17,8 @@ package file
 import (
 	"io/ioutil"
 	"os"
+
+	"github.com/coreos/coreos-cloudinit/datasource"
 )
 
 type localFile struct {
@@ -40,8 +42,8 @@ func (f *localFile) ConfigRoot() string {
 	return ""
 }
 
-func (f *localFile) FetchMetadata() ([]byte, error) {
-	return []byte{}, nil
+func (f *localFile) FetchMetadata() (datasource.Metadata, error) {
+	return datasource.Metadata{}, nil
 }
 
 func (f *localFile) FetchUserdata() ([]byte, error) {
