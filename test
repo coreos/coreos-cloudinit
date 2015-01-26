@@ -33,7 +33,7 @@ declare -a TESTPKGS=(
 )
 
 if [ -z "$PKG" ]; then
-	GOFMTPATH="${TESTPKGS[*]} coreos-cloudinit.go"
+	GOFMTPATH="${TESTPKGS[*]} *.go"
 	# prepend repo path to each package
 	TESTPKGS="${TESTPKGS[*]/#/${REPO_PATH}/} ./"
 else
