@@ -189,19 +189,8 @@ func main() {
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, subs)
 	userdata := env.Apply(string(userdataBytes))
 
-	var ccm, ccu *config.CloudConfig
+	var ccu *config.CloudConfig
 	var script *config.Script
-	ccm = initialize.ParseMetaData(metadata)
-
-	if ccm != nil && flags.convertNetconf != "" {
-		fmt.Printf("Fetching network config from datasource of type %q\n", ds.Type())
-		netconfBytes, err := ds.FetchNetworkConfig(ccm.NetworkConfigPath)
-		if err != nil {
-			fmt.Printf("Failed fetching network config from datasource: %v\n", err)
-			os.Exit(1)
-		}
-		ccm.NetworkConfig = string(netconfBytes)
-	}
 
 	if ud, err := initialize.ParseUserData(userdata); err != nil {
 		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
@@ -215,26 +204,22 @@ func main() {
 		}
 	}
 
-	var cc *config.CloudConfig
-	if ccm != nil && ccu != nil {
-		fmt.Println("Merging cloud-config from meta-data and user-data")
-		merged := mergeCloudConfig(*ccm, *ccu)
-		cc = &merged
-	} else if ccm != nil && ccu == nil {
-		fmt.Println("Processing cloud-config from meta-data")
-		cc = ccm
-	} else if ccm == nil && ccu != nil {
-		fmt.Println("Processing cloud-config from user-data")
-		cc = ccu
-	} else {
-		fmt.Println("No cloud-config data to handle.")
-	}
+	fmt.Println("Merging cloud-config from meta-data and user-data")
+	cc := mergeConfigs(ccu, metadata)
 
-	if cc != nil {
-		if err = initialize.Apply(*cc, env); err != nil {
-			fmt.Printf("Failed to apply cloud-config: %v\n", err)
+	if flags.convertNetconf != "" {
+		fmt.Printf("Fetching network config from datasource of type %q\n", ds.Type())
+		netconfBytes, err := ds.FetchNetworkConfig(metadata.NetworkConfigPath)
+		if err != nil {
+			fmt.Printf("Failed fetching network config from datasource: %v\n", err)
 			os.Exit(1)
 		}
+		cc.Internal.NetworkConfig = netconfBytes
+	}
+
+	if err = initialize.Apply(cc, env); err != nil {
+		fmt.Printf("Failed to apply cloud-config: %v\n", err)
+		os.Exit(1)
 	}
 
 	if script != nil {
@@ -249,38 +234,25 @@ func main() {
 	}
 }
 
-// mergeCloudConfig merges certain options from mdcc (a CloudConfig derived from
-// meta-data) onto udcc (a CloudConfig derived from user-data), if they are
-// not already set on udcc (i.e. user-data always takes precedence)
-// NB: This needs to be kept in sync with ParseMetadata so that it tracks all
-// elements of a CloudConfig which that function can populate.
-func mergeCloudConfig(mdcc, udcc config.CloudConfig) (cc config.CloudConfig) {
-	if mdcc.Hostname != "" {
-		if udcc.Hostname != "" {
-			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", udcc.Hostname, mdcc.Hostname)
-		} else {
-			udcc.Hostname = mdcc.Hostname
-		}
+// mergeConfigs merges certain options from md (meta-data from the datasource)
+// onto cc (a CloudConfig derived from user-data), if they are not already set
+// on cc (i.e. user-data always takes precedence)
+func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.CloudConfig) {
+	if cc != nil {
+		out = *cc
+	}
 
-	}
-	for _, key := range mdcc.SSHAuthorizedKeys {
-		udcc.SSHAuthorizedKeys = append(udcc.SSHAuthorizedKeys, key)
-	}
-	if mdcc.NetworkConfigPath != "" {
-		if udcc.NetworkConfigPath != "" {
-			fmt.Printf("Warning: user-data NetworkConfigPath %s overrides metadata NetworkConfigPath %s\n", udcc.NetworkConfigPath, mdcc.NetworkConfigPath)
+	if md.Hostname != "" {
+		if out.Hostname != "" {
+			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", out.Hostname, md.Hostname)
 		} else {
-			udcc.NetworkConfigPath = mdcc.NetworkConfigPath
+			out.Hostname = md.Hostname
 		}
 	}
-	if mdcc.NetworkConfig != "" {
-		if udcc.NetworkConfig != "" {
-			fmt.Printf("Warning: user-data NetworkConfig %s overrides metadata NetworkConfig %s\n", udcc.NetworkConfig, mdcc.NetworkConfig)
-		} else {
-			udcc.NetworkConfig = mdcc.NetworkConfig
-		}
+	for _, key := range md.SSHPublicKeys {
+		out.SSHAuthorizedKeys = append(out.SSHAuthorizedKeys, key)
 	}
-	return udcc
+	return
 }
 
 // getDatasources creates a slice of possible Datasources for cloudinit based

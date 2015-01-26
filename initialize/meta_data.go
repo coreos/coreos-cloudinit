@@ -17,24 +17,8 @@ package initialize
 import (
 	"sort"
 
-	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/datasource"
 )
-
-// ParseMetaData parses a JSON blob in the OpenStack metadata service format,
-// and converts it to a partially hydrated CloudConfig.
-func ParseMetaData(metadata datasource.Metadata) *config.CloudConfig {
-	var cfg config.CloudConfig
-	if len(metadata.SSHPublicKeys) > 0 {
-		cfg.SSHAuthorizedKeys = make([]string, 0, len(metadata.SSHPublicKeys))
-		for _, name := range sortedKeys(metadata.SSHPublicKeys) {
-			cfg.SSHAuthorizedKeys = append(cfg.SSHAuthorizedKeys, metadata.SSHPublicKeys[name])
-		}
-	}
-	cfg.Hostname = metadata.Hostname
-	cfg.NetworkConfigPath = metadata.NetworkConfigPath
-	return &cfg
-}
 
 // ExtractIPsFromMetaData parses a JSON blob in the OpenStack metadata service
 // format and returns a substitution map possibly containing private_ipv4,

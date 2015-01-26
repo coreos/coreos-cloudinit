@@ -19,9 +19,9 @@ import (
 	"strings"
 )
 
-func ProcessDebianNetconf(config string) ([]InterfaceGenerator, error) {
+func ProcessDebianNetconf(config []byte) ([]InterfaceGenerator, error) {
 	log.Println("Processing Debian network config")
-	lines := formatConfig(config)
+	lines := formatConfig(string(config))
 	stanzas, err := parseStanzas(lines)
 	if err != nil {
 		return nil, err

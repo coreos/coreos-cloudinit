@@ -19,116 +19,71 @@ import (
 	"testing"
 
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/datasource"
 )
 
-func TestMergeCloudConfig(t *testing.T) {
-	simplecc := config.CloudConfig{
-		SSHAuthorizedKeys: []string{"abc", "def"},
-		Hostname:          "foobar",
-		NetworkConfigPath: "/path/somewhere",
-		NetworkConfig:     `{}`,
-	}
-	for i, tt := range []struct {
-		udcc config.CloudConfig
-		mdcc config.CloudConfig
-		want config.CloudConfig
+func TestMergeConfigs(t *testing.T) {
+	tests := []struct {
+		cc *config.CloudConfig
+		md datasource.Metadata
+
+		out config.CloudConfig
 	}{
 		{
-			// If mdcc is empty, udcc should be returned unchanged
-			simplecc,
-			config.CloudConfig{},
-			simplecc,
+			// If md is empty and cc is nil, result should be empty
+			out: config.CloudConfig{},
 		},
 		{
-			// If udcc is empty, mdcc should be returned unchanged(overridden)
-			config.CloudConfig{},
-			simplecc,
-			simplecc,
+			// If md and cc are empty, result should be empty
+			cc:  &config.CloudConfig{},
+			out: config.CloudConfig{},
+		},
+		{
+			// If cc is empty, cc should be returned unchanged
+			cc:  &config.CloudConfig{SSHAuthorizedKeys: []string{"abc", "def"}, Hostname: "cc-host"},
+			out: config.CloudConfig{SSHAuthorizedKeys: []string{"abc", "def"}, Hostname: "cc-host"},
+		},
+		{
+			// If cc is empty, cc should be returned unchanged(overridden)
+			cc:  &config.CloudConfig{},
+			md:  datasource.Metadata{Hostname: "md-host", SSHPublicKeys: map[string]string{"key": "ghi"}},
+			out: config.CloudConfig{SSHAuthorizedKeys: []string{"ghi"}, Hostname: "md-host"},
+		},
+		{
+			// If cc is nil, cc should be returned unchanged(overridden)
+			md:  datasource.Metadata{Hostname: "md-host", SSHPublicKeys: map[string]string{"key": "ghi"}},
+			out: config.CloudConfig{SSHAuthorizedKeys: []string{"ghi"}, Hostname: "md-host"},
 		},
 		{
 			// user-data should override completely in the case of conflicts
-			simplecc,
-			config.CloudConfig{
-				Hostname:          "meta-hostname",
-				NetworkConfigPath: "/path/meta",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
-			simplecc,
+			cc:  &config.CloudConfig{SSHAuthorizedKeys: []string{"abc", "def"}, Hostname: "cc-host"},
+			md:  datasource.Metadata{Hostname: "md-host"},
+			out: config.CloudConfig{SSHAuthorizedKeys: []string{"abc", "def"}, Hostname: "cc-host"},
 		},
 		{
 			// Mixed merge should succeed
-			config.CloudConfig{
-				SSHAuthorizedKeys: []string{"abc", "def"},
-				Hostname:          "user-hostname",
-				NetworkConfigPath: "/path/somewhere",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
-			config.CloudConfig{
-				SSHAuthorizedKeys: []string{"woof", "qux"},
-				Hostname:          "meta-hostname",
-			},
-			config.CloudConfig{
-				SSHAuthorizedKeys: []string{"abc", "def", "woof", "qux"},
-				Hostname:          "user-hostname",
-				NetworkConfigPath: "/path/somewhere",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
+			cc:  &config.CloudConfig{SSHAuthorizedKeys: []string{"abc", "def"}, Hostname: "cc-host"},
+			md:  datasource.Metadata{Hostname: "md-host", SSHPublicKeys: map[string]string{"key": "ghi"}},
+			out: config.CloudConfig{SSHAuthorizedKeys: []string{"abc", "def", "ghi"}, Hostname: "cc-host"},
 		},
 		{
 			// Completely non-conflicting merge should be fine
-			config.CloudConfig{
-				Hostname: "supercool",
-			},
-			config.CloudConfig{
-				SSHAuthorizedKeys: []string{"zaphod", "beeblebrox"},
-				NetworkConfigPath: "/dev/fun",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
-			config.CloudConfig{
-				Hostname:          "supercool",
-				SSHAuthorizedKeys: []string{"zaphod", "beeblebrox"},
-				NetworkConfigPath: "/dev/fun",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
+			cc:  &config.CloudConfig{Hostname: "cc-host"},
+			md:  datasource.Metadata{SSHPublicKeys: map[string]string{"zaphod": "beeblebrox"}},
+			out: config.CloudConfig{Hostname: "cc-host", SSHAuthorizedKeys: []string{"beeblebrox"}},
 		},
 		{
 			// Non-mergeable settings in user-data should not be affected
-			config.CloudConfig{
-				Hostname:       "mememe",
-				ManageEtcHosts: config.EtcHosts("lolz"),
-			},
-			config.CloudConfig{
-				Hostname:          "youyouyou",
-				NetworkConfigPath: "meta-meta-yo",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
-			config.CloudConfig{
-				Hostname:          "mememe",
-				ManageEtcHosts:    config.EtcHosts("lolz"),
-				NetworkConfigPath: "meta-meta-yo",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
+			cc:  &config.CloudConfig{Hostname: "cc-host", ManageEtcHosts: config.EtcHosts("lolz")},
+			md:  datasource.Metadata{Hostname: "md-host"},
+			out: config.CloudConfig{Hostname: "cc-host", ManageEtcHosts: config.EtcHosts("lolz")},
 		},
-		{
-			// Non-mergeable (unexpected) settings in meta-data are ignored
-			config.CloudConfig{
-				Hostname: "mememe",
-			},
-			config.CloudConfig{
-				ManageEtcHosts:    config.EtcHosts("lolz"),
-				NetworkConfigPath: "meta-meta-yo",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
-			config.CloudConfig{
-				Hostname:          "mememe",
-				NetworkConfigPath: "meta-meta-yo",
-				NetworkConfig:     `{"hostname":"test"}`,
-			},
-		},
-	} {
-		got := mergeCloudConfig(tt.mdcc, tt.udcc)
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("case #%d: mergeCloudConfig mutated CloudConfig unexpectedly:\ngot:\n%s\nwant:\n%s", i, got, tt.want)
+	}
+
+	for i, tt := range tests {
+		out := mergeConfigs(tt.cc, tt.md)
+		if !reflect.DeepEqual(tt.out, out) {
+			t.Errorf("bad config (%d): want %#v, got %#v", i, tt.out, out)
 		}
 	}
 }

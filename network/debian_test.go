@@ -44,7 +44,7 @@ func TestProcessDebianNetconf(t *testing.T) {
 		{"auto eth1\nauto eth2", false, 0},
 		{"iface eth1 inet manual", false, 1},
 	} {
-		interfaces, err := ProcessDebianNetconf(tt.in)
+		interfaces, err := ProcessDebianNetconf([]byte(tt.in))
 		failed := err != nil
 		if tt.fail != failed {
 			t.Fatalf("bad failure state for %q: got %t, want %t", tt.in, failed, tt.fail)
