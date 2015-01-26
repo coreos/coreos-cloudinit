@@ -15,12 +15,14 @@
 package initialize
 
 import (
+	"net"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/system"
 )
 
@@ -36,20 +38,18 @@ type Environment struct {
 }
 
 // TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
-func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string, substitutions map[string]string) *Environment {
-	if substitutions == nil {
-		substitutions = make(map[string]string)
-	}
-	// If certain values are not in the supplied substitution, fall back to retrieving them from the environment
-	for k, v := range map[string]string{
-		"$public_ipv4":  os.Getenv("COREOS_PUBLIC_IPV4"),
-		"$private_ipv4": os.Getenv("COREOS_PRIVATE_IPV4"),
-		"$public_ipv6":  os.Getenv("COREOS_PUBLIC_IPV6"),
-		"$private_ipv6": os.Getenv("COREOS_PRIVATE_IPV6"),
-	} {
-		if _, ok := substitutions[k]; !ok {
-			substitutions[k] = v
+func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string, metadata datasource.Metadata) *Environment {
+	firstNonNull := func(ip net.IP, env string) string {
+		if ip == nil {
+			return env
 		}
+		return ip.String()
+	}
+	substitutions := map[string]string{
+		"$public_ipv4":  firstNonNull(metadata.PublicIPv4, os.Getenv("COREOS_PUBLIC_IPV4")),
+		"$private_ipv4": firstNonNull(metadata.PrivateIPv4, os.Getenv("COREOS_PRIVATE_IPV4")),
+		"$public_ipv6":  firstNonNull(metadata.PublicIPv6, os.Getenv("COREOS_PUBLIC_IPV6")),
+		"$private_ipv6": firstNonNull(metadata.PrivateIPv6, os.Getenv("COREOS_PRIVATE_IPV6")),
 	}
 	return &Environment{root, configRoot, workspace, netconfType, sshKeyName, substitutions}
 }

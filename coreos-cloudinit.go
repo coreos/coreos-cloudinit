@@ -182,11 +182,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Extract IPv4 addresses from metadata
-	subs := initialize.ExtractIPsFromMetadata(metadata)
-
 	// Apply environment to user-data
-	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, subs)
+	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, metadata)
 	userdata := env.Apply(string(userdataBytes))
 
 	var ccu *config.CloudConfig
