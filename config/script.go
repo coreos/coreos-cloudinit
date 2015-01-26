@@ -25,6 +25,7 @@ func IsScript(userdata string) bool {
 	return strings.HasPrefix(header, "#!")
 }
 
-func NewScript(userdata string) (Script, error) {
-	return Script(userdata), nil
+func NewScript(userdata string) (*Script, error) {
+	s := Script(userdata)
+	return &s, nil
 }

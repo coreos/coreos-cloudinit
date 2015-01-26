@@ -220,8 +220,8 @@ func main() {
 		switch t := ud.(type) {
 		case *config.CloudConfig:
 			ccu = t
-		case config.Script:
-			script = &t
+		case *config.Script:
+			script = t
 		}
 	}
 
