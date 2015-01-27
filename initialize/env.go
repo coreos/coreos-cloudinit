@@ -32,13 +32,12 @@ type Environment struct {
 	root          string
 	configRoot    string
 	workspace     string
-	netconfType   string
 	sshKeyName    string
 	substitutions map[string]string
 }
 
 // TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
-func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string, metadata datasource.Metadata) *Environment {
+func NewEnvironment(root, configRoot, workspace, sshKeyName string, metadata datasource.Metadata) *Environment {
 	firstNonNull := func(ip net.IP, env string) string {
 		if ip == nil {
 			return env
@@ -51,7 +50,7 @@ func NewEnvironment(root, configRoot, workspace, netconfType, sshKeyName string,
 		"$public_ipv6":  firstNonNull(metadata.PublicIPv6, os.Getenv("COREOS_PUBLIC_IPV6")),
 		"$private_ipv6": firstNonNull(metadata.PrivateIPv6, os.Getenv("COREOS_PRIVATE_IPV6")),
 	}
-	return &Environment{root, configRoot, workspace, netconfType, sshKeyName, substitutions}
+	return &Environment{root, configRoot, workspace, sshKeyName, substitutions}
 }
 
 func (e *Environment) Workspace() string {
@@ -64,10 +63,6 @@ func (e *Environment) Root() string {
 
 func (e *Environment) ConfigRoot() string {
 	return e.configRoot
-}
-
-func (e *Environment) NetconfType() string {
-	return e.netconfType
 }
 
 func (e *Environment) SSHKeyName() string {

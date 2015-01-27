@@ -27,13 +27,12 @@ import (
 // directly to YAML. Fields that cannot be set in the cloud-config (fields
 // used for internal use) have the YAML tag '-' so that they aren't marshalled.
 type CloudConfig struct {
-	SSHAuthorizedKeys []string  `yaml:"ssh_authorized_keys"`
-	CoreOS            CoreOS    `yaml:"coreos"`
-	WriteFiles        []File    `yaml:"write_files"`
-	Hostname          string    `yaml:"hostname"`
-	Users             []User    `yaml:"users"`
-	ManageEtcHosts    EtcHosts  `yaml:"manage_etc_hosts"`
-	Internal          Internals `yaml:"-"`
+	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
+	CoreOS            CoreOS   `yaml:"coreos"`
+	WriteFiles        []File   `yaml:"write_files"`
+	Hostname          string   `yaml:"hostname"`
+	Users             []User   `yaml:"users"`
+	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
 }
 
 type CoreOS struct {
@@ -44,10 +43,6 @@ type CoreOS struct {
 	OEM       OEM       `yaml:"oem"`
 	Update    Update    `yaml:"update"`
 	Units     []Unit    `yaml:"units"`
-}
-
-type Internals struct {
-	NetworkConfig []byte
 }
 
 func IsCloudConfig(userdata string) bool {

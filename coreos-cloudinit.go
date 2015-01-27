@@ -33,6 +33,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/datasource/waagent"
 	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 )
@@ -183,7 +184,7 @@ func main() {
 	}
 
 	// Apply environment to user-data
-	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.convertNetconf, flags.sshKeyName, metadata)
+	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.sshKeyName, metadata)
 	userdata := env.Apply(string(userdataBytes))
 
 	var ccu *config.CloudConfig
@@ -203,7 +204,24 @@ func main() {
 	fmt.Println("Merging cloud-config from meta-data and user-data")
 	cc := mergeConfigs(ccu, metadata)
 
-	if err = initialize.Apply(cc, env); err != nil {
+	var ifaces []network.InterfaceGenerator
+	if flags.convertNetconf != "" {
+		var err error
+		switch flags.convertNetconf {
+		case "debian":
+			ifaces, err = network.ProcessDebianNetconf(metadata.NetworkConfig)
+		case "digitalocean":
+			ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig)
+		default:
+			err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
+		}
+		if err != nil {
+			fmt.Printf("Failed to generate interfaces: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if err = initialize.Apply(cc, ifaces, env); err != nil {
 		fmt.Printf("Failed to apply cloud-config: %v\n", err)
 		os.Exit(1)
 	}
@@ -238,7 +256,6 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 	for _, key := range md.SSHPublicKeys {
 		out.SSHAuthorizedKeys = append(out.SSHAuthorizedKeys, key)
 	}
-	out.Internal.NetworkConfig = md.NetworkConfig
 	return
 }
 

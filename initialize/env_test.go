@@ -95,7 +95,7 @@ addr: $private_ipv4
 		},
 	} {
 
-		env := NewEnvironment("./", "./", "./", "", "", tt.metadata)
+		env := NewEnvironment("./", "./", "./", "", tt.metadata)
 		got := env.Apply(tt.input)
 		if got != tt.out {
 			t.Fatalf("Environment incorrectly applied.\ngot:\n%s\nwant:\n%s", got, tt.out)
@@ -118,7 +118,7 @@ func TestEnvironmentFile(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	env := NewEnvironment("./", "./", "./", "", "", metadata)
+	env := NewEnvironment("./", "./", "./", "", metadata)
 	ef := env.DefaultEnvironmentFile()
 	err = system.WriteEnvFile(ef, dir)
 	if err != nil {
@@ -140,7 +140,7 @@ func TestEnvironmentFileNil(t *testing.T) {
 	os.Clearenv()
 	metadata := datasource.Metadata{}
 
-	env := NewEnvironment("./", "./", "./", "", "", metadata)
+	env := NewEnvironment("./", "./", "./", "", metadata)
 	ef := env.DefaultEnvironmentFile()
 	if ef != nil {
 		t.Fatalf("Environment file not nil: %v", ef)
