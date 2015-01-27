@@ -16,8 +16,10 @@ package digitalocean
 
 import (
 	"encoding/json"
+	"net"
 	"strconv"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata"
 )
 
@@ -59,8 +61,6 @@ type Metadata struct {
 }
 
 type metadataService struct {
-	interfaces Interfaces
-	dns        DNS
 	metadata.MetadataService
 }
 
@@ -68,52 +68,41 @@ func NewDatasource(root string) *metadataService {
 	return &metadataService{MetadataService: metadata.NewDatasource(root, apiVersion, userdataUrl, metadataPath)}
 }
 
-func (ms *metadataService) FetchMetadata() ([]byte, error) {
-	data, err := ms.FetchData(ms.MetadataUrl())
-	if err != nil || len(data) == 0 {
-		return []byte{}, err
+func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
+	var data []byte
+	var m Metadata
+
+	if data, err = ms.FetchData(ms.MetadataUrl()); err != nil || len(data) == 0 {
+		return
+	}
+	if err = json.Unmarshal(data, &m); err != nil {
+		return
 	}
 
-	var metadata Metadata
-	if err := json.Unmarshal(data, &metadata); err != nil {
-		return []byte{}, err
-	}
-
-	ms.interfaces = metadata.Interfaces
-	ms.dns = metadata.DNS
-
-	attrs := make(map[string]interface{})
-	if len(metadata.Interfaces.Public) > 0 {
-		if metadata.Interfaces.Public[0].IPv4 != nil {
-			attrs["public-ipv4"] = metadata.Interfaces.Public[0].IPv4.IPAddress
+	if len(m.Interfaces.Public) > 0 {
+		if m.Interfaces.Public[0].IPv4 != nil {
+			metadata.PublicIPv4 = net.ParseIP(m.Interfaces.Public[0].IPv4.IPAddress)
 		}
-		if metadata.Interfaces.Public[0].IPv6 != nil {
-			attrs["public-ipv6"] = metadata.Interfaces.Public[0].IPv6.IPAddress
+		if m.Interfaces.Public[0].IPv6 != nil {
+			metadata.PublicIPv6 = net.ParseIP(m.Interfaces.Public[0].IPv6.IPAddress)
 		}
 	}
-	if len(metadata.Interfaces.Private) > 0 {
-		if metadata.Interfaces.Private[0].IPv4 != nil {
-			attrs["local-ipv4"] = metadata.Interfaces.Private[0].IPv4.IPAddress
+	if len(m.Interfaces.Private) > 0 {
+		if m.Interfaces.Private[0].IPv4 != nil {
+			metadata.PrivateIPv4 = net.ParseIP(m.Interfaces.Private[0].IPv4.IPAddress)
 		}
-		if metadata.Interfaces.Private[0].IPv6 != nil {
-			attrs["local-ipv6"] = metadata.Interfaces.Private[0].IPv6.IPAddress
+		if m.Interfaces.Private[0].IPv6 != nil {
+			metadata.PrivateIPv6 = net.ParseIP(m.Interfaces.Private[0].IPv6.IPAddress)
 		}
 	}
-	attrs["hostname"] = metadata.Hostname
-	keys := make(map[string]string)
-	for i, key := range metadata.PublicKeys {
-		keys[strconv.Itoa(i)] = key
+	metadata.Hostname = m.Hostname
+	metadata.SSHPublicKeys = map[string]string{}
+	for i, key := range m.PublicKeys {
+		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
-	attrs["public_keys"] = keys
+	metadata.NetworkConfig = data
 
-	return json.Marshal(attrs)
-}
-
-func (ms metadataService) FetchNetworkConfig(filename string) ([]byte, error) {
-	return json.Marshal(Metadata{
-		Interfaces: ms.interfaces,
-		DNS:        ms.dns,
-	})
+	return
 }
 
 func (ms metadataService) Type() string {

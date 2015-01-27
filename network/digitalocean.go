@@ -23,14 +23,14 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 )
 
-func ProcessDigitalOceanNetconf(config string) ([]InterfaceGenerator, error) {
+func ProcessDigitalOceanNetconf(config []byte) ([]InterfaceGenerator, error) {
 	log.Println("Processing DigitalOcean network config")
-	if config == "" {
+	if len(config) == 0 {
 		return nil, nil
 	}
 
 	var cfg digitalocean.Metadata
-	if err := json.Unmarshal([]byte(config), &cfg); err != nil {
+	if err := json.Unmarshal(config, &cfg); err != nil {
 		return nil, err
 	}
 

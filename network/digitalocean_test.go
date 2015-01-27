@@ -378,7 +378,7 @@ func TestProcessDigitalOceanNetconf(t *testing.T) {
 			ifaces: []InterfaceGenerator{},
 		},
 	} {
-		ifaces, err := ProcessDigitalOceanNetconf(tt.cfg)
+		ifaces, err := ProcessDigitalOceanNetconf([]byte(tt.cfg))
 		if !errorsEqual(tt.err, err) {
 			t.Fatalf("bad error (%q): want %q, got %q", tt.cfg, tt.err, err)
 		}

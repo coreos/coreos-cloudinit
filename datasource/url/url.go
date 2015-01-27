@@ -15,6 +15,7 @@
 package url
 
 import (
+	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/pkg"
 )
 
@@ -40,17 +41,13 @@ func (f *remoteFile) ConfigRoot() string {
 	return ""
 }
 
-func (f *remoteFile) FetchMetadata() ([]byte, error) {
-	return []byte{}, nil
+func (f *remoteFile) FetchMetadata() (datasource.Metadata, error) {
+	return datasource.Metadata{}, nil
 }
 
 func (f *remoteFile) FetchUserdata() ([]byte, error) {
 	client := pkg.NewHttpClient()
 	return client.GetRetry(f.url)
-}
-
-func (f *remoteFile) FetchNetworkConfig(filename string) ([]byte, error) {
-	return nil, nil
 }
 
 func (f *remoteFile) Type() string {

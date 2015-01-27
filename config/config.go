@@ -33,8 +33,6 @@ type CloudConfig struct {
 	Hostname          string   `yaml:"hostname"`
 	Users             []User   `yaml:"users"`
 	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
-	NetworkConfigPath string   `yaml:"-"`
-	NetworkConfig     string   `yaml:"-"`
 }
 
 type CoreOS struct {

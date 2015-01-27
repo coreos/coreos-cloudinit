@@ -24,6 +24,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/datasource"
+
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/cloudsigma/cepgo"
 )
 
@@ -69,7 +71,7 @@ func (_ *serverContextService) Type() string {
 	return "server-context"
 }
 
-func (scs *serverContextService) FetchMetadata() ([]byte, error) {
+func (scs *serverContextService) FetchMetadata() (metadata datasource.Metadata, err error) {
 	var (
 		inputMetadata struct {
 			Name string            `json:"name"`
@@ -88,48 +90,41 @@ func (scs *serverContextService) FetchMetadata() ([]byte, error) {
 				} `json:"vlan"`
 			} `json:"nics"`
 		}
-		outputMetadata struct {
-			Hostname   string            `json:"name"`
-			PublicKeys map[string]string `json:"public_keys"`
-			LocalIPv4  string            `json:"local-ipv4"`
-			PublicIPv4 string            `json:"public-ipv4"`
-		}
+		rawMetadata []byte
 	)
 
-	rawMetadata, err := scs.client.FetchRaw("")
-	if err != nil {
-		return []byte{}, err
+	if rawMetadata, err = scs.client.FetchRaw(""); err != nil {
+		return
 	}
 
-	err = json.Unmarshal(rawMetadata, &inputMetadata)
-	if err != nil {
-		return []byte{}, err
+	if err = json.Unmarshal(rawMetadata, &inputMetadata); err != nil {
+		return
 	}
 
 	if inputMetadata.Name != "" {
-		outputMetadata.Hostname = inputMetadata.Name
+		metadata.Hostname = inputMetadata.Name
 	} else {
-		outputMetadata.Hostname = inputMetadata.UUID
+		metadata.Hostname = inputMetadata.UUID
 	}
 
+	metadata.SSHPublicKeys = map[string]string{}
 	if key, ok := inputMetadata.Meta["ssh_public_key"]; ok {
 		splitted := strings.Split(key, " ")
-		outputMetadata.PublicKeys = make(map[string]string)
-		outputMetadata.PublicKeys[splitted[len(splitted)-1]] = key
+		metadata.SSHPublicKeys[splitted[len(splitted)-1]] = key
 	}
 
 	for _, nic := range inputMetadata.Nics {
 		if nic.IPv4Conf.IP.UUID != "" {
-			outputMetadata.PublicIPv4 = nic.IPv4Conf.IP.UUID
+			metadata.PublicIPv4 = net.ParseIP(nic.IPv4Conf.IP.UUID)
 		}
 		if nic.VLAN.UUID != "" {
 			if localIP, err := scs.findLocalIP(nic.Mac); err == nil {
-				outputMetadata.LocalIPv4 = localIP
+				metadata.PrivateIPv4 = localIP
 			}
 		}
 	}
 
-	return json.Marshal(outputMetadata)
+	return
 }
 
 func (scs *serverContextService) FetchUserdata() ([]byte, error) {
@@ -150,18 +145,14 @@ func (scs *serverContextService) FetchUserdata() ([]byte, error) {
 	return []byte(userData), nil
 }
 
-func (scs *serverContextService) FetchNetworkConfig(a string) ([]byte, error) {
-	return nil, nil
-}
-
-func (scs *serverContextService) findLocalIP(mac string) (string, error) {
+func (scs *serverContextService) findLocalIP(mac string) (net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	ifaceMac, err := net.ParseMAC(mac)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	for _, iface := range ifaces {
 		if !bytes.Equal(iface.HardwareAddr, ifaceMac) {
@@ -176,12 +167,12 @@ func (scs *serverContextService) findLocalIP(mac string) (string, error) {
 			switch ip := addr.(type) {
 			case *net.IPNet:
 				if ip.IP.To4() != nil {
-					return ip.IP.To4().String(), nil
+					return ip.IP.To4(), nil
 				}
 			}
 		}
 	}
-	return "", errors.New("Local IP not found")
+	return nil, errors.New("Local IP not found")
 }
 
 func isBase64Encoded(field string, userdata map[string]string) bool {

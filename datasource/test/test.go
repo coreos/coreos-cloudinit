@@ -12,27 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package datasource
+package test
 
 import (
-	"net"
+	"os"
 )
 
-type Datasource interface {
-	IsAvailable() bool
-	AvailabilityChanges() bool
-	ConfigRoot() string
-	FetchMetadata() (Metadata, error)
-	FetchUserdata() ([]byte, error)
-	Type() string
-}
+type MockFilesystem map[string]string
 
-type Metadata struct {
-	PublicIPv4    net.IP
-	PublicIPv6    net.IP
-	PrivateIPv4   net.IP
-	PrivateIPv6   net.IP
-	Hostname      string
-	SSHPublicKeys map[string]string
-	NetworkConfig []byte
+func (m MockFilesystem) ReadFile(filename string) ([]byte, error) {
+	if contents, ok := m[filename]; ok {
+		return []byte(contents), nil
+	}
+	return nil, os.ErrNotExist
 }

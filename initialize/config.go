@@ -42,7 +42,7 @@ type CloudConfigUnit interface {
 // Apply renders a CloudConfig to an Environment. This can involve things like
 // configuring the hostname, adding new users, writing various configuration
 // files to disk, and manipulating systemd services.
-func Apply(cfg config.CloudConfig, env *Environment) error {
+func Apply(cfg config.CloudConfig, ifaces []network.InterfaceGenerator, env *Environment) error {
 	if cfg.Hostname != "" {
 		if err := system.SetHostname(cfg.Hostname); err != nil {
 			return err
@@ -165,23 +165,9 @@ func Apply(cfg config.CloudConfig, env *Environment) error {
 		}
 	}
 
-	if env.NetconfType() != "" {
-		var interfaces []network.InterfaceGenerator
-		var err error
-		switch env.NetconfType() {
-		case "debian":
-			interfaces, err = network.ProcessDebianNetconf(cfg.NetworkConfig)
-		case "digitalocean":
-			interfaces, err = network.ProcessDigitalOceanNetconf(cfg.NetworkConfig)
-		default:
-			err = fmt.Errorf("Unsupported network config format %q", env.NetconfType())
-		}
-		if err != nil {
-			return err
-		}
-
-		units = append(units, createNetworkingUnits(interfaces)...)
-		if err := system.RestartNetwork(interfaces); err != nil {
+	if len(ifaces) > 0 {
+		units = append(units, createNetworkingUnits(ifaces)...)
+		if err := system.RestartNetwork(ifaces); err != nil {
 			return err
 		}
 	}
