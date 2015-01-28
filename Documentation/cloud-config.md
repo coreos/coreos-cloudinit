@@ -151,7 +151,7 @@ coreos:
 Environment="LOCKSMITHD_ENDPOINT=example.com:4001"
 ```
 
-For the complete list of locksmith configuraion parameters, see the [locksmith documentation][locksmith-readme].
+For the complete list of locksmith configuration parameters, see the [locksmith documentation][locksmith-readme].
 
 [locksmith-readme]: https://github.com/coreos/locksmith/blob/master/README.md
 
