@@ -18,6 +18,7 @@ declare -a TESTPKGS=(
 	config/validate
 	datasource
 	datasource/configdrive
+	datasource/configdrive/openstack
 	datasource/file
 	datasource/metadata
 	datasource/metadata/cloudsigma

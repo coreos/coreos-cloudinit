@@ -15,114 +15,16 @@
 package configdrive
 
 import (
-	"reflect"
+	"bytes"
 	"testing"
 
-	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/test"
 )
 
-func TestFetchMetadata(t *testing.T) {
-	for _, tt := range []struct {
-		root  string
-		files test.MockFilesystem
-
-		metadata datasource.Metadata
-	}{
-		{
-			root:  "/",
-			files: test.MockFilesystem{"/openstack/latest/meta_data.json": `{"ignore": "me"}`},
-		},
-		{
-			root:     "/",
-			files:    test.MockFilesystem{"/openstack/latest/meta_data.json": `{"hostname": "host"}`},
-			metadata: datasource.Metadata{Hostname: "host"},
-		},
-		{
-			root: "/media/configdrive",
-			files: test.MockFilesystem{
-				"/media/configdrive/openstack/latest/meta_data.json": `{"hostname": "host", "network_config": {"content_path": "config_file.json"}, "public_keys":{"1": "key1", "2": "key2"}}`,
-				"/media/configdrive/openstack/config_file.json":      "make it work",
-			},
-			metadata: datasource.Metadata{
-				Hostname:      "host",
-				NetworkConfig: []byte("make it work"),
-				SSHPublicKeys: map[string]string{
-					"1": "key1",
-					"2": "key2",
-				},
-			},
-		},
-	} {
-		cd := configDrive{tt.root, tt.files.ReadFile}
-		metadata, err := cd.FetchMetadata()
-		if err != nil {
-			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
-		}
-		if !reflect.DeepEqual(tt.metadata, metadata) {
-			t.Fatalf("bad metadata for %q: want %#v, got %#v", tt, tt.metadata, metadata)
-		}
-	}
-}
-
-func TestFetchUserdata(t *testing.T) {
-	for _, tt := range []struct {
-		root  string
-		files test.MockFilesystem
-
-		userdata string
-	}{
-		{
-			"/",
-			test.MockFilesystem{},
-			"",
-		},
-		{
-			"/",
-			test.MockFilesystem{"/openstack/latest/user_data": "userdata"},
-			"userdata",
-		},
-		{
-			"/media/configdrive",
-			test.MockFilesystem{"/media/configdrive/openstack/latest/user_data": "userdata"},
-			"userdata",
-		},
-	} {
-		cd := configDrive{tt.root, tt.files.ReadFile}
-		userdata, err := cd.FetchUserdata()
-		if err != nil {
-			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
-		}
-		if string(userdata) != tt.userdata {
-			t.Fatalf("bad userdata for %q: want %q, got %q", tt, tt.userdata, userdata)
-		}
-	}
-}
-
-func TestConfigRoot(t *testing.T) {
-	for _, tt := range []struct {
-		root       string
-		configRoot string
-	}{
-		{
-			"/",
-			"/openstack",
-		},
-		{
-			"/media/configdrive",
-			"/media/configdrive/openstack",
-		},
-	} {
-		cd := configDrive{tt.root, nil}
-		if configRoot := cd.ConfigRoot(); configRoot != tt.configRoot {
-			t.Fatalf("bad config root for %q: want %q, got %q", tt, tt.configRoot, configRoot)
-		}
-	}
-}
-
 func TestNewDatasource(t *testing.T) {
-	for _, tt := range []struct {
-		root       string
+	tests := []struct {
+		root string
+
 		expectRoot string
 	}{
 		{
@@ -133,10 +35,65 @@ func TestNewDatasource(t *testing.T) {
 			root:       "/media/configdrive",
 			expectRoot: "/media/configdrive",
 		},
-	} {
+	}
+
+	for i, tt := range tests {
 		service := NewDatasource(tt.root)
-		if service.root != tt.expectRoot {
-			t.Fatalf("bad root (%q): want %q, got %q", tt.root, tt.expectRoot, service.root)
+		if service.Root != tt.expectRoot {
+			t.Errorf("bad root (test %d): want %q, got %q", i, tt.expectRoot, service.Root)
+		}
+	}
+}
+
+func TestConfigRoot(t *testing.T) {
+	tests := []struct {
+		root string
+
+		configRoot string
+	}{
+		{
+			"/",
+			"/",
+		},
+		{
+			"/media/configdrive",
+			"/media/configdrive",
+		},
+	}
+
+	for i, tt := range tests {
+		cd := ConfigDrive{tt.root, nil}
+		if configRoot := cd.ConfigRoot(); configRoot != tt.configRoot {
+			t.Errorf("bad config root (test %d): want %q, got %q", i, tt.configRoot, configRoot)
+		}
+	}
+}
+
+func TestTryReadFile(t *testing.T) {
+	tests := []struct {
+		filename string
+		files    test.MockFilesystem
+
+		content []byte
+	}{
+		{
+			filename: "/test",
+			files:    test.MockFilesystem{"/test": "my file"},
+			content:  []byte("my file"),
+		},
+		{
+			filename: "/test",
+		},
+	}
+
+	for i, tt := range tests {
+		service := ConfigDrive{"", tt.files.ReadFile}
+		content, err := service.TryReadFile(tt.filename)
+		if err != nil {
+			t.Errorf("bad error (test %d): want %v, got %v", i, nil, err)
+		}
+		if !bytes.Equal(content, tt.content) {
+			t.Errorf("bad root (test %d): want %q, got %q", i, tt.content, content)
 		}
 	}
 }
