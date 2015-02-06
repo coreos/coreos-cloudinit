@@ -167,8 +167,11 @@ The `reboot-strategy` parameter also affects the behaviour of [locksmith](https:
   - _etcd-lock_: Reboot after first taking a distributed lock in etcd, this guarantees that only one host will reboot concurrently and that the cluster will remain available during the update.
   - _best-effort_ - If etcd is running, "etcd-lock", otherwise simply "reboot".
   - _off_ - Disable rebooting after updates are applied (not recommended).
-- **server**: is the omaha endpoint URL which will be queried for updates.
+- **server**: The location of the [CoreUpdate][coreupdate] server which will be queried for updates. Also known as the [omaha][omaha-docs] server endpoint.
 - **group**:  signifies the channel which should be used for automatic updates.  This value defaults to the version of the image initially downloaded. (one of "master", "alpha", "beta", "stable")
+
+[coreupdate]: {{site.url}}/products/coreupdate
+[omaha-docs]: https://code.google.com/p/omaha/
 
 *Note: cloudinit will only manipulate the locksmith unit file in the systemd runtime directory (`/run/systemd/system/locksmithd.service`). If any manual modifications are made to an overriding unit configuration file (e.g. `/etc/systemd/system/locksmithd.service`), cloudinit will no longer be able to control the locksmith service unit.*
 
