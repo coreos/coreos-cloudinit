@@ -170,8 +170,8 @@ The `reboot-strategy` parameter also affects the behaviour of [locksmith](https:
 - **server**: The location of the [CoreUpdate][coreupdate] server which will be queried for updates. Also known as the [omaha][omaha-docs] server endpoint.
 - **group**:  signifies the channel which should be used for automatic updates.  This value defaults to the version of the image initially downloaded. (one of "master", "alpha", "beta", "stable")
 
-[coreupdate]: {{site.url}}/products/coreupdate
-[omaha-docs]: https://code.google.com/p/omaha/
+[coreupdate]: https://coreos.com/products/coreupdate
+[omaha-docs]: https://coreos.com/docs/coreupdate/custom-apps/coreupdate-protocol/
 
 *Note: cloudinit will only manipulate the locksmith unit file in the systemd runtime directory (`/run/systemd/system/locksmithd.service`). If any manual modifications are made to an overriding unit configuration file (e.g. `/etc/systemd/system/locksmithd.service`), cloudinit will no longer be able to control the locksmith service unit.*
 
