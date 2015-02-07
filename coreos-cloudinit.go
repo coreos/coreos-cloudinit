@@ -24,7 +24,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/config/validate"
 	"github.com/coreos/coreos-cloudinit/datasource"
-	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
+	"github.com/coreos/coreos-cloudinit/datasource/configdrive/openstack"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/cloudsigma"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
@@ -52,6 +52,7 @@ var (
 		sources       struct {
 			file                        string
 			configDrive                 string
+			openstackConfigDrive        string
 			waagent                     string
 			metadataService             bool
 			ec2MetadataService          string
@@ -72,7 +73,8 @@ func init() {
 	flag.BoolVar(&flags.printVersion, "version", false, "Print the version and exit")
 	flag.BoolVar(&flags.ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
 	flag.StringVar(&flags.sources.file, "from-file", "", "Read user-data from provided file")
-	flag.StringVar(&flags.sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
+	flag.StringVar(&flags.sources.configDrive, "from-configdrive", "", "[DEPRECATED - Use -from-openstack-configdrive] Read data from provided cloud-drive directory")
+	flag.StringVar(&flags.sources.openstackConfigDrive, "from-openstack-configdrive", "", "Read data from provided config-drive directory")
 	flag.StringVar(&flags.sources.waagent, "from-waagent", "", "Read data from provided waagent directory")
 	flag.BoolVar(&flags.sources.metadataService, "from-metadata-service", false, "[DEPRECATED - Use -from-ec2-metadata] Download data from metadata service")
 	flag.StringVar(&flags.sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
@@ -96,12 +98,12 @@ var (
 			"convert-netconf":            "digitalocean",
 		},
 		"ec2-compat": oemConfig{
-			"from-ec2-metadata": "http://169.254.169.254/",
-			"from-configdrive":  "/media/configdrive",
+			"from-ec2-metadata":          "http://169.254.169.254/",
+			"from-openstack-configdrive": "/media/configdrive",
 		},
 		"rackspace-onmetal": oemConfig{
-			"from-configdrive": "/media/configdrive",
-			"convert-netconf":  "debian",
+			"from-openstack-configdrive": "/media/configdrive",
+			"convert-netconf":            "debian",
 		},
 		"azure": oemConfig{
 			"from-waagent": "/var/lib/waagent",
@@ -270,7 +272,10 @@ func getDatasources() []datasource.Datasource {
 		dss = append(dss, url.NewDatasource(flags.sources.url))
 	}
 	if flags.sources.configDrive != "" {
-		dss = append(dss, configdrive.NewDatasource(flags.sources.configDrive))
+		dss = append(dss, openstack.NewDatasource(flags.sources.configDrive))
+	}
+	if flags.sources.openstackConfigDrive != "" {
+		dss = append(dss, openstack.NewDatasource(flags.sources.openstackConfigDrive))
 	}
 	if flags.sources.metadataService {
 		dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))

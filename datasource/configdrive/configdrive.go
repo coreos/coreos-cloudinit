@@ -15,84 +15,50 @@
 package configdrive
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 
 	"github.com/coreos/coreos-cloudinit/datasource"
 )
 
-const (
-	openstackApiVersion = "latest"
-)
-
-type configDrive struct {
-	root     string
-	readFile func(filename string) ([]byte, error)
+type ConfigDrive struct {
+	Root     string
+	ReadFile func(filename string) ([]byte, error)
 }
 
-func NewDatasource(root string) *configDrive {
-	return &configDrive{root, ioutil.ReadFile}
+func NewDatasource(root string) ConfigDrive {
+	return ConfigDrive{root, ioutil.ReadFile}
 }
 
-func (cd *configDrive) IsAvailable() bool {
-	_, err := os.Stat(cd.root)
+func (cd *ConfigDrive) IsAvailable() bool {
+	_, err := os.Stat(cd.Root)
 	return !os.IsNotExist(err)
 }
 
-func (cd *configDrive) AvailabilityChanges() bool {
+func (cd *ConfigDrive) AvailabilityChanges() bool {
 	return true
 }
 
-func (cd *configDrive) ConfigRoot() string {
-	return cd.openstackRoot()
+func (cd *ConfigDrive) ConfigRoot() string {
+	return cd.Root
 }
 
-func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error) {
-	var data []byte
-	var m struct {
-		SSHAuthorizedKeyMap map[string]string `json:"public_keys"`
-		Hostname            string            `json:"hostname"`
-		NetworkConfig       struct {
-			ContentPath string `json:"content_path"`
-		} `json:"network_config"`
-	}
-
-	if data, err = cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "meta_data.json")); err != nil {
-		return
-	}
-	if err = json.Unmarshal([]byte(data), &m); err != nil {
-		return
-	}
-
-	metadata.SSHPublicKeys = m.SSHAuthorizedKeyMap
-	metadata.Hostname = m.Hostname
-	metadata.NetworkConfig, err = cd.tryReadFile(path.Join(cd.openstackRoot(), m.NetworkConfig.ContentPath))
-
-	return
+func (cd *ConfigDrive) FetchMetadata() (datasource.Metadata, error) {
+	return datasource.Metadata{}, nil
 }
 
-func (cd *configDrive) FetchUserdata() ([]byte, error) {
-	return cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "user_data"))
+func (cd *ConfigDrive) FetchUserdata() ([]byte, error) {
+	return nil, nil
 }
 
-func (cd *configDrive) Type() string {
+func (cd *ConfigDrive) Type() string {
 	return "cloud-drive"
 }
 
-func (cd *configDrive) openstackRoot() string {
-	return path.Join(cd.root, "openstack")
-}
-
-func (cd *configDrive) openstackVersionRoot() string {
-	return path.Join(cd.openstackRoot(), openstackApiVersion)
-}
-
-func (cd *configDrive) tryReadFile(filename string) ([]byte, error) {
+func (cd *ConfigDrive) TryReadFile(filename string) ([]byte, error) {
 	fmt.Printf("Attempting to read from %q\n", filename)
-	data, err := cd.readFile(filename)
+	data, err := cd.ReadFile(filename)
 	if os.IsNotExist(err) {
 		err = nil
 	}
