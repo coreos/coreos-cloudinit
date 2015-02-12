@@ -106,6 +106,9 @@ var (
 		"azure": oemConfig{
 			"from-waagent": "/var/lib/waagent",
 		},
+		"cloudsigma": oemConfig{
+			"from-cloudsigma-metadata": "true",
+		},
 	}
 )
 
