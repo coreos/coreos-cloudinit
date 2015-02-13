@@ -31,6 +31,10 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			root:  "/",
+			files: test.MockFilesystem{"/openstack/latest/meta_data.json": ""},
+		},
+		{
+			root:  "/",
 			files: test.MockFilesystem{"/openstack/latest/meta_data.json": `{"ignore": "me"}`},
 		},
 		{

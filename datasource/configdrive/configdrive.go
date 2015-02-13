@@ -60,7 +60,7 @@ func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error)
 		} `json:"network_config"`
 	}
 
-	if data, err = cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "meta_data.json")); err != nil {
+	if data, err = cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "meta_data.json")); err != nil || len(data) == 0 {
 		return
 	}
 	if err = json.Unmarshal([]byte(data), &m); err != nil {
