@@ -31,23 +31,22 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			root:  "/",
-			files: test.MockFilesystem{"/openstack/latest/meta_data.json": ""},
+			files: test.NewMockFilesystem(test.File{Path: "/openstack/latest/meta_data.json", Contents: ""}),
 		},
 		{
 			root:  "/",
-			files: test.MockFilesystem{"/openstack/latest/meta_data.json": `{"ignore": "me"}`},
+			files: test.NewMockFilesystem(test.File{Path: "/openstack/latest/meta_data.json", Contents: `{"ignore": "me"}`}),
 		},
 		{
 			root:     "/",
-			files:    test.MockFilesystem{"/openstack/latest/meta_data.json": `{"hostname": "host"}`},
+			files:    test.NewMockFilesystem(test.File{Path: "/openstack/latest/meta_data.json", Contents: `{"hostname": "host"}`}),
 			metadata: datasource.Metadata{Hostname: "host"},
 		},
 		{
 			root: "/media/configdrive",
-			files: test.MockFilesystem{
-				"/media/configdrive/openstack/latest/meta_data.json": `{"hostname": "host", "network_config": {"content_path": "config_file.json"}, "public_keys":{"1": "key1", "2": "key2"}}`,
-				"/media/configdrive/openstack/config_file.json":      "make it work",
-			},
+			files: test.NewMockFilesystem(test.File{Path: "/media/configdrive/openstack/latest/meta_data.json", Contents: `{"hostname": "host", "network_config": {"content_path": "config_file.json"}, "public_keys":{"1": "key1", "2": "key2"}}`},
+				test.File{Path: "/media/configdrive/openstack/config_file.json", Contents: "make it work"},
+			),
 			metadata: datasource.Metadata{
 				Hostname:      "host",
 				NetworkConfig: []byte("make it work"),
@@ -61,10 +60,10 @@ func TestFetchMetadata(t *testing.T) {
 		cd := configDrive{tt.root, tt.files.ReadFile}
 		metadata, err := cd.FetchMetadata()
 		if err != nil {
-			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
+			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
 		}
 		if !reflect.DeepEqual(tt.metadata, metadata) {
-			t.Fatalf("bad metadata for %q: want %#v, got %#v", tt, tt.metadata, metadata)
+			t.Fatalf("bad metadata for %+v: want %#v, got %#v", tt, tt.metadata, metadata)
 		}
 	}
 }
@@ -78,27 +77,27 @@ func TestFetchUserdata(t *testing.T) {
 	}{
 		{
 			"/",
-			test.MockFilesystem{},
+			test.NewMockFilesystem(),
 			"",
 		},
 		{
 			"/",
-			test.MockFilesystem{"/openstack/latest/user_data": "userdata"},
+			test.NewMockFilesystem(test.File{Path: "/openstack/latest/user_data", Contents: "userdata"}),
 			"userdata",
 		},
 		{
 			"/media/configdrive",
-			test.MockFilesystem{"/media/configdrive/openstack/latest/user_data": "userdata"},
+			test.NewMockFilesystem(test.File{Path: "/media/configdrive/openstack/latest/user_data", Contents: "userdata"}),
 			"userdata",
 		},
 	} {
 		cd := configDrive{tt.root, tt.files.ReadFile}
 		userdata, err := cd.FetchUserdata()
 		if err != nil {
-			t.Fatalf("bad error for %q: want %v, got %q", tt, nil, err)
+			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
 		}
 		if string(userdata) != tt.userdata {
-			t.Fatalf("bad userdata for %q: want %q, got %q", tt, tt.userdata, userdata)
+			t.Fatalf("bad userdata for %+v: want %q, got %q", tt, tt.userdata, userdata)
 		}
 	}
 }

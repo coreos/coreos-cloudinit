@@ -69,7 +69,9 @@ func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error)
 
 	metadata.SSHPublicKeys = m.SSHAuthorizedKeyMap
 	metadata.Hostname = m.Hostname
-	metadata.NetworkConfig, err = cd.tryReadFile(path.Join(cd.openstackRoot(), m.NetworkConfig.ContentPath))
+	if m.NetworkConfig.ContentPath != "" {
+		metadata.NetworkConfig, err = cd.tryReadFile(path.Join(cd.openstackRoot(), m.NetworkConfig.ContentPath))
+	}
 
 	return
 }

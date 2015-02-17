@@ -24,6 +24,7 @@ declare -a TESTPKGS=(
 	datasource/metadata/digitalocean
 	datasource/metadata/ec2
 	datasource/proc_cmdline
+	datasource/test
 	datasource/url
 	datasource/waagent
 	initialize
