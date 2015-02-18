@@ -120,6 +120,7 @@ Environment="FLANNELD_ETCD_PREFIX=/coreos.com/network2"
 ```
 
 List of flannel configuration parameters:
+
 - **etcd_endpoints**: Comma separated list of etcd endpoints
 - **etcd_cafile**: Path to CA file used for TLS communication with etcd
 - **etcd_certfile**: Path to certificate file used for TLS communication with etcd
