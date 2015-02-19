@@ -24,7 +24,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/network"
 
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/dotcloud/docker/pkg/netlink"
+	"github.com/docker/libcontainer/netlink"
 )
 
 func RestartNetwork(interfaces []network.InterfaceGenerator) (err error) {
