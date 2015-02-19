@@ -17,7 +17,7 @@ limitations under the License.
 package dbus
 
 import (
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/guelfey/go.dbus"
+	"github.com/guelfey/go.dbus"
 )
 
 // From the systemd docs:
