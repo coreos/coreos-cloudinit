@@ -58,7 +58,7 @@ func (i *logicalInterface) Network() string {
 	if i.hwaddr != nil {
 		config += fmt.Sprintf("MACAddress=%s\n", i.hwaddr)
 	}
-	config += "\n[Network]\n"
+	config += "\n[Network]\nIPForward=true\n"
 
 	for _, child := range i.children {
 		switch iface := child.(type) {

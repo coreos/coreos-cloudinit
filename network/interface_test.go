@@ -31,7 +31,7 @@ func TestInterfaceGenerators(t *testing.T) {
 	}{
 		{
 			name:    "",
-			network: "[Match]\nMACAddress=00:01:02:03:04:05\n\n[Network]\n",
+			network: "[Match]\nMACAddress=00:01:02:03:04:05\n\n[Network]\nIPForward=true\n",
 			kind:    "physical",
 			iface: &physicalInterface{logicalInterface{
 				hwaddr: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5}),
@@ -39,7 +39,7 @@ func TestInterfaceGenerators(t *testing.T) {
 		},
 		{
 			name:    "testname",
-			network: "[Match]\nName=testname\n\n[Network]\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\n",
+			network: "[Match]\nName=testname\n\n[Network]\nIPForward=true\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\n",
 			kind:    "physical",
 			iface: &physicalInterface{logicalInterface{
 				name: "testname",
@@ -53,7 +53,7 @@ func TestInterfaceGenerators(t *testing.T) {
 		{
 			name:    "testname",
 			netdev:  "[NetDev]\nKind=bond\nName=testname\n",
-			network: "[Match]\nName=testname\n\n[Network]\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\nDHCP=true\n",
+			network: "[Match]\nName=testname\n\n[Network]\nIPForward=true\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\nDHCP=true\n",
 			kind:    "bond",
 			iface: &bondInterface{logicalInterface: logicalInterface{
 				name:   "testname",
@@ -68,28 +68,28 @@ func TestInterfaceGenerators(t *testing.T) {
 		{
 			name:    "testname",
 			netdev:  "[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=1\n",
-			network: "[Match]\nName=testname\n\n[Network]\n",
+			network: "[Match]\nName=testname\n\n[Network]\nIPForward=true\n",
 			kind:    "vlan",
 			iface:   &vlanInterface{logicalInterface{name: "testname"}, 1, ""},
 		},
 		{
 			name:    "testname",
 			netdev:  "[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
-			network: "[Match]\nName=testname\n\n[Network]\n",
+			network: "[Match]\nName=testname\n\n[Network]\nIPForward=true\n",
 			kind:    "vlan",
 			iface:   &vlanInterface{logicalInterface{name: "testname", config: configMethodStatic{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
 		},
 		{
 			name:    "testname",
 			netdev:  "[NetDev]\nKind=vlan\nName=testname\nMACAddress=00:01:02:03:04:05\n\n[VLAN]\nId=1\n",
-			network: "[Match]\nName=testname\n\n[Network]\nDHCP=true\n",
+			network: "[Match]\nName=testname\n\n[Network]\nIPForward=true\nDHCP=true\n",
 			kind:    "vlan",
 			iface:   &vlanInterface{logicalInterface{name: "testname", config: configMethodDHCP{hwaddress: net.HardwareAddr([]byte{0, 1, 2, 3, 4, 5})}}, 1, ""},
 		},
 		{
 			name:    "testname",
 			netdev:  "[NetDev]\nKind=vlan\nName=testname\n\n[VLAN]\nId=0\n",
-			network: "[Match]\nName=testname\n\n[Network]\nDNS=8.8.8.8\n\n[Address]\nAddress=192.168.1.100/24\n\n[Route]\nDestination=0.0.0.0/0\nGateway=1.2.3.4\n",
+			network: "[Match]\nName=testname\n\n[Network]\nIPForward=true\nDNS=8.8.8.8\n\n[Address]\nAddress=192.168.1.100/24\n\n[Route]\nDestination=0.0.0.0/0\nGateway=1.2.3.4\n",
 			kind:    "vlan",
 			iface: &vlanInterface{logicalInterface: logicalInterface{
 				name: "testname",
