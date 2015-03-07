@@ -299,6 +299,7 @@ All but the `passwd` and `ssh-authorized-keys` fields will be ignored if the use
 - **coreos-ssh-import-url**: Authorize SSH keys imported from a url endpoint.
 - **system**: Create the user as a system user. No home directory will be created.
 - **no-log-init**: Boolean. Skip initialization of lastlog and faillog databases.
+- **shell**: User's login shell.
 
 The following fields are not yet implemented:
 
