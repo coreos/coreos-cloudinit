@@ -39,7 +39,7 @@ CoreOS tries to conform to each platform's native method to provide user data. E
 
 ### coreos
 
-#### etcd
+#### etcd (deprecated. see etcd2)
 
 The `coreos.etcd.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
 If the platform environment supports the templating feature of coreos-cloudinit it is possible to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. For example, the following cloud-config document...
@@ -49,15 +49,15 @@ If the platform environment supports the templating feature of coreos-cloudinit 
 
 coreos:
   etcd:
-      name: node001
-      # generate a new token for each unique cluster from https://discovery.etcd.io/new
-      discovery: https://discovery.etcd.io/<token>
-      # multi-region and multi-cloud deployments need to use $public_ipv4
-      addr: $public_ipv4:4001
-      peer-addr: $private_ipv4:7001
+    name: node001
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new
+    discovery: https://discovery.etcd.io/<token>
+    # multi-region and multi-cloud deployments need to use $public_ipv4
+    addr: $public_ipv4:4001
+    peer-addr: $private_ipv4:7001
 ```
 
-...will generate a systemd unit drop-in like this:
+...will generate a systemd unit drop-in for etcd.service with the following contents:
 
 ```yaml
 [Service]
@@ -71,11 +71,49 @@ For more information about the available configuration parameters, see the [etcd
 
 _Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced in other documents are only supported on Amazon EC2, Google Compute Engine, OpenStack, Rackspace, DigitalOcean, and Vagrant._
 
-[etcd-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
+[etcd-config]: https://github.com/coreos/etcd/blob/9fa3bea5a22265151f0d5063ce38a79c5b5d0271/Documentation/configuration.md
+
+#### etcd2
+
+The `coreos.etcd2.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
+If the platform environment supports the templating feature of coreos-cloudinit it is possible to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. For example, the following cloud-config document...
+
+```yaml
+#cloud-config
+
+coreos:
+  etcd2:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new
+    discovery: https://discovery.etcd.io/<token>
+    # multi-region and multi-cloud deployments need to use $public_ipv4
+    advertise-client-urls: http://$public_ipv4:2379
+    initial-advertise-peer-urls: http://$private_ipv4:2380
+    # listen on both the official ports and the legacy ports
+    # legacy ports can be omitted if your application doesn't depend on them
+    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
+    listen-peer-urls: http://$private_ipv4:2380,http://$private_ipv4:7001
+```
+
+...will generate a systemd unit drop-in for etcd2.service with the following contents:
+
+```yaml
+[Service]
+Environment="ETCD_DISCOVERY=https://discovery.etcd.io/<token>"
+Environment="ETCD_ADVERTISE_CLIENT_URLS=http://203.0.113.29:2379"
+Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=http://192.0.2.13:2380"
+Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
+Environment="ETCD_LISTEN_PEERS_URLS=http://192.0.2.13:2380,http://192.0.2.13:7001"
+```
+
+For more information about the available configuration parameters, see the [etcd documentation][etcd-config].
+
+_Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced in other documents are only supported on Amazon EC2, Google Compute Engine, OpenStack, Rackspace, DigitalOcean, and Vagrant._
+
+[etcd-config]: https://github.com/coreos/etcd/blob/86e616c6e974828fc9119c1eb0f6439577a9ce0b/Documentation/configuration.md
 
 #### fleet
 
-The `coreos.fleet.*` parameters work very similarly to `coreos.etcd.*`, and allow for the configuration of fleet through environment variables. For example, the following cloud-config document...
+The `coreos.fleet.*` parameters work very similarly to `coreos.etcd2.*`, and allow for the configuration of fleet through environment variables. For example, the following cloud-config document...
 
 ```yaml
 #cloud-config
@@ -100,7 +138,7 @@ For more information on fleet configuration, see the [fleet documentation][fleet
 
 #### flannel
 
-The `coreos.flannel.*` parameters also work very similarly to `coreos.etcd.*`
+The `coreos.flannel.*` parameters also work very similarly to `coreos.etcd2.*`
 and `coreos.fleet.*`. They can be used to set environment variables for
 flanneld. For example, the following cloud-config...
 
@@ -125,7 +163,7 @@ List of flannel configuration parameters:
 - **etcd_cafile**: Path to CA file used for TLS communication with etcd
 - **etcd_certfile**: Path to certificate file used for TLS communication with etcd
 - **etcd_keyfile**: Path to private key file used for TLS communication with etcd
-- **etcd_prefix**: Etcd prefix path to be used for flannel keys
+- **etcd_prefix**: etcd prefix path to be used for flannel keys
 - **ip_masq**: Install IP masquerade rules for traffic outside of flannel subnet
 - **subnet_file**: Path to flannel subnet file to write out
 - **interface**: Interface (name or IP) that should be used for inter-host communication
@@ -242,14 +280,14 @@ coreos:
             Environment=DOCKER_OPTS='--insecure-registry="10.0.1.0/24"'
 ```
 
-Start the built-in `etcd` and `fleet` services:
+Start the built-in `etcd2` and `fleet` services:
 
 ```yaml
 #cloud-config
 
 coreos:
   units:
-    - name: etcd.service
+    - name: etcd2.service
       command: start
     - name: fleet.service
       command: start
