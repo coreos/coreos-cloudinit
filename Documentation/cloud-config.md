@@ -104,7 +104,7 @@ Environment="ETCD_DISCOVERY=https://discovery.etcd.io/<token>"
 Environment="ETCD_ADVERTISE_CLIENT_URLS=http://203.0.113.29:2379"
 Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=http://192.0.2.13:2380"
 Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
-Environment="ETCD_LISTEN_PEERS_URLS=http://192.0.2.13:2380,http://192.0.2.13:7001"
+Environment="ETCD_LISTEN_PEER_URLS=http://192.0.2.13:2380,http://192.0.2.13:7001"
 ```
 
 For more information about the available configuration parameters, see the [etcd documentation][etcd-config].
