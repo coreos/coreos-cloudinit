@@ -33,6 +33,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
+	"github.com/coreos/coreos-cloudinit/datasource/vmware"
 	"github.com/coreos/coreos-cloudinit/datasource/waagent"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/network"
@@ -61,6 +62,7 @@ var (
 			packetMetadataService       string
 			url                         string
 			procCmdLine                 bool
+			vmware                      bool
 		}
 		convertNetconf string
 		workspace      string
@@ -84,6 +86,7 @@ func init() {
 	flag.StringVar(&flags.sources.packetMetadataService, "from-packet-metadata", "", "Download Packet data from metadata service")
 	flag.StringVar(&flags.sources.url, "from-url", "", "Download user-data from provided url")
 	flag.BoolVar(&flags.sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
+	flag.BoolVar(&flags.sources.vmware, "from-vmware-backdoor", false, "Read data from VMware backdoor")
 	flag.StringVar(&flags.oem, "oem", "", "Use the settings specific to the provided OEM")
 	flag.StringVar(&flags.convertNetconf, "convert-netconf", "", "Read the network config provided in cloud-drive and translate it from the specified format into networkd unit files")
 	flag.StringVar(&flags.workspace, "workspace", "/var/lib/coreos-cloudinit", "Base directory coreos-cloudinit should use to store data")
@@ -117,6 +120,10 @@ var (
 			"from-packet-metadata": "https://metadata.packet.net/",
 			"convert-netconf":      "packet",
 		},
+		"vmware": oemConfig{
+			"from-vmware-backdoor": "true",
+			"convert-netconf":      "vmware",
+		},
 	}
 )
 
@@ -148,8 +155,9 @@ func main() {
 	case "debian":
 	case "digitalocean":
 	case "packet":
+	case "vmware":
 	default:
-		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean, packet'\n", flags.convertNetconf)
+		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean, packet, vmware'\n", flags.convertNetconf)
 		os.Exit(2)
 	}
 
@@ -230,6 +238,8 @@ func main() {
 			ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig.(digitalocean.Metadata))
 		case "packet":
 			ifaces, err = network.ProcessPacketNetconf(metadata.NetworkConfig.(packet.NetworkData))
+		case "vmware":
+			ifaces, err = network.ProcessVMwareNetconf(metadata.NetworkConfig.(map[string]string))
 		default:
 			err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
 		}
@@ -310,6 +320,9 @@ func getDatasources() []datasource.Datasource {
 	}
 	if flags.sources.procCmdLine {
 		dss = append(dss, proc_cmdline.NewDatasource())
+	}
+	if flags.sources.vmware {
+		dss = append(dss, vmware.NewDatasource())
 	}
 	return dss
 }
