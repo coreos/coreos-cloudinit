@@ -17,6 +17,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -160,37 +161,37 @@ func main() {
 
 	ds := selectDatasource(dss)
 	if ds == nil {
-		fmt.Println("No datasources available in time")
+		log.Println("No datasources available in time")
 		os.Exit(1)
 	}
 
-	fmt.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
+	log.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
 	userdataBytes, err := ds.FetchUserdata()
 	if err != nil {
-		fmt.Printf("Failed fetching user-data from datasource: %v\nContinuing...\n", err)
+		log.Printf("Failed fetching user-data from datasource: %v. Continuing...\n", err)
 		failure = true
 	}
 
 	if report, err := validate.Validate(userdataBytes); err == nil {
 		ret := 0
 		for _, e := range report.Entries() {
-			fmt.Println(e)
+			log.Println(e)
 			ret = 1
 		}
 		if flags.validate {
 			os.Exit(ret)
 		}
 	} else {
-		fmt.Printf("Failed while validating user_data (%q)\n", err)
+		log.Printf("Failed while validating user_data (%q)\n", err)
 		if flags.validate {
 			os.Exit(1)
 		}
 	}
 
-	fmt.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
+	log.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
 	metadata, err := ds.FetchMetadata()
 	if err != nil {
-		fmt.Printf("Failed fetching meta-data from datasource: %v\n", err)
+		log.Printf("Failed fetching meta-data from datasource: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -216,7 +217,7 @@ func main() {
 		failure = true
 	}
 
-	fmt.Println("Merging cloud-config from meta-data and user-data")
+	log.Println("Merging cloud-config from meta-data and user-data")
 	cc := mergeConfigs(ccu, metadata)
 
 	var ifaces []network.InterfaceGenerator
@@ -233,19 +234,19 @@ func main() {
 			err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
 		}
 		if err != nil {
-			fmt.Printf("Failed to generate interfaces: %v\n", err)
+			log.Printf("Failed to generate interfaces: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
 	if err = initialize.Apply(cc, ifaces, env); err != nil {
-		fmt.Printf("Failed to apply cloud-config: %v\n", err)
+		log.Printf("Failed to apply cloud-config: %v\n", err)
 		os.Exit(1)
 	}
 
 	if script != nil {
 		if err = runScript(*script, env); err != nil {
-			fmt.Printf("Failed to run script: %v\n", err)
+			log.Printf("Failed to run script: %v\n", err)
 			os.Exit(1)
 		}
 	}
@@ -265,7 +266,7 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 
 	if md.Hostname != "" {
 		if out.Hostname != "" {
-			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", out.Hostname, md.Hostname)
+			log.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", out.Hostname, md.Hostname)
 		} else {
 			out.Hostname = md.Hostname
 		}
@@ -330,7 +331,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 
 			duration := datasourceInterval
 			for {
-				fmt.Printf("Checking availability of %q\n", s.Type())
+				log.Printf("Checking availability of %q\n", s.Type())
 				if s.IsAvailable() {
 					ds <- s
 					return
@@ -368,7 +369,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 func runScript(script config.Script, env *initialize.Environment) error {
 	err := initialize.PrepWorkspace(env.Workspace())
 	if err != nil {
-		fmt.Printf("Failed preparing workspace: %v\n", err)
+		log.Printf("Failed preparing workspace: %v\n", err)
 		return err
 	}
 	path, err := initialize.PersistScriptInWorkspace(script, env.Workspace())
