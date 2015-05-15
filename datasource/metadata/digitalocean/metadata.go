@@ -100,7 +100,7 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	for i, key := range m.PublicKeys {
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
-	metadata.NetworkConfig = data
+	metadata.NetworkConfig = m
 
 	return
 }

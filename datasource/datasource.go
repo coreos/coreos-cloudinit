@@ -34,5 +34,5 @@ type Metadata struct {
 	PrivateIPv6   net.IP
 	Hostname      string
 	SSHPublicKeys map[string]string
-	NetworkConfig []byte
+	NetworkConfig interface{}
 }

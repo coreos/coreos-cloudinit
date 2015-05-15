@@ -225,11 +225,11 @@ func main() {
 		var err error
 		switch flags.convertNetconf {
 		case "debian":
-			ifaces, err = network.ProcessDebianNetconf(metadata.NetworkConfig)
+			ifaces, err = network.ProcessDebianNetconf(metadata.NetworkConfig.([]byte))
 		case "digitalocean":
-			ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig)
+			ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig.(digitalocean.Metadata))
 		case "packet":
-			ifaces, err = network.ProcessPacketNetconf(metadata.NetworkConfig)
+			ifaces, err = network.ProcessPacketNetconf(metadata.NetworkConfig.(packet.NetworkData))
 		default:
 			err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
 		}

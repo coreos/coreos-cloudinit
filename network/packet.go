@@ -15,18 +15,12 @@
 package network
 
 import (
-	"encoding/json"
 	"net"
 
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 )
 
-func ProcessPacketNetconf(config []byte) ([]InterfaceGenerator, error) {
-	var netdata packet.NetworkData
-	if err := json.Unmarshal(config, &netdata); err != nil {
-		return nil, err
-	}
-
+func ProcessPacketNetconf(netdata packet.NetworkData) ([]InterfaceGenerator, error) {
 	var nameservers []net.IP
 	if netdata.DNS != nil {
 		nameservers = netdata.DNS
