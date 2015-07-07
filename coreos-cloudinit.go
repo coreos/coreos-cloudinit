@@ -200,16 +200,20 @@ func main() {
 
 	var ccu *config.CloudConfig
 	var script *config.Script
-	if ud, err := initialize.ParseUserData(userdata); err != nil {
-		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
-		failure = true
-	} else {
+	switch ud, err := initialize.ParseUserData(userdata); err {
+	case initialize.ErrIgnitionConfig:
+		fmt.Printf("Detected an Ignition config. Exiting...")
+		os.Exit(0)
+	case nil:
 		switch t := ud.(type) {
 		case *config.CloudConfig:
 			ccu = t
 		case *config.Script:
 			script = t
 		}
+	default:
+		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
+		failure = true
 	}
 
 	fmt.Println("Merging cloud-config from meta-data and user-data")

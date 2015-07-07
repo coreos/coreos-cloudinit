@@ -40,6 +40,8 @@ func Validate(userdataBytes []byte) (Report, error) {
 		return Report{}, nil
 	case config.IsScript(string(userdataBytes)):
 		return Report{}, nil
+	case config.IsIgnitionConfig(string(userdataBytes)):
+		return Report{}, nil
 	case config.IsCloudConfig(string(userdataBytes)):
 		return validateCloudConfig(userdataBytes, Rules)
 	default:
