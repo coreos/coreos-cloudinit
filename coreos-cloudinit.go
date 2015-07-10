@@ -29,6 +29,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/cloudsigma"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/datasource/waagent"
@@ -57,6 +58,7 @@ var (
 			ec2MetadataService          string
 			cloudSigmaMetadataService   bool
 			digitalOceanMetadataService string
+			packetMetadataService       string
 			url                         string
 			procCmdLine                 bool
 		}
@@ -78,6 +80,7 @@ func init() {
 	flag.StringVar(&flags.sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
 	flag.BoolVar(&flags.sources.cloudSigmaMetadataService, "from-cloudsigma-metadata", false, "Download data from CloudSigma server context")
 	flag.StringVar(&flags.sources.digitalOceanMetadataService, "from-digitalocean-metadata", "", "Download DigitalOcean data from the provided url")
+	flag.StringVar(&flags.sources.packetMetadataService, "from-packet-metadata", "", "Download Packet data from metadata service")
 	flag.StringVar(&flags.sources.url, "from-url", "", "Download user-data from provided url")
 	flag.BoolVar(&flags.sources.procCmdLine, "from-proc-cmdline", false, fmt.Sprintf("Parse %s for '%s=<url>', using the cloud-config served by an HTTP GET to <url>", proc_cmdline.ProcCmdlineLocation, proc_cmdline.ProcCmdlineCloudConfigFlag))
 	flag.StringVar(&flags.oem, "oem", "", "Use the settings specific to the provided OEM")
@@ -109,6 +112,10 @@ var (
 		"cloudsigma": oemConfig{
 			"from-cloudsigma-metadata": "true",
 		},
+		"packet": oemConfig{
+			"from-packet-metadata": "https://metadata.packet.net/",
+			"convert-netconf":      "packet",
+		},
 	}
 )
 
@@ -139,14 +146,15 @@ func main() {
 	case "":
 	case "debian":
 	case "digitalocean":
+	case "packet":
 	default:
-		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean'\n", flags.convertNetconf)
+		fmt.Printf("Invalid option to -convert-netconf: '%s'. Supported options: 'debian, digitalocean, packet'\n", flags.convertNetconf)
 		os.Exit(2)
 	}
 
 	dss := getDatasources()
 	if len(dss) == 0 {
-		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-url or --from-proc-cmdline")
+		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-packet-metadata, --from-url or --from-proc-cmdline")
 		os.Exit(2)
 	}
 
@@ -215,6 +223,8 @@ func main() {
 			ifaces, err = network.ProcessDebianNetconf(metadata.NetworkConfig)
 		case "digitalocean":
 			ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig)
+		case "packet":
+			ifaces, err = network.ProcessPacketNetconf(metadata.NetworkConfig)
 		default:
 			err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
 		}
@@ -289,6 +299,9 @@ func getDatasources() []datasource.Datasource {
 	}
 	if flags.sources.waagent != "" {
 		dss = append(dss, waagent.NewDatasource(flags.sources.waagent))
+	}
+	if flags.sources.packetMetadataService != "" {
+		dss = append(dss, packet.NewDatasource(flags.sources.packetMetadataService))
 	}
 	if flags.sources.procCmdLine {
 		dss = append(dss, proc_cmdline.NewDatasource())
