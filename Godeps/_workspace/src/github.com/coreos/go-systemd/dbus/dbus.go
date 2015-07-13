@@ -23,7 +23,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/guelfey/go.dbus"
+	"github.com/guelfey/go.dbus"
 )
 
 const signalBuffer = 100
