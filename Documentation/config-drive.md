@@ -21,6 +21,12 @@ mkisofs -R -V config-2 -o configdrive.iso /tmp/new-drive
 rm -r /tmp/new-drive
 ```
 
+If on OS X, replace the `mkisofs` invocation with:
+
+```sh
+hdiutil makehybrid -iso -joliet -default-volume-name config-2 -o configdrive.iso /tmp/new-drive
+```
+
 ## QEMU virtfs
 
 One exception to the above, when using QEMU it is possible to skip creating an
