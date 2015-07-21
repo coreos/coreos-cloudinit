@@ -39,6 +39,6 @@ type Etcd2 struct {
 	PeerCAFile               string `yaml:"peer_ca_file"                  env:"ETCD_PEER_CA_FILE"`
 	PeerCertFile             string `yaml:"peer_cert_file"                env:"ETCD_PEER_CERT_FILE"`
 	PeerKeyFile              string `yaml:"peer_key_file"                 env:"ETCD_PEER_KEY_FILE"`
-	Proxy                    string `yaml:"proxy"                         env:"ETCD_PROXY"`
+	Proxy                    string `yaml:"proxy"                         env:"ETCD_PROXY" valid:"^(on|off|readonly)$"`
 	SnapshotCount            int    `yaml:"snapshot_count"                env:"ETCD_SNAPSHOTCOUNT"`
 }
