@@ -182,14 +182,14 @@ for locksmith. For example, the following cloud-config...
 
 coreos:
   locksmith:
-      endpoint: example.com:4001
+      endpoint: http://example.com:2379
 ```
 
 ...will generate a systemd unit drop-in like so:
 
 ```
 [Service]
-Environment="LOCKSMITHD_ENDPOINT=example.com:4001"
+Environment="LOCKSMITHD_ENDPOINT=http://example.com:2379"
 ```
 
 For the complete list of locksmith configuration parameters, see the [locksmith documentation][locksmith-readme].
