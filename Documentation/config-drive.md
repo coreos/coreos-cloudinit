@@ -4,7 +4,7 @@ CoreOS supports providing configuration data via [config drive][config-drive]
 disk images. Currently only providing a single script or cloud config file is
 supported.
 
-[config-drive]: http://docs.openstack.org/user-guide/content/enable_config_drive.html#config_drive_contents
+[config-drive]: http://docs.openstack.org/user-guide/cli_config_drive.html
 
 ## Contents and Format
 
