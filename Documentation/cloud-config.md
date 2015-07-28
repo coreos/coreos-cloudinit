@@ -169,6 +169,7 @@ List of flannel configuration parameters:
 - **ip_masq**: Install IP masquerade rules for traffic outside of flannel subnet
 - **subnet_file**: Path to flannel subnet file to write out
 - **interface**: Interface (name or IP) that should be used for inter-host communication
+- **public_ip**: IP accessible by other nodes for inter-host communication
 
 [flannel-readme]: https://github.com/coreos/flannel/blob/master/README.md
 

@@ -111,6 +111,16 @@ func TestValidate(t *testing.T) {
 		{
 			config: "#!/bin/bash\necho hey",
 		},
+		{
+			config: "{}",
+			report: Report{entries: []Entry{{entryError, `must be "#cloud-config" or begin with "#!"`, 1}}},
+		},
+		{
+			config: `{"ignitionVersion":0}`,
+		},
+		{
+			config: `{"ignitionVersion":1}`,
+		},
 	}
 
 	for i, tt := range tests {
