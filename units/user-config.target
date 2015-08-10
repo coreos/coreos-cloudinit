@@ -3,6 +3,9 @@ Description=Load user-provided cloud configs
 Requires=system-config.target
 After=system-config.target
 
+# Inhibit all cloudinit-related activities if ignition disabled us.
+ConditionPathExists=!/etc/.disable-cloudinit
+
 # Watch for configs at a couple common paths
 Requires=user-configdrive.path
 After=user-configdrive.path

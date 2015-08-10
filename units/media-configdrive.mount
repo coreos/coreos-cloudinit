@@ -7,6 +7,9 @@ ConditionVirtualization=|vm
 ConditionKernelCommandLine=|coreos.configdrive=1
 ConditionKernelCommandLine=!coreos.configdrive=0
 
+# Inhibit all cloudinit-related activities if ignition disabled us.
+ConditionPathExists=!/etc/.disable-cloudinit
+
 [Mount]
 What=LABEL=config-2
 Where=/media/configdrive

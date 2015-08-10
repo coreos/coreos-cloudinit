@@ -7,6 +7,9 @@ ConditionVirtualization=|vm
 ConditionKernelCommandLine=|coreos.configdrive=1
 ConditionKernelCommandLine=!coreos.configdrive=0
 
+# Inhibit all cloudinit-related activities if ignition disabled us.
+ConditionPathExists=!/etc/.disable-cloudinit
+
 # Support old style setup for now
 Wants=addon-run@media-configvirtfs.service addon-config@media-configvirtfs.service
 Before=addon-run@media-configvirtfs.service addon-config@media-configvirtfs.service

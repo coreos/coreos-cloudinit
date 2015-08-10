@@ -4,6 +4,9 @@ Requires=coreos-setup-environment.service
 After=coreos-setup-environment.service
 Before=user-config.target
 
+# Inhibit all cloudinit-related activities if ignition disabled us.
+ConditionPathExists=!/etc/.disable-cloudinit
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes

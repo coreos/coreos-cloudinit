@@ -5,6 +5,9 @@ After=dbus.service
 Before=system-config.target
 ConditionFileNotEmpty=%f
 
+# Inhibit all cloudinit-related activities if ignition disabled us.
+ConditionPathExists=!/etc/.disable-cloudinit
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes
