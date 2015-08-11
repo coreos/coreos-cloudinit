@@ -1,6 +1,9 @@
 [Unit]
 Description=Load system-provided cloud configs
 
+# Inhibit all cloudinit-related activities if ignition disabled us.
+ConditionPathExists=!/etc/.disable-cloudinit
+
 # Generate /etc/environment
 Requires=coreos-setup-environment.service
 After=coreos-setup-environment.service
