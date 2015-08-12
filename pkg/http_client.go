@@ -80,7 +80,7 @@ func NewHttpClient() *HttpClient {
 		MaxRetries:     15,
 		SkipTLS:        false,
 		client: &http.Client{
-			Timeout: time.Duration(2) * time.Second,
+			Timeout: 10 * time.Second,
 		},
 	}
 
