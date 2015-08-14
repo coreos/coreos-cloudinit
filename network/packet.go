@@ -98,33 +98,21 @@ func parseNetwork(netdata packet.NetworkData, nameservers []net.IP) ([]Interface
 		},
 	}
 
-	for _, iface := range netdata.Interfaces {
-		if iface.Name != "chassis0" && iface.Name != "ipmi0" {
-			bond.slaves = append(bond.slaves, iface.Name)
-			if iface.Name == "enp1s0f0" {
-				bond.hwaddr, _ = net.ParseMAC(iface.Mac)
-			}
-		}
-	}
+	bond.hwaddr, _ = net.ParseMAC(netdata.Interfaces[0].Mac)
 
-	for _, iface := range netdata.Interfaces {
-		if iface.Name != "chassis0" && iface.Name != "ipmi0" {
-			p := physicalInterface{
-				logicalInterface: logicalInterface{
-					name: iface.Name,
-					config: configMethodStatic{
-						nameservers: nameservers,
-					},
-					children: []networkInterface{&bond},
+	for index, iface := range netdata.Interfaces {
+		bond.slaves = append(bond.slaves, iface.Name)
+
+		interfaces = append(interfaces, &physicalInterface{
+			logicalInterface: logicalInterface{
+				name: iface.Name,
+				config: configMethodStatic{
+					nameservers: nameservers,
 				},
-			}
-
-			if iface.Name == "enp1s0f0" {
-				p.configDepth = 20
-			}
-
-			interfaces = append(interfaces, &p)
-		}
+				children:    []networkInterface{&bond},
+				configDepth: index,
+			},
+		})
 	}
 
 	interfaces = append(interfaces, &bond)
