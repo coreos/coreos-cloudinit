@@ -17,6 +17,7 @@ package metadata
 import (
 	"strings"
 
+	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/pkg"
 )
 
@@ -49,7 +50,13 @@ func (ms MetadataService) ConfigRoot() string {
 }
 
 func (ms MetadataService) FetchUserdata() ([]byte, error) {
-	return ms.FetchData(ms.UserdataUrl())
+	if data, err := ms.FetchData(ms.UserdataUrl()); err != nil {
+		return data, err
+	} else if t_data, t_err := config.DecodeGzipContent(string(data[:])); t_err != nil {
+		return data, err
+	} else {
+		return t_data, t_err
+	}
 }
 
 func (ms MetadataService) FetchData(url string) ([]byte, error) {

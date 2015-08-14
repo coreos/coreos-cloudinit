@@ -63,6 +63,10 @@ func TestIsAvailable(t *testing.T) {
 }
 
 func TestFetchUserdata(t *testing.T) {
+	gzip_payload := fmt.Sprint("\x1f\x8b\x08\x00\xbd\x5d\xce\x55\x00\x03\x53\x4e",
+		"\xce\xc9\x2f\x4d\xd1\x4d\xce\xcf\x4b\xcb\x4c\x07",
+		"\x00\x1b\x7a\x99\x01\x0d\x00\x00\x00")
+
 	for _, tt := range []struct {
 		root         string
 		userdataPath string
@@ -78,6 +82,14 @@ func TestFetchUserdata(t *testing.T) {
 				"/2009-04-04/user-data": "hello",
 			},
 			userdata: []byte("hello"),
+		},
+		{
+			root:         "/",
+			userdataPath: "2009-04-04/user-data",
+			resources: map[string]string{
+				"/2009-04-04/user-data": gzip_payload,
+			},
+			userdata: []byte("#cloud-config"),
 		},
 		{
 			root:      "/",
