@@ -4,6 +4,14 @@ CoreOS allows you to declaratively customize various OS-level items, such as net
 
 Your cloud-config is processed during each boot. Invalid cloud-config won't be processed but will be logged in the journal. You can validate your cloud-config with the [CoreOS validator]({{site.url}}/validate) or by running `coreos-cloudinit -validate`.
 
+In addition to `coreos-cloudinit -validate` command and https://coreos.com/validate/ online service you can debug `coreos-cloudinit` system output through the `journalctl` tool:
+
+```sh
+journalctl _EXE=/usr/bin/coreos-cloudinit
+```
+
+It will show `coreos-cloudinit` run output which was triggered by system boot.
+
 ## Configuration File
 
 The file used by this system initialization program is called a "cloud-config" file. It is inspired by the [cloud-init][cloud-init] project's [cloud-config][cloud-config] file, which is "the defacto multi-distribution package that handles early initialization of a cloud instance" ([cloud-init docs][cloud-init-docs]). Because the cloud-init project includes tools which aren't used by CoreOS, only the relevant subset of its configuration items will be implemented in our cloud-config file. In addition to those, we added a few CoreOS-specific items, such as etcd configuration, OEM definition, and systemd units.
@@ -183,14 +191,14 @@ for locksmith. For example, the following cloud-config...
 
 coreos:
   locksmith:
-      endpoint: example.com:4001
+      endpoint: http://example.com:2379
 ```
 
 ...will generate a systemd unit drop-in like so:
 
 ```
 [Service]
-Environment="LOCKSMITHD_ENDPOINT=example.com:4001"
+Environment="LOCKSMITHD_ENDPOINT=http://example.com:2379"
 ```
 
 For the complete list of locksmith configuration parameters, see the [locksmith documentation][locksmith-readme].
