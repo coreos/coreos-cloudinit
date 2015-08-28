@@ -8,7 +8,7 @@ On every boot, coreos-cloudinit looks for a config file to configure your host. 
 * `/var/lib/coreos-install/user_data` when you install CoreOS manually using the [coreos-install](/os/docs/latest/installing-to-disk.html) tool. Usually used in bare metal installations.
 * OEM images use `/usr/share/oem/cloud-config.yml` path.
 * Azure platform uses OEM path for first Cloud-Config initialization and then `/var/lib/waagent/CustomData` to apply your settings.
-* DigitalOcean and EC2 use URLs to download Cloud-Config.
+* DigitalOcean, EC2 and Packet cloud providers use URLs to download Cloud-Config. `http://169.254.169.254/metadata/v1/user-data`, `http://169.254.169.254/2009-04-04/user-data` and `https://metadata.packet.net/userdata` correspondingly.
 
 You can also run the `coreos-cloudinit` tool manually and provide a path to your custom Cloud-Config file:
 
