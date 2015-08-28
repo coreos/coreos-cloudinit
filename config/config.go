@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/coreos/yaml"
 )
@@ -49,10 +50,8 @@ type CoreOS struct {
 func IsCloudConfig(userdata string) bool {
 	header := strings.SplitN(userdata, "\n", 2)[0]
 
-	// Explicitly trim the header so we can handle user-data from
-	// non-unix operating systems. The rest of the file is parsed
-	// by yaml, which correctly handles CRLF.
-	header = strings.TrimSuffix(header, "\r")
+	// Trim trailing whitespaces
+	header = strings.TrimRightFunc(header, unicode.IsSpace)
 
 	return (header == "#cloud-config")
 }
