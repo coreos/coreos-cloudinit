@@ -96,7 +96,7 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
 
-	metadata.NetworkConfig, err = json.Marshal(m.NetworkData)
+	metadata.NetworkConfig = m.NetworkData
 
 	return
 }

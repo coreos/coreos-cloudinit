@@ -16,8 +16,8 @@ package waagent
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -108,7 +108,7 @@ func (a *waagent) Type() string {
 }
 
 func (a *waagent) tryReadFile(filename string) ([]byte, error) {
-	fmt.Printf("Attempting to read from %q\n", filename)
+	log.Printf("Attempting to read from %q\n", filename)
 	data, err := a.readFile(filename)
 	if os.IsNotExist(err) {
 		err = nil

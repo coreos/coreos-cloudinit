@@ -29,6 +29,10 @@
 		{
 			"ImportPath": "github.com/tarm/goserial",
 			"Rev": "cdabc8d44e8e84f58f18074ae44337e1f2f375b9"
+		},
+		{
+			"ImportPath": "github.com/sigma/vmw-guestinfo",
+			"Rev": "de573afc542e0268fe8478d46e237fad9d6f7aec"
 		}
 	]
 }

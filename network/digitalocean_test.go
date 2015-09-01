@@ -358,27 +358,37 @@ func TestParseInterfaces(t *testing.T) {
 
 func TestProcessDigitalOceanNetconf(t *testing.T) {
 	for _, tt := range []struct {
-		cfg    string
+		cfg    digitalocean.Metadata
 		ifaces []InterfaceGenerator
 		err    error
 	}{
 		{
-			cfg: ``,
-		},
-		{
-			cfg: `{"dns":{"nameservers":["bad"]}}`,
+			cfg: digitalocean.Metadata{
+				DNS: digitalocean.DNS{
+					Nameservers: []string{"bad"},
+				},
+			},
 			err: errors.New("could not parse \"bad\" as nameserver IP address"),
 		},
 		{
-			cfg: `{"interfaces":{"public":[{"ipv4":{"ip_address":"bad"}}]}}`,
+			cfg: digitalocean.Metadata{
+				Interfaces: digitalocean.Interfaces{
+					Public: []digitalocean.Interface{
+						digitalocean.Interface{
+							IPv4: &digitalocean.Address{
+								IPAddress: "bad",
+							},
+						},
+					},
+				},
+			},
 			err: errors.New("could not parse \"bad\" as IPv4 address"),
 		},
 		{
-			cfg:    `{}`,
 			ifaces: []InterfaceGenerator{},
 		},
 	} {
-		ifaces, err := ProcessDigitalOceanNetconf([]byte(tt.cfg))
+		ifaces, err := ProcessDigitalOceanNetconf(tt.cfg)
 		if !errorsEqual(tt.err, err) {
 			t.Fatalf("bad error (%q): want %q, got %q", tt.cfg, tt.err, err)
 		}

@@ -15,6 +15,7 @@ SRC="
 	datasource/proc_cmdline
 	datasource/test
 	datasource/url
+	datasource/vmware
 	datasource/waagent
 	initialize
 	network
