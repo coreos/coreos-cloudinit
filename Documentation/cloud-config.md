@@ -26,7 +26,7 @@ We've designed our implementation to allow the same cloud-config file to work ac
 
 The cloud-config file uses the [YAML][yaml] file format, which uses whitespace and new-lines to delimit lists, associative arrays, and values.
 
-A cloud-config file must contain `#cloud-config`, followed by an associative array which has zero or more of the following keys:
+A cloud-config file must contain a header: either `#cloud-config` for processing as cloud-config (suggested) or `#!` for processing as a shell script (advanced). If cloud-config has #cloud-config header, it should followed by an associative array which has zero or more of the following keys:
 
 - `coreos`
 - `ssh_authorized_keys`
@@ -36,6 +36,8 @@ A cloud-config file must contain `#cloud-config`, followed by an associative arr
 - `manage_etc_hosts`
 
 The expected values for these keys are defined in the rest of this document.
+
+If cloud-config header starts on `#!` then coreos-cloudinit will recognize it as shell script which is interpreted by bash and run it as transient systemd service.
 
 [yaml]: https://en.wikipedia.org/wiki/YAML
 
