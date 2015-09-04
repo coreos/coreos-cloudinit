@@ -21,17 +21,25 @@ import (
 
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/datasource"
+	"github.com/coreos/coreos-cloudinit/pkg"
 
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/rpcvmx"
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/vmcheck"
 )
 
+type readConfigFunction func(key string) (string, error)
+type urlDownloadFunction func(url string) ([]byte, error)
+
 type vmware struct {
-	readConfig func(key string) (string, error)
+	readConfig  readConfigFunction
+	urlDownload urlDownloadFunction
 }
 
 func NewDatasource() *vmware {
-	return &vmware{readConfig}
+	return &vmware{
+		readConfig:  readConfig,
+		urlDownload: urlDownload,
+	}
 }
 
 func (v vmware) IsAvailable() bool {
@@ -133,6 +141,22 @@ func (v vmware) FetchUserdata() ([]byte, error) {
 		return nil, err
 	}
 
+	// Try to fallback to url if no explicit data
+	if data == "" {
+		url, err := v.readConfig("coreos.config.url")
+		if err != nil {
+			return nil, err
+		}
+
+		if url != "" {
+			rawData, err := v.urlDownload(url)
+			if err != nil {
+				return nil, err
+			}
+			data = string(rawData)
+		}
+	}
+
 	if encoding != "" {
 		return config.DecodeContent(data, encoding)
 	}
@@ -141,6 +165,11 @@ func (v vmware) FetchUserdata() ([]byte, error) {
 
 func (v vmware) Type() string {
 	return "vmware"
+}
+
+func urlDownload(url string) ([]byte, error) {
+	client := pkg.NewHttpClient()
+	return client.GetRetry(url)
 }
 
 func readConfig(key string) (string, error) {

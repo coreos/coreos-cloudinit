@@ -19,6 +19,7 @@ are supported by coreos-cloudinit:
 | `dns.server.<x>`                      | `IP address`                    |
 | `coreos.config.data`                  | `string`                        |
 | `coreos.config.data.encoding`         | `{"", "base64", "gzip+base64"}` |
+| `coreos.config.url`                   | `URL`                           |
 
 Note: "n", "m", "l", and "x" are 0-indexed, incrementing integers. The
 identifier for the interfaces does not correspond to anything outside of this
