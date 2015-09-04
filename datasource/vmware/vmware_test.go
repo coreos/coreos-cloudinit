@@ -115,7 +115,7 @@ func TestFetchMetadata(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		v := vmware{tt.variables.ReadConfig}
+		v := vmware{readConfig: tt.variables.ReadConfig}
 		metadata, err := v.FetchMetadata()
 		if !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad error (#%d): want %v, got %v", i, tt.err, err)
@@ -165,10 +165,37 @@ func TestFetchUserdata(t *testing.T) {
 			},
 			err: errors.New(`Unsupported encoding "test encoding"`),
 		},
+		{
+			variables: map[string]string{
+				"coreos.config.url": "http://good.example.com",
+			},
+			userdata: "test config",
+		},
+		{
+			variables: map[string]string{
+				"coreos.config.url": "http://bad.example.com",
+			},
+			err: errors.New("Not found"),
+		},
+	}
+
+	var downloader urlDownloadFunction = func(url string) ([]byte, error) {
+		mapping := map[string]struct {
+			data []byte
+			err  error
+		}{
+			"http://good.example.com": {[]byte("test config"), nil},
+			"http://bad.example.com":  {nil, errors.New("Not found")},
+		}
+		val := mapping[url]
+		return val.data, val.err
 	}
 
 	for i, tt := range tests {
-		v := vmware{tt.variables.ReadConfig}
+		v := vmware{
+			readConfig:  tt.variables.ReadConfig,
+			urlDownload: downloader,
+		}
 		userdata, err := v.FetchUserdata()
 		if !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad error (#%d): want %v, got %v", i, nil, err)
@@ -181,7 +208,7 @@ func TestFetchUserdata(t *testing.T) {
 
 func TestFetchUserdataError(t *testing.T) {
 	testErr := errors.New("test error")
-	_, err := vmware{func(_ string) (string, error) { return "", testErr }}.FetchUserdata()
+	_, err := vmware{readConfig: func(_ string) (string, error) { return "", testErr }}.FetchUserdata()
 
 	if testErr != err {
 		t.Errorf("bad error: want %v, got %v", testErr, err)
