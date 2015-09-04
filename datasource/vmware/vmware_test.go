@@ -171,7 +171,7 @@ func TestFetchUserdata(t *testing.T) {
 		v := vmware{tt.variables.ReadConfig}
 		userdata, err := v.FetchUserdata()
 		if !reflect.DeepEqual(tt.err, err) {
-			t.Errorf("bad error (#%d): want %v, got %v", i, nil, err)
+			t.Errorf("bad error (#%d): want %v, got %v", i, tt.err, err)
 		}
 		if tt.userdata != string(userdata) {
 			t.Errorf("bad userdata (#%d): want %q, got %q", i, tt.userdata, userdata)
