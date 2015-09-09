@@ -59,12 +59,12 @@ If the platform environment supports the templating feature of coreos-cloudinit 
 
 coreos:
   etcd:
-    name: node001
+    name: "node001"
     # generate a new token for each unique cluster from https://discovery.etcd.io/new
-    discovery: https://discovery.etcd.io/<token>
+    discovery: "https://discovery.etcd.io/<token>"
     # multi-region and multi-cloud deployments need to use $public_ipv4
-    addr: $public_ipv4:4001
-    peer-addr: $private_ipv4:7001
+    addr: "$public_ipv4:4001"
+    peer-addr: "$private_ipv4:7001"
 ```
 
 ...will generate a systemd unit drop-in for etcd.service with the following contents:
@@ -96,14 +96,14 @@ For example, the following cloud-config document...
 coreos:
   etcd2:
     # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
-    discovery: https://discovery.etcd.io/<token>
+    discovery: "https://discovery.etcd.io/<token>"
     # multi-region and multi-cloud deployments need to use $public_ipv4
-    advertise-client-urls: http://$public_ipv4:2379
-    initial-advertise-peer-urls: http://$private_ipv4:2380
+    advertise-client-urls: "http://$public_ipv4:2379"
+    initial-advertise-peer-urls: "http://$private_ipv4:2380"
     # listen on both the official ports and the legacy ports
     # legacy ports can be omitted if your application doesn't depend on them
-    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
-    listen-peer-urls: http://$private_ipv4:2380,http://$private_ipv4:7001
+    listen-client-urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
+    listen-peer-urls: "http://$private_ipv4:2380,http://$private_ipv4:7001"
 ```
 
 ...will generate a systemd unit drop-in for etcd2.service with the following contents:
@@ -132,8 +132,8 @@ The `coreos.fleet.*` parameters work very similarly to `coreos.etcd2.*`, and all
 
 coreos:
   fleet:
-      public-ip: $public_ipv4
-      metadata: region=us-west
+      public-ip: "$public_ipv4"
+      metadata: "region=us-west"
 ```
 
 ...will generate a systemd unit drop-in like this:
@@ -159,7 +159,7 @@ flanneld. For example, the following cloud-config...
 
 coreos:
   flannel:
-      etcd_prefix: /coreos.com/network2
+      etcd_prefix: "/coreos.com/network2"
 ```
 
 ...will generate a systemd unit drop-in like so:
@@ -193,7 +193,7 @@ for locksmith. For example, the following cloud-config...
 
 coreos:
   locksmith:
-      endpoint: http://example.com:2379
+      endpoint: "http://example.com:2379"
 ```
 
 ...will generate a systemd unit drop-in like so:
@@ -233,7 +233,7 @@ The `reboot-strategy` parameter also affects the behaviour of [locksmith](https:
 #cloud-config
 coreos:
   update:
-    reboot-strategy: etcd-lock
+    reboot-strategy: "etcd-lock"
 ```
 
 #### units
@@ -264,8 +264,8 @@ Write a unit to disk, automatically starting it.
 
 coreos:
   units:
-    - name: docker-redis.service
-      command: start
+    - name: "docker-redis.service"
+      command: "start"
       content: |
         [Unit]
         Description=Redis container
@@ -285,9 +285,9 @@ Add the DOCKER_OPTS environment variable to docker.service.
 
 coreos:
   units:
-    - name: docker.service
+    - name: "docker.service"
       drop-ins:
-        - name: 50-insecure-registry.conf
+        - name: "50-insecure-registry.conf"
           content: |
             [Service]
             Environment=DOCKER_OPTS='--insecure-registry="10.0.1.0/24"'
@@ -300,10 +300,10 @@ Start the built-in `etcd2` and `fleet` services:
 
 coreos:
   units:
-    - name: etcd2.service
-      command: start
-    - name: fleet.service
-      command: start
+    - name: "etcd2.service"
+      command: "start"
+    - name: "fleet.service"
+      command: "start"
 ```
 
 ### ssh_authorized_keys
@@ -317,7 +317,7 @@ Override this by using the `--ssh-key-name` flag when calling `coreos-cloudinit`
 #cloud-config
 
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h..."
 ```
 
 ### hostname
@@ -328,7 +328,7 @@ This is the local part of a fully-qualified domain name (i.e. `foo` in `foo.exam
 ```yaml
 #cloud-config
 
-hostname: coreos1
+hostname: "coreos1"
 ```
 
 ### users
@@ -364,13 +364,13 @@ The following fields are not yet implemented:
 #cloud-config
 
 users:
-  - name: elroy
-    passwd: $6$5s2u6/jR$un0AvWnqilcgaNB3Mkxd5yYv6mTlWfOoCYHZmfi3LDKVltj.E8XNKEcwWm...
+  - name: "elroy"
+    passwd: "$6$5s2u6/jR$un0AvWnqilcgaNB3Mkxd5yYv6mTlWfOoCYHZmfi3LDKVltj.E8XNKEcwWm..."
     groups:
-      - sudo
-      - docker
+      - "sudo"
+      - "docker"
     ssh-authorized-keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h...
+      - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0g+ZTxC7weoIJLUafOgrm+h..."
 ```
 
 #### Generating a password hash
@@ -411,32 +411,32 @@ Each item in the list may have the following keys:
 ```yaml
 #cloud-config
 write_files:
-  - path: /etc/resolv.conf
-    permissions: 0644
-    owner: root
+  - path: "/etc/resolv.conf"
+    permissions: "0644"
+    owner: "root"
     content: |
       nameserver 8.8.8.8
-  - path: /etc/motd
-    permissions: 0644
-    owner: root
+  - path: "/etc/motd"
+    permissions: "0644"
+    owner: "root"
     content: |
       Good news, everyone!
-  - path: /tmp/like_this
-    permissions: 0644
-    owner: root
-    encoding: gzip
+  - path: "/tmp/like_this"
+    permissions: "0644"
+    owner: "root"
+    encoding: "gzip"
     content: !!binary |
       H4sIAKgdh1QAAwtITM5WyK1USMqvUCjPLMlQSMssS1VIya9KzVPIySwszS9SyCpNLwYARQFQ5CcAAAA=
-  - path: /tmp/or_like_this
-    permissions: 0644
-    owner: root
-    encoding: gzip+base64
+  - path: "/tmp/or_like_this"
+    permissions: "0644"
+    owner: "root"
+    encoding: "gzip+base64"
     content: |
       H4sIAKgdh1QAAwtITM5WyK1USMqvUCjPLMlQSMssS1VIya9KzVPIySwszS9SyCpNLwYARQFQ5CcAAAA=
-  - path: /tmp/todolist
-    permissions: 0644
-    owner: root
-    encoding: base64
+  - path: "/tmp/todolist"
+    permissions: "0644"
+    owner: "root"
+    encoding: "base64"
     content: |
       UGFjayBteSBib3ggd2l0aCBmaXZlIGRvemVuIGxpcXVvciBqdWdz
 ```
@@ -451,5 +451,5 @@ infrastructure in place to resolve its own hostname, for example, when using Vag
 ```yaml
 #cloud-config
 
-manage_etc_hosts: localhost
+manage_etc_hosts: "localhost"
 ```
