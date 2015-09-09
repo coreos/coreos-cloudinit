@@ -17,11 +17,11 @@ For example, the following cloud-config document...
 #cloud-config
 coreos:
   oem:
-    id: rackspace
-    name: Rackspace Cloud Servers
-    version-id: 168.0.0
-    home-url: https://www.rackspace.com/cloud/servers/
-    bug-report-url: https://github.com/coreos/coreos-overlay
+    id: "rackspace"
+    name: "Rackspace Cloud Servers"
+    version-id: "168.0.0"
+    home-url: "https://www.rackspace.com/cloud/servers/"
+    bug-report-url: "https://github.com/coreos/coreos-overlay"
 ```
 
 ...would be rendered to the following `/etc/oem-release`:
