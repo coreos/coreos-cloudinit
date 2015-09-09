@@ -1,7 +1,7 @@
 [Unit]
 Description=Load cloud-config from url defined in /proc/cmdline
-Requires=coreos-setup-environment.service
-After=coreos-setup-environment.service
+Requires=coreos-setup-environment.service network-online.target
+After=coreos-setup-environment.service network-online.target
 Before=user-config.target
 ConditionKernelCommandLine=cloud-config-url
 
