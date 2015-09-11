@@ -118,7 +118,6 @@ var (
 		},
 		"packet": oemConfig{
 			"from-packet-metadata": "https://metadata.packet.net/",
-			"convert-netconf":      "packet",
 		},
 		"vmware": oemConfig{
 			"from-vmware-backdoor": "true",
