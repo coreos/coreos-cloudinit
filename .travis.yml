@@ -3,11 +3,10 @@ sudo: false
 matrix:
   include:
     - go: 1.4
-      env: TOOLS_CMD=golang.org/x/tools/cmd
-
-install:
- - go get ${TOOLS_CMD}/cover
- - go get ${TOOLS_CMD}/vet
+      install:
+        - go get golang.org/x/tools/cmd/cover
+        - go get golang.org/x/tools/cmd/vet
+    - go: 1.5
 
 script:
  - ./test

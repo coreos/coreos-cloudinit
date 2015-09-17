@@ -52,6 +52,14 @@ func TestParseNameservers(t *testing.T) {
 	}
 }
 
+func mkInvalidMAC() error {
+	if isGo15 {
+		return &net.AddrError{Err: "invalid MAC address", Addr: "bad"}
+	} else {
+		return errors.New("invalid MAC address: bad")
+	}
+}
+
 func TestParseInterface(t *testing.T) {
 	for _, tt := range []struct {
 		cfg      digitalocean.Interface
@@ -64,7 +72,7 @@ func TestParseInterface(t *testing.T) {
 			cfg: digitalocean.Interface{
 				MAC: "bad",
 			},
-			err: errors.New("invalid MAC address: bad"),
+			err: mkInvalidMAC(),
 		},
 		{
 			cfg: digitalocean.Interface{
@@ -337,13 +345,13 @@ func TestParseInterfaces(t *testing.T) {
 			cfg: digitalocean.Interfaces{
 				Public: []digitalocean.Interface{{MAC: "bad"}},
 			},
-			err: errors.New("invalid MAC address: bad"),
+			err: mkInvalidMAC(),
 		},
 		{
 			cfg: digitalocean.Interfaces{
 				Private: []digitalocean.Interface{{MAC: "bad"}},
 			},
-			err: errors.New("invalid MAC address: bad"),
+			err: mkInvalidMAC(),
 		},
 	} {
 		ifaces, err := parseInterfaces(tt.cfg, tt.nss)
