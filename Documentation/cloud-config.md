@@ -144,6 +144,20 @@ Environment="FLEET_PUBLIC_IP=203.0.113.29"
 Environment="FLEET_METADATA=region=us-west"
 ```
 
+List of fleet configuration parameters:
+
+- **agent_ttl**: An Agent will be considered dead if it exceeds this amount of time to communicate with the Registry
+- **engine_reconcile_interval**: Interval in seconds at which the engine should reconcile the cluster schedule in etcd
+- **etcd_cafile**: Path to CA file used for TLS communication with etcd
+- **etcd_certfile**: Provide TLS configuration when SSL certificate authentication is enabled in etcd endpoints
+- **etcd_keyfile**: Path to private key file used for TLS communication with etcd
+- **etcd_key_prefix**: etcd prefix path to be used for fleet keys
+- **etcd_request_timeout**: Amount of time in seconds to allow a single etcd request before considering it failed
+- **etcd_servers**: Comma separated list of etcd endpoints
+- **metadata**: Comma separated key/value pairs that are published with the local to the fleet registry
+- **public_ip**: IP accessible by other nodes for inter-host communication
+- **verbosity**: Enable debug logging by setting this to an integer value greater than zero
+
 For more information on fleet configuration, see the [fleet documentation][fleet-config].
 
 [fleet-config]: https://github.com/coreos/fleet/blob/master/Documentation/deployment-and-configuration.md#configuration
@@ -181,6 +195,8 @@ List of flannel configuration parameters:
 - **interface**: Interface (name or IP) that should be used for inter-host communication
 - **public_ip**: IP accessible by other nodes for inter-host communication
 
+For more information on flannel configuration, see the [flannel documentation][flannel-readme].
+
 [flannel-readme]: https://github.com/coreos/flannel/blob/master/README.md
 
 #### locksmith
@@ -202,6 +218,13 @@ coreos:
 [Service]
 Environment="LOCKSMITHD_ENDPOINT=http://example.com:2379"
 ```
+
+List of locksmith configuration parameters:
+
+- **endpoint**: Comma separated list of etcd endpoints
+- **etcd_cafile**: Path to CA file used for TLS communication with etcd
+- **etcd_certfile**: Path to certificate file used for TLS communication with etcd
+- **etcd_keyfile**: Path to private key file used for TLS communication with etcd
 
 For the complete list of locksmith configuration parameters, see the [locksmith documentation][locksmith-readme].
 
