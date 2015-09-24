@@ -15,8 +15,11 @@
 package config
 
 type Locksmith struct {
-	Endpoint     string `yaml:"endpoint"      env:"LOCKSMITHD_ENDPOINT"`
-	EtcdCAFile   string `yaml:"etcd_cafile"   env:"LOCKSMITHD_ETCD_CAFILE"`
-	EtcdCertFile string `yaml:"etcd_certfile" env:"LOCKSMITHD_ETCD_CERTFILE"`
-	EtcdKeyFile  string `yaml:"etcd_keyfile"  env:"LOCKSMITHD_ETCD_KEYFILE"`
+	Endpoint          string `yaml:"endpoint"      env:"LOCKSMITHD_ENDPOINT"`
+	EtcdCAFile        string `yaml:"etcd_cafile"   env:"LOCKSMITHD_ETCD_CAFILE"`
+	EtcdCertFile      string `yaml:"etcd_certfile" env:"LOCKSMITHD_ETCD_CERTFILE"`
+	EtcdKeyFile       string `yaml:"etcd_keyfile"  env:"LOCKSMITHD_ETCD_KEYFILE"`
+	Group             string `yaml:"group"	       env:"LOCKSMITHD_GROUP"`
+	RebootWindowStart string `yaml:"window_start"  env:"REBOOT_WINDOW_START"`
+	RebootWindowEnd   string `yaml:"window_end"    env:"REBOOT_WINDOW_END"`
 }
