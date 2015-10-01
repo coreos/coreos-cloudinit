@@ -8,5 +8,6 @@ ConditionKernelCommandLine=cloud-config-url
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+Environment=GOMAXPROCS=1
 EnvironmentFile=-/etc/environment
 ExecStart=/usr/bin/coreos-cloudinit --from-proc-cmdline

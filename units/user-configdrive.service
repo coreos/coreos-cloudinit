@@ -18,5 +18,6 @@ After=ec2-cloudinit.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+Environment=GOMAXPROCS=1
 EnvironmentFile=-/etc/environment
 ExecStart=/usr/bin/coreos-cloudinit --from-configdrive=/media/configdrive
