@@ -31,7 +31,7 @@ gofmt -d -e $SRC
 
 # split SRC into an array and prepend REPO_PATH to each local package for go vet
 split_vet=(${SRC// / })
-VET_TEST=${split_vet[@]/#/${REPO_PATH}/}
+VET_TEST="${REPO_PATH} ${split_vet[@]/#/${REPO_PATH}/}"
 
 echo "Checking govet..."
 go vet $VET_TEST
