@@ -38,10 +38,11 @@ type Address struct {
 }
 
 type Interface struct {
-	IPv4 *Address `json:"ipv4"`
-	IPv6 *Address `json:"ipv6"`
-	MAC  string   `json:"mac"`
-	Type string   `json:"type"`
+	IPv4       *Address `json:"ipv4"`
+	IPv6       *Address `json:"ipv6"`
+	AnchorIPv4 *Address `json:"anchor_ipv4"`
+	MAC        string   `json:"mac"`
+	Type       string   `json:"type"`
 }
 
 type Interfaces struct {
