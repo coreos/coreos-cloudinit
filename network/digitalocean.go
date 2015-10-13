@@ -126,6 +126,32 @@ func parseInterface(iface digitalocean.Interface, nameservers []net.IP, useRoute
 			})
 		}
 	}
+	if iface.AnchorIPv4 != nil {
+		var ip, mask, gateway net.IP
+		if ip = net.ParseIP(iface.AnchorIPv4.IPAddress); ip == nil {
+			return nil, fmt.Errorf("could not parse %q as anchor IPv4 address", iface.AnchorIPv4.IPAddress)
+		}
+		if mask = net.ParseIP(iface.AnchorIPv4.Netmask); mask == nil {
+			return nil, fmt.Errorf("could not parse %q as anchor IPv4 mask", iface.AnchorIPv4.Netmask)
+		}
+		addresses = append(addresses, net.IPNet{
+			IP:   ip,
+			Mask: net.IPMask(mask),
+		})
+
+		if useRoute {
+			if gateway = net.ParseIP(iface.AnchorIPv4.Gateway); gateway == nil {
+				return nil, fmt.Errorf("could not parse %q as anchor IPv4 gateway", iface.AnchorIPv4.Gateway)
+			}
+			routes = append(routes, route{
+				destination: net.IPNet{
+					IP:   net.IPv4zero,
+					Mask: net.IPMask(net.IPv4zero),
+				},
+				gateway: gateway,
+			})
+		}
+	}
 
 	hwaddr, err := net.ParseMAC(iface.MAC)
 	if err != nil {
