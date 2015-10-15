@@ -53,4 +53,5 @@ type Etcd2 struct {
 	ProxyWriteTimeout        int    `yaml:"proxy_write_timeout"           env:"ETCD_PROXY_WRITE_TIMEOUT"`
 	SnapshotCount            int    `yaml:"snapshot_count"                env:"ETCD_SNAPSHOT_COUNT"`
 	TrustedCAFile            string `yaml:"trusted_ca_file"               env:"ETCD_TRUSTED_CA_FILE"`
+	WalDir                   string `yaml:"wal_dir"                       env:"ETCD_WAL_DIR"`
 }
