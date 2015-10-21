@@ -1,7 +1,9 @@
-# VMware Backdoor #
+# VMware Backdoor
+
+## Cloud-Config Options List
 
 coreos-cloudinit is capable of reading userdata and metadata from the VMware
-backdoor. This datasource can be enable with the `--from-vmware-backdoor` flag.
+backdoor. This datasource can be enabled with the `--from-vmware-backdoor` flag.
 Userdata and metadata are passed from the hypervisor to the virtual machine
 through guest variables. The following guest variables and their expected types
 are supported by coreos-cloudinit:
@@ -24,3 +26,7 @@ are supported by coreos-cloudinit:
 Note: "n", "m", "l", and "x" are 0-indexed, incrementing integers. The
 identifier for the interfaces does not correspond to anything outside of this
 configuration; it is merely for mapping configuration values to each interface.
+
+Please refer to [link][vmware] to know more how to run CoreOS on VMware.
+
+[vmware]: https://github.com/coreos/docs/blob/master/os/booting-on-vmware.md
