@@ -284,19 +284,6 @@ func TestParseInterface(t *testing.T) {
 		{
 			cfg: digitalocean.Interface{
 				MAC: "01:23:45:67:89:AB",
-				AnchorIPv4: &digitalocean.Address{
-					IPAddress: "1.2.3.4",
-					Netmask:   "255.255.0.0",
-					Gateway:   "bad",
-				},
-			},
-			useRoute: true,
-			nss:      []net.IP{},
-			err:      errors.New("could not parse \"bad\" as anchor IPv4 gateway"),
-		},
-		{
-			cfg: digitalocean.Interface{
-				MAC: "01:23:45:67:89:AB",
 				IPv4: &digitalocean.Address{
 					IPAddress: "1.2.3.4",
 					Netmask:   "255.255.0.0",
@@ -305,7 +292,6 @@ func TestParseInterface(t *testing.T) {
 				AnchorIPv4: &digitalocean.Address{
 					IPAddress: "7.8.9.10",
 					Netmask:   "255.255.0.0",
-					Gateway:   "11.12.13.14",
 				},
 			},
 			useRoute: true,
@@ -326,12 +312,11 @@ func TestParseInterface(t *testing.T) {
 					nameservers: []net.IP{},
 					routes: []route{
 						{
-							net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
-							net.ParseIP("5.6.7.8"),
+							destination: net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
+							gateway:     net.ParseIP("5.6.7.8"),
 						},
 						{
-							net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
-							net.ParseIP("11.12.13.14"),
+							destination: net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
 						},
 					},
 				},
