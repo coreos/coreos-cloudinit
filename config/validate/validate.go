@@ -42,11 +42,13 @@ func Validate(userdataBytes []byte) (Report, error) {
 		return Report{}, nil
 	case config.IsIgnitionConfig(string(userdataBytes)):
 		return Report{}, nil
+	case config.IsMimeMultiPart(string(userdataBytes)):
+		return Report{}, nil
 	case config.IsCloudConfig(string(userdataBytes)):
 		return validateCloudConfig(userdataBytes, Rules)
 	default:
 		return Report{entries: []Entry{
-			Entry{kind: entryError, message: `must be "#cloud-config" or begin with "#!"`, line: 1},
+			Entry{kind: entryError, message: `must be "#cloud-config" or begin with "#!" or be mime-multipart`, line: 1},
 		}}, nil
 	}
 }

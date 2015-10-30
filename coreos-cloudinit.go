@@ -221,8 +221,8 @@ func main() {
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.sshKeyName, metadata)
 	userdata := env.Apply(string(userdataBytes))
 
-	var ccu *config.CloudConfig
-	var script *config.Script
+	var ccu []*config.CloudConfig
+	var scripts []*config.Script
 	switch ud, err := initialize.ParseUserData(userdata); err {
 	case initialize.ErrIgnitionConfig:
 		fmt.Printf("Detected an Ignition config. Exiting...")
@@ -230,9 +230,12 @@ func main() {
 	case nil:
 		switch t := ud.(type) {
 		case *config.CloudConfig:
-			ccu = t
+			ccu = append(ccu, t)
 		case *config.Script:
-			script = t
+			scripts = append(scripts, t)
+		case *config.MimeMultiPart:
+			ccu = t.Configs
+			scripts = t.Scripts
 		}
 	default:
 		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
@@ -240,7 +243,23 @@ func main() {
 	}
 
 	log.Println("Merging cloud-config from meta-data and user-data")
-	cc := mergeConfigs(ccu, metadata)
+	var cc config.CloudConfig
+	if len(ccu) > 0 {
+		cc = mergeConfigs(ccu[0], metadata)
+		for _, c := range ccu[1:] {
+			for _, key := range c.SSHAuthorizedKeys {
+				cc.SSHAuthorizedKeys = append(cc.SSHAuthorizedKeys, key)
+			}
+			for _, user := range c.Users {
+				cc.Users = append(cc.Users, user)
+			}
+			for _, file := range c.WriteFiles {
+				cc.WriteFiles = append(cc.WriteFiles, file)
+			}
+		}
+	} else {
+		cc = mergeConfigs(&cc, metadata)
+	}
 
 	var ifaces []network.InterfaceGenerator
 	if flags.convertNetconf != "" {
@@ -268,10 +287,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if script != nil {
-		if err = runScript(*script, env); err != nil {
-			log.Printf("Failed to run script: %v\n", err)
-			os.Exit(1)
+	if len(scripts) > 0 {
+		for _, s := range scripts {
+			if err = runScript(*s, env); err != nil {
+				log.Printf("Failed to run script: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 

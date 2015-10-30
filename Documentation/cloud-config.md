@@ -22,11 +22,14 @@ We've designed our implementation to allow the same cloud-config file to work ac
 [cloud-init-docs]: http://cloudinit.readthedocs.org/en/latest/index.html
 [cloud-config]: http://cloudinit.readthedocs.org/en/latest/topics/format.html#cloud-config-data
 
-### File Format
+### File Formats
 
-The cloud-config file uses the [YAML][yaml] file format, which uses whitespace and new-lines to delimit lists, associative arrays, and values.
+The configuration format comes in three flavors: cloud-config, shell script, and [MIME multipart mixed][MIME multipart mixed].
 
-A cloud-config file must contain a header: either `#cloud-config` for processing as cloud-config (suggested) or `#!` for processing as a shell script (advanced). If cloud-config has #cloud-config header, it should followed by an associative array which has zero or more of the following keys:
+#### Cloud-config
+The cloud-config format uses the [YAML][yaml] file format, which uses whitespace and new-lines to delimit lists, associative arrays, and values.
+
+A cloud-config formatted file must contain `#cloud-config` header as the first line for processing as cloud-config. Or if part of a MIME multipart document it must contain text/cloud-config as the content type. cloud-config data consists of an associative array which has zero or more of the following keys:
 
 - `coreos`
 - `ssh_authorized_keys`
@@ -35,11 +38,23 @@ A cloud-config file must contain a header: either `#cloud-config` for processing
 - `write_files`
 - `manage_etc_hosts`
 
-The expected values for these keys are defined in the rest of this document.
-
-If cloud-config header starts on `#!` then coreos-cloudinit will recognize it as shell script which is interpreted by bash and run it as transient systemd service.
-
 [yaml]: https://en.wikipedia.org/wiki/YAML
+[MIME multipart mixed]: https://en.wikipedia.org/wiki/MIME#Multipart_messages
+
+#### Shell Script
+
+The shell script format must contain a hashbang `#!` as its first line for processing as a shell script (advanced). Or if part of a MIME multipart mixed document it must contain text/x-shellscript as the content type.
+
+#### MIME Multipart Mixed
+
+The [MIME multipart mixed][MIME multipart mixed] format supports combining the above two formats as well as including configurations from external sources. This allows vendors to easily combine separate types of userdata from different sources, such as a user shell script and cloud-config section. If multiple cloud-config sections are specified, they will be merged in the order specified.
+
+The following MIME content types are supported:
+
+- `text/x-include-url` - The body should specify a URL or list of URLs. The URLs can point to shell scripts or cloud-config sections, which will be downloaded and processed accordingly.
+- `text/cloud-config` - The body is cloud-config data.
+- `text/x-shellscript` - The body will be executed as a shell script and must begin with a `#!`
+- `text/plain` - If the body is a cloud-config document starting with `#cloud-config` or a userdata script starting with `#!`, it will be processed as such. Otherwise, it will not be acted on.
 
 ### Providing Cloud-Config with Config-Drive
 

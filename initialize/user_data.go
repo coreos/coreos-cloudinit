@@ -39,6 +39,8 @@ func ParseUserData(contents string) (interface{}, error) {
 		return config.NewCloudConfig(contents)
 	case config.IsIgnitionConfig(contents):
 		return nil, ErrIgnitionConfig
+	case config.IsMimeMultiPart(contents):
+		return config.NewMimeMultiPart(contents)
 	default:
 		return nil, errors.New("Unrecognized user-data format")
 	}
