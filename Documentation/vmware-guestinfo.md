@@ -1,14 +1,16 @@
-# VMware Backdoor
+# VMWare Guestinfo Interface
 
-## Cloud-Config Options List
+## Cloud-Config VMWare Guestinfo Variables
 
-coreos-cloudinit is capable of reading userdata and metadata from the VMware
-backdoor. This datasource can be enabled with the `--from-vmware-backdoor` flag.
-Userdata and metadata are passed from the hypervisor to the virtual machine
-through guest variables. The following guest variables and their expected types
-are supported by coreos-cloudinit:
+coreos-cloudinit accepts configuration from the VMware RPC API's *guestinfo*
+facility. This datasource can be enabled with the `-from-vmware-guestinfo`
+flag to coreos-cloudinit.
 
-|            guest variable             |              type               |
+The following guestinfo variables are recognized and processed by cloudinit
+when passed from the hypervisor to the virtual machine at boot time. Note that
+property names are prefixed with `guestinfo.` in the VMX, e.g., `guestinfo.hostname`.
+
+|            guestinfo variable             |              type               |
 |:--------------------------------------|:--------------------------------|
 | `hostname`                            | `hostname`                      |
 | `interface.<n>.name`                  | `string`                        |
@@ -24,9 +26,10 @@ are supported by coreos-cloudinit:
 | `coreos.config.url`                   | `URL`                           |
 
 Note: "n", "m", "l", and "x" are 0-indexed, incrementing integers. The
-identifier for the interfaces does not correspond to anything outside of this
-configuration; it is merely for mapping configuration values to each interface.
+identifier for an `interface` does not correspond to anything outside of this
+configuration; it serves only to distinguish between multiple `interface`s.
 
-Please refer to [link][vmware] to know more how to run CoreOS on VMware.
+The guide to [booting on VMWare][bootvmware] is the starting point for more
+information about configuring and running CoreOS on VMWare.
 
-[vmware]: https://github.com/coreos/docs/blob/master/os/booting-on-vmware.md
+[bootvmware]: https://github.com/coreos/docs/blob/master/os/booting-on-vmware.md
