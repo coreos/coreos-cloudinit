@@ -12,15 +12,15 @@ Location | Description
 |`/var/lib/coreos-vagrant/vagrantfile-user-data`| Vagrant OEM scripts automatically store Cloud-Config into this path. |
 |`/var/lib/waagent/CustomData`| Azure platform uses OEM path for first Cloud-Config initialization and then `/var/lib/waagent/CustomData` to apply your settings.|
 |`http://169.254.169.254/metadata/v1/user-data` `http://169.254.169.254/2009-04-04/user-data` `https://metadata.packet.net/userdata`|DigitalOcean, EC2 and Packet cloud providers correspondingly use these URLs to download Cloud-Config.|
-|`/usr/share/oem/bin/vmtoolsd --cmd "info-get guestinfo.coreos.config.data"`|Cloud-Config provided by [VMware Backdoor][VMware Backdoor]|
-|`/usr/share/oem/bin/vmtoolsd --cmd "info-get guestinfo.coreos.config.url"`|Cloud-Config URL provided by [VMware Backdoor][VMware Backdoor]|
+|`/usr/share/oem/bin/vmtoolsd --cmd "info-get guestinfo.coreos.config.data"`|Cloud-Config provided by [VMware Guestinfo][VMware Guestinfo]|
+|`/usr/share/oem/bin/vmtoolsd --cmd "info-get guestinfo.coreos.config.url"`|Cloud-Config URL provided by [VMware Guestinfo][VMware Guestinfo]|
 
-[VMware Backdoor]: vmware-backdoor.md
+[VMware Guestinfo]: vmware-guestinfo.md
 
 You can also run the `coreos-cloudinit` tool manually and provide a path to your custom Cloud-Config file:
 
 ```sh
 sudo coreos-cloudinit --from-file=/home/core/cloud-config.yaml
-``` 
+```
 
 This command will apply your custom cloud-config.
