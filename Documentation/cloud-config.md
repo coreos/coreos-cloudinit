@@ -81,7 +81,7 @@ For more information about the available configuration parameters, see the [etcd
 
 _Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced in other documents are only supported on Amazon EC2, Google Compute Engine, OpenStack, Rackspace, DigitalOcean, and Vagrant._
 
-[etcd-config]: https://github.com/coreos/etcd/blob/9fa3bea5a22265151f0d5063ce38a79c5b5d0271/Documentation/configuration.md
+[etcd-config]: https://github.com/coreos/etcd/blob/release-0.4/Documentation/configuration.md
 
 #### etcd2
 
@@ -117,11 +117,11 @@ Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379,http://0.0.0.0:4001"
 Environment="ETCD_LISTEN_PEER_URLS=http://192.0.2.13:2380,http://192.0.2.13:7001"
 ```
 
-For more information about the available configuration parameters, see the [etcd documentation][etcd-config].
+For more information about the available configuration parameters, see the [etcd2 documentation][etcd2-config].
 
 _Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced in other documents are only supported on Amazon EC2, Google Compute Engine, OpenStack, Rackspace, DigitalOcean, and Vagrant._
 
-[etcd-config]: https://github.com/coreos/etcd/blob/86e616c6e974828fc9119c1eb0f6439577a9ce0b/Documentation/configuration.md
+[etcd2-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
 
 #### fleet
 
