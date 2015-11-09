@@ -68,6 +68,99 @@ func NewCloudConfig(contents string) (*CloudConfig, error) {
 	return &cfg, err
 }
 
+func (co *CoreOS) Merge(mergeWith CoreOS) {
+	mergeStruct(reflect.ValueOf(co).Elem(), reflect.ValueOf(mergeWith))
+	for _, u := range mergeWith.Units {
+		if unit := co.findUnit(u.Name); unit != nil {
+			unit.Merge(u)
+		} else {
+			co.Units = append(co.Units, u)
+		}
+	}
+}
+func (co *CoreOS) findUnit(unitName string) *Unit {
+	for i, u := range co.Units {
+		if u.Name == unitName {
+			return &co.Units[i]
+		}
+	}
+	return nil
+}
+
+// Deep config merge:
+// - Slice members are combined without duplicates
+// - Other fields(except structs) will be overwrited with value from mergeWith unless it is zero
+// i.e. if some parameter was intentionally set to zero value in mergeWith it will not be changed
+// because were is no way to tell if param was set to zero or was just missing in yaml
+func (cc *CloudConfig) Merge(mergeWith *CloudConfig) {
+	mergeStruct(reflect.ValueOf(cc).Elem(), reflect.ValueOf(mergeWith).Elem())
+	for _, key := range mergeWith.SSHAuthorizedKeys {
+		if !cc.sshKeyAlreadyExists(key) {
+			cc.SSHAuthorizedKeys = append(cc.SSHAuthorizedKeys, key)
+		}
+	}
+	for _, user := range mergeWith.Users {
+		if u := cc.findUser(user.Name); u != nil {
+			u.Merge(user)
+		} else {
+			cc.Users = append(cc.Users, user)
+		}
+	}
+	for _, file := range mergeWith.WriteFiles {
+		if !cc.writeFileAlreadyExists(file.Path) {
+			cc.WriteFiles = append(cc.WriteFiles, file)
+		}
+	}
+	cc.CoreOS.Merge(mergeWith.CoreOS)
+}
+
+func (cc *CloudConfig) writeFileAlreadyExists(path string) bool {
+	for _, file := range cc.WriteFiles {
+		if file.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
+func (cc *CloudConfig) sshKeyAlreadyExists(sshKey string) bool {
+	for _, key := range cc.SSHAuthorizedKeys {
+		if key == sshKey {
+			return true
+		}
+	}
+	return false
+}
+
+func (cc *CloudConfig) findUser(user string) *User {
+	for i, u := range cc.Users {
+		if u.Name == user {
+			return &cc.Users[i]
+		}
+	}
+	return nil
+}
+
+func mergeStruct(dst, src reflect.Value) {
+	for i, n := 0, dst.NumField(); i < n; i++ {
+		srcField := src.Field(i)
+		dstField := dst.Field(i)
+		switch dstField.Kind() {
+		case reflect.Struct:
+			_, provideMerge := dstField.Type().MethodByName("Merge")
+			if !provideMerge {
+				mergeStruct(dstField, srcField)
+			}
+		case reflect.Slice:
+			continue
+		default:
+			if dstField.CanSet() && !isZero(srcField) {
+				dstField.Set(srcField)
+			}
+		}
+	}
+}
+
 func (cc CloudConfig) String() string {
 	bytes, err := yaml.Marshal(cc)
 	if err != nil {

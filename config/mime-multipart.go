@@ -14,7 +14,7 @@ import (
 
 type MimeMultiPart struct {
 	Scripts []*Script
-	Configs []*CloudConfig
+	Config  *CloudConfig
 }
 
 func (m *MimeMultiPart) AddScript(script []byte) error {
@@ -28,7 +28,11 @@ func (m *MimeMultiPart) AddScript(script []byte) error {
 func (m *MimeMultiPart) AddCloudConfig(config []byte) error {
 	c, err := NewCloudConfig(string(config))
 	if err == nil {
-		m.Configs = append(m.Configs, c)
+		if m.Config == nil {
+			m.Config = c
+		} else {
+			m.Config.Merge(c)
+		}
 	}
 	return err
 }

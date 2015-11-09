@@ -31,3 +31,48 @@ type User struct {
 	NoLogInit            bool     `yaml:"no_log_init"`
 	Shell                string   `yaml:"shell"`
 }
+
+func (u *User) Merge(mergeWith User) {
+	for _, key := range mergeWith.SSHAuthorizedKeys {
+		if !u.sshKeyAlreadyExists(key) {
+			u.SSHAuthorizedKeys = append(u.SSHAuthorizedKeys, key)
+		}
+	}
+	for _, user := range mergeWith.SSHImportGithubUsers {
+		if !u.sshImportGithubUserAlreadyExists(user) {
+			u.SSHImportGithubUsers = append(u.SSHImportGithubUsers, user)
+		}
+	}
+	for _, group := range mergeWith.Groups {
+		if !u.groupAlreadyExists(group) {
+			u.Groups = append(u.Groups, group)
+		}
+	}
+}
+
+func (u *User) sshKeyAlreadyExists(sshKey string) bool {
+	for _, key := range u.SSHAuthorizedKeys {
+		if key == sshKey {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) sshImportGithubUserAlreadyExists(sshGithubUser string) bool {
+	for _, user := range u.SSHImportGithubUsers {
+		if user == sshGithubUser {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) groupAlreadyExists(group string) bool {
+	for _, g := range u.Groups {
+		if g == group {
+			return true
+		}
+	}
+	return false
+}

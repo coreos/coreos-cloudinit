@@ -221,7 +221,7 @@ func main() {
 	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.sshKeyName, metadata)
 	userdata := env.Apply(string(userdataBytes))
 
-	var ccu []*config.CloudConfig
+	var ccu *config.CloudConfig
 	var scripts []*config.Script
 	switch ud, err := initialize.ParseUserData(userdata); err {
 	case initialize.ErrIgnitionConfig:
@@ -230,11 +230,11 @@ func main() {
 	case nil:
 		switch t := ud.(type) {
 		case *config.CloudConfig:
-			ccu = append(ccu, t)
+			ccu = t
 		case *config.Script:
 			scripts = append(scripts, t)
 		case *config.MimeMultiPart:
-			ccu = t.Configs
+			ccu = t.Config
 			scripts = t.Scripts
 		}
 	default:
@@ -243,23 +243,7 @@ func main() {
 	}
 
 	log.Println("Merging cloud-config from meta-data and user-data")
-	var cc config.CloudConfig
-	if len(ccu) > 0 {
-		cc = mergeConfigs(ccu[0], metadata)
-		for _, c := range ccu[1:] {
-			for _, key := range c.SSHAuthorizedKeys {
-				cc.SSHAuthorizedKeys = append(cc.SSHAuthorizedKeys, key)
-			}
-			for _, user := range c.Users {
-				cc.Users = append(cc.Users, user)
-			}
-			for _, file := range c.WriteFiles {
-				cc.WriteFiles = append(cc.WriteFiles, file)
-			}
-		}
-	} else {
-		cc = mergeConfigs(&cc, metadata)
-	}
+	cc := mergeConfigs(ccu, metadata)
 
 	var ifaces []network.InterfaceGenerator
 	if flags.convertNetconf != "" {

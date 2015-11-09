@@ -13,18 +13,13 @@ func sameMimeMultiParts(a, b MimeMultiPart) bool {
 	if len(a.Scripts) != len(b.Scripts) {
 		return false
 	}
-	if len(a.Configs) != len(b.Configs) {
-		return false
-	}
 	for i, _ := range a.Scripts {
 		if !bytes.Equal(*a.Scripts[i], *b.Scripts[i]) {
 			return false
 		}
 	}
-	for i, _ := range a.Configs {
-		if !reflect.DeepEqual(a.Configs[i], b.Configs[i]) {
-			return false
-		}
+	if !reflect.DeepEqual(a.Config, b.Config) {
+		return false
 	}
 	return true
 }
@@ -66,7 +61,7 @@ Content-Type: text/cloud-config
 %s
 --Boundary_ayn1dgbfbd03yc84am2azq--
 `, testScript, testConfig),
-			mmp: MimeMultiPart{Scripts: []*Script{t1}, Configs: []*CloudConfig{t2}},
+			mmp: MimeMultiPart{Scripts: []*Script{t1}, Config: t2},
 		},
 		{
 			contents: fmt.Sprintf(`Content-ID: <a4cdaxbfbd03yc84am2be4@ek4znmbfbd03yc84am2bfw.local>
@@ -85,7 +80,7 @@ Content-Type: text/cloud-config
 %s
 --Boundary_ayn1dgbfbd03yc84am2azq--
 `, testServer.URL, testConfig),
-			mmp: MimeMultiPart{Scripts: []*Script{t1}, Configs: []*CloudConfig{t2}},
+			mmp: MimeMultiPart{Scripts: []*Script{t1}, Config: t2},
 		},
 	}
 

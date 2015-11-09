@@ -28,3 +28,20 @@ type UnitDropIn struct {
 	Name    string `yaml:"name"`
 	Content string `yaml:"content"`
 }
+
+func (u *Unit) Merge(mergeWith Unit) {
+	for _, dropIn := range mergeWith.DropIns {
+		if !u.dropInAlreadyExists(dropIn.Name) {
+			u.DropIns = append(u.DropIns, dropIn)
+		}
+	}
+}
+
+func (u *Unit) dropInAlreadyExists(dropInName string) bool {
+	for _, dropIn := range u.DropIns {
+		if dropIn.Name == dropInName {
+			return true
+		}
+	}
+	return false
+}
