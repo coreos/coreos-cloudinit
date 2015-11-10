@@ -3,7 +3,7 @@
 ## Cloud-Config VMWare Guestinfo Variables
 
 coreos-cloudinit accepts configuration from the VMware RPC API's *guestinfo*
-facility. This datasource can be enabled with the `-from-vmware-guestinfo`
+facility. This datasource can be enabled with the `--from-vmware-guestinfo`
 flag to coreos-cloudinit.
 
 The following guestinfo variables are recognized and processed by cloudinit
