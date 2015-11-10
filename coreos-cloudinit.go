@@ -169,7 +169,7 @@ func main() {
 
 	dss := getDatasources()
 	if len(dss) == 0 {
-		fmt.Println("Provide at least one of -from-file, -from-configdrive, -from-ec2-metadata, -from-cloudsigma-metadata, -from-packet-metadata, -from-digitalocean-metadata, -from-vmware-guestinfo, -from-waagent, -from-url or -from-proc-cmdline")
+		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-packet-metadata, --from-digitalocean-metadata, --from-vmware-guestinfo, --from-waagent, --from-url or --from-proc-cmdline")
 		os.Exit(2)
 	}
 
