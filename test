@@ -21,6 +21,7 @@ SRC="
 	network
 	pkg
 	system
+	.
 "
 
 echo "Checking gofix..."
