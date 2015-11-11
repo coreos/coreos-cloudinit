@@ -15,8 +15,11 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -183,6 +186,11 @@ func main() {
 	userdataBytes, err := ds.FetchUserdata()
 	if err != nil {
 		log.Printf("Failed fetching user-data from datasource: %v. Continuing...\n", err)
+		failure = true
+	}
+	userdataBytes, err = decompressIfGzip(userdataBytes)
+	if err != nil {
+		log.Printf("Failed decompressing user-data from datasource: %v. Continuing...\n", err)
 		failure = true
 	}
 
@@ -398,4 +406,18 @@ func runScript(script config.Script, env *initialize.Environment) error {
 		initialize.PersistUnitNameInWorkspace(name, env.Workspace())
 	}
 	return err
+}
+
+const gzipMagicBytes = "\x1f\x8b"
+
+func decompressIfGzip(userdataBytes []byte) ([]byte, error) {
+	if !bytes.HasPrefix(userdataBytes, []byte(gzipMagicBytes)) {
+		return userdataBytes, nil
+	}
+	gzr, err := gzip.NewReader(bytes.NewReader(userdataBytes))
+	if err != nil {
+		return nil, err
+	}
+	defer gzr.Close()
+	return ioutil.ReadAll(gzr)
 }
