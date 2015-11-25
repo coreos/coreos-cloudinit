@@ -18,15 +18,13 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"os/user"
 	"strings"
 
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
 func UserExists(u *config.User) bool {
-	_, err := user.Lookup(u.Name)
-	return err == nil
+       return exec.Command("getent", "passwd", u.Name).Run() == nil
 }
 
 func CreateUser(u *config.User) error {
@@ -81,12 +79,46 @@ func CreateUser(u *config.User) error {
 	output, err := exec.Command("useradd", args...).CombinedOutput()
 	if err != nil {
 		log.Printf("Command 'useradd %s' failed: %v\n%s", strings.Join(args, " "), err, output)
+		return err
+	}
+
+	return nil
+}
+
+func IsLockedUser(u *config.User) bool {
+	output, err := exec.Command("getent", "shadow", u.Name).CombinedOutput()
+	if err == nil {
+		fields := strings.Split(string(output), ":")
+		if len(fields[1]) > 1 && fields[1][0] == '!' {
+			return true
+		}
+	}
+	return false
+}
+
+func LockUnlockUser(u *config.User) error {
+	args := []string{}
+
+	if u.LockPasswd {
+		args = append(args, "-l")
+	} else {
+		if !IsLockedUser(u) {
+			return nil
+		}
+		args = append(args, "-u")
+	}
+
+	args = append(args, u.Name)
+
+	output, err := exec.Command("passwd", args...).CombinedOutput()
+	if err != nil {
+		log.Printf("Command 'passwd %s' failed: %v\n%s", strings.Join(args, " "), err, output)
 	}
 	return err
 }
 
 func SetUserPassword(user, hash string) error {
-	cmd := exec.Command("/usr/sbin/chpasswd", "-e")
+	cmd := exec.Command("chpasswd", "-e")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -111,4 +143,13 @@ func SetUserPassword(user, hash string) error {
 	}
 
 	return nil
+}
+
+func UserHome(name string) (string, error) {
+	output, err := exec.Command("getent", "passwd", name).CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	passwd := strings.Split(string(output), ":")
+	return passwd[5], nil
 }

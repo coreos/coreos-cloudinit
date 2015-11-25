@@ -24,6 +24,7 @@ type User struct {
 	GECOS                string   `yaml:"gecos"`
 	Homedir              string   `yaml:"homedir"`
 	NoCreateHome         bool     `yaml:"no_create_home"`
+	LockPasswd           bool     `yaml:"lock_passwd"`
 	PrimaryGroup         string   `yaml:"primary_group"`
 	Groups               []string `yaml:"groups"`
 	NoUserGroup          bool     `yaml:"no_user_group"`
