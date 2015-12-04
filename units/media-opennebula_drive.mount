@@ -1,0 +1,13 @@
+[Unit]
+Wants=user-opennebula_drive.service
+Before=user-opennebula_drive.service
+# Only mount config drive block devices automatically in virtual machines
+# or any host that has it explicitly enabled and not explicitly disabled.
+ConditionVirtualization=|vm
+ConditionKernelCommandLine=|coreos.opennebula_drive=1
+ConditionKernelCommandLine=!coreos.opennebula_drive=0
+
+[Mount]
+What=LABEL=CONTEXT
+Where=/media/opennebula_drive
+Options=ro
