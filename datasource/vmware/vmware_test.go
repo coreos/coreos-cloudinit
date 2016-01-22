@@ -16,7 +16,9 @@ package vmware
 
 import (
 	"errors"
+	"io/ioutil"
 	"net"
+	"os"
 	"reflect"
 	"testing"
 
@@ -27,6 +29,18 @@ type MockHypervisor map[string]string
 
 func (h MockHypervisor) ReadConfig(key string) (string, error) {
 	return h[key], nil
+}
+
+var fakeDownloader urlDownloadFunction = func(url string) ([]byte, error) {
+	mapping := map[string]struct {
+		data []byte
+		err  error
+	}{
+		"http://good.example.com": {[]byte("test config"), nil},
+		"http://bad.example.com":  {nil, errors.New("Not found")},
+	}
+	val := mapping[url]
+	return val.data, val.err
 }
 
 func TestFetchMetadata(t *testing.T) {
@@ -179,22 +193,10 @@ func TestFetchUserdata(t *testing.T) {
 		},
 	}
 
-	var downloader urlDownloadFunction = func(url string) ([]byte, error) {
-		mapping := map[string]struct {
-			data []byte
-			err  error
-		}{
-			"http://good.example.com": {[]byte("test config"), nil},
-			"http://bad.example.com":  {nil, errors.New("Not found")},
-		}
-		val := mapping[url]
-		return val.data, val.err
-	}
-
 	for i, tt := range tests {
 		v := vmware{
 			readConfig:  tt.variables.ReadConfig,
-			urlDownload: downloader,
+			urlDownload: fakeDownloader,
 		}
 		userdata, err := v.FetchUserdata()
 		if !reflect.DeepEqual(tt.err, err) {
@@ -213,4 +215,84 @@ func TestFetchUserdataError(t *testing.T) {
 	if testErr != err {
 		t.Errorf("bad error: want %v, got %v", testErr, err)
 	}
+}
+
+func TestOvfTransport(t *testing.T) {
+	tests := []struct {
+		document string
+
+		metadata datasource.Metadata
+		userdata []byte
+	}{
+		{
+			document: `<?xml version="1.0" encoding="UTF-8"?>
+<Environment xmlns="http://schemas.dmtf.org/ovf/environment/1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:oe="http://schemas.dmtf.org/ovf/environment/1"
+     oe:id="CoreOS-vmw">
+   <PlatformSection>
+      <Kind>VMware ESXi</Kind>
+      <Version>5.5.0</Version>
+      <Vendor>VMware, Inc.</Vendor>
+      <Locale>en</Locale>
+   </PlatformSection>
+   <PropertySection>
+      <Property oe:key="foo" oe:value="42"/>
+      <Property oe:key="guestinfo.coreos.config.url" oe:value="http://good.example.com"/>
+      <Property oe:key="guestinfo.hostname" oe:value="test host"/>
+      <Property oe:key="guestinfo.interface.0.name" oe:value="test name"/>
+      <Property oe:key="guestinfo.interface.0.role" oe:value="public"/>
+      <Property oe:key="guestinfo.interface.0.ip.0.address" oe:value="10.0.0.100/24"/>
+      <Property oe:key="guestinfo.interface.0.ip.1.address" oe:value="10.0.0.101/24"/>
+      <Property oe:key="guestinfo.interface.0.route.0.gateway" oe:value="10.0.0.1"/>
+      <Property oe:key="guestinfo.interface.0.route.0.destination" oe:value="0.0.0.0"/>
+      <Property oe:key="guestinfo.interface.1.mac" oe:value="test mac"/>
+      <Property oe:key="guestinfo.interface.1.role" oe:value="private"/>
+      <Property oe:key="guestinfo.interface.1.route.0.gateway" oe:value="10.0.0.2"/>
+      <Property oe:key="guestinfo.interface.1.route.0.destination" oe:value="0.0.0.0"/>
+      <Property oe:key="guestinfo.interface.1.ip.0.address" oe:value="10.0.0.102/24"/>
+   </PropertySection>
+</Environment>`,
+			metadata: datasource.Metadata{
+				Hostname:    "test host",
+				PublicIPv4:  net.ParseIP("10.0.0.101"),
+				PrivateIPv4: net.ParseIP("10.0.0.102"),
+				NetworkConfig: map[string]string{
+					"interface.0.name":                "test name",
+					"interface.0.ip.0.address":        "10.0.0.100/24",
+					"interface.0.ip.1.address":        "10.0.0.101/24",
+					"interface.0.route.0.gateway":     "10.0.0.1",
+					"interface.0.route.0.destination": "0.0.0.0",
+					"interface.1.mac":                 "test mac",
+					"interface.1.route.0.gateway":     "10.0.0.2",
+					"interface.1.route.0.destination": "0.0.0.0",
+					"interface.1.ip.0.address":        "10.0.0.102/24",
+				},
+			},
+			userdata: []byte("test config"),
+		},
+	}
+
+	for i, tt := range tests {
+		file, err := ioutil.TempFile(os.TempDir(), "ovf")
+		if err != nil {
+			t.Errorf("error creating ovf file (#%d)", i)
+		}
+		defer os.Remove(file.Name())
+
+		file.WriteString(tt.document)
+		v := NewDatasource(file.Name())
+		v.urlDownload = fakeDownloader
+
+		metadata, err := v.FetchMetadata()
+		userdata, err := v.FetchUserdata()
+
+		if !reflect.DeepEqual(tt.metadata, metadata) {
+			t.Errorf("bad metadata (#%d): want %#v, got %#v", i, tt.metadata, metadata)
+		}
+		if !reflect.DeepEqual(tt.userdata, userdata) {
+			t.Errorf("bad userdata (#%d): want %#v, got %#v", i, tt.userdata, userdata)
+		}
+	}
+
 }

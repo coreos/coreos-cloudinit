@@ -16,8 +16,10 @@ package vmware
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
+	"os"
 
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/datasource"
@@ -25,17 +27,60 @@ import (
 
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/rpcvmx"
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/vmcheck"
+	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-ovflib"
 )
 
 type readConfigFunction func(key string) (string, error)
 type urlDownloadFunction func(url string) ([]byte, error)
 
 type vmware struct {
+	ovfFileName string
 	readConfig  readConfigFunction
 	urlDownload urlDownloadFunction
 }
 
-func NewDatasource() *vmware {
+type ovfWrapper struct {
+	env *ovf.OvfEnvironment
+}
+
+func (ovf ovfWrapper) readConfig(key string) (string, error) {
+	return ovf.env.Properties["guestinfo."+key], nil
+}
+
+func NewDatasource(fileName string) *vmware {
+	getOvfReadConfig := func(ovfEnv []byte) readConfigFunction {
+		env := &ovf.OvfEnvironment{}
+		if len(ovfEnv) != 0 {
+			env = ovf.ReadEnvironment(ovfEnv)
+		}
+
+		wrapper := ovfWrapper{env}
+		return wrapper.readConfig
+	}
+
+	// read from provided ovf environment document (typically /media/ovfenv/ovf-env.xml)
+	if fileName != "" {
+		ovfEnv, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			ovfEnv = make([]byte, 0)
+		}
+		return &vmware{
+			ovfFileName: fileName,
+			readConfig:  getOvfReadConfig(ovfEnv),
+			urlDownload: urlDownload,
+		}
+	}
+
+	// try to read ovf environment from VMware tools
+	data, err := rpcvmx.NewConfig().GetString("ovfenv", "")
+	if err == nil {
+		return &vmware{
+			readConfig:  getOvfReadConfig([]byte(data)),
+			urlDownload: urlDownload,
+		}
+	}
+
+	// if everything fails, fallback to directly reading variables from the backdoor
 	return &vmware{
 		readConfig:  readConfig,
 		urlDownload: urlDownload,
@@ -43,6 +88,10 @@ func NewDatasource() *vmware {
 }
 
 func (v vmware) IsAvailable() bool {
+	if v.ovfFileName != "" {
+		_, err := os.Stat(v.ovfFileName)
+		return !os.IsNotExist(err)
+	}
 	return vmcheck.IsVirtualWorld()
 }
 
