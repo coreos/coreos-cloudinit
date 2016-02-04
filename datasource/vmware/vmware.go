@@ -72,7 +72,7 @@ func NewDatasource(fileName string) *vmware {
 	}
 
 	// try to read ovf environment from VMware tools
-	data, err := rpcvmx.NewConfig().GetString("ovfenv", "")
+	data, err := rpcvmx.NewConfig().String("ovfenv", "")
 	if err == nil {
 		return &vmware{
 			readConfig:  getOvfReadConfig([]byte(data)),
@@ -222,7 +222,7 @@ func urlDownload(url string) ([]byte, error) {
 }
 
 func readConfig(key string) (string, error) {
-	data, err := rpcvmx.NewConfig().GetString(key, "")
+	data, err := rpcvmx.NewConfig().String(key, "")
 	if err == nil {
 		log.Printf("Read from %q: %q\n", key, data)
 	} else {
