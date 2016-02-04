@@ -37,6 +37,10 @@
 		{
 			"ImportPath": "github.com/sigma/vmw-ovflib",
 			"Rev": "56b4f44581cac03d17d8270158bdfd0942ffe790"
+		},
+		{
+			"ImportPath": "github.com/sigma/bdoor",
+			"Rev": "babf2a4017b020d4ce04e8167076186e82645dd1"
 		}
 	]
 }
