@@ -13,10 +13,15 @@ func main() {
 		return
 	}
 
-	version, typ := vmcheck.GetVersion()
-	fmt.Println(version, typ)
-
 	config := rpcvmx.NewConfig()
-	fmt.Println(config.GetString("foo", "foo"))
-	fmt.Println(config.GetString("bar", "foo"))
+
+	fmt.Println(config.SetString("foo", "bar"))
+	fmt.Println(config.String("foo", "foo"))
+
+	fmt.Println(config.SetInt("foo", 3))
+	fmt.Println(config.Int("foo", 0))
+
+	fmt.Println(config.SetBool("foo", false))
+	fmt.Println(config.Bool("foo", true))
+
 }

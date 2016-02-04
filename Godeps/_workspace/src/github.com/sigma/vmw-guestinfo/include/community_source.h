@@ -38,6 +38,7 @@
 
 #ifndef _COMMUNITY_SOURCE_H_
 #define _COMMUNITY_SOURCE_H_
+
 /* 
  * Convenience macro for COMMUNITY_SOURCE
  */

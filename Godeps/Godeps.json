@@ -32,7 +32,7 @@
 		},
 		{
 			"ImportPath": "github.com/sigma/vmw-guestinfo",
-			"Rev": "c036b3e8a5c2736a7b1ab6eb8a52d18a87779820"
+			"Rev": "95dd4126d6e8b4ef1970b3f3fe2e8cdd470d2903"
 		},
 		{
 			"ImportPath": "github.com/sigma/vmw-ovflib",
