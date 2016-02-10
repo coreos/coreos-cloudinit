@@ -60,6 +60,7 @@ func NewDatasource(fileName string) *vmware {
 
 	// read from provided ovf environment document (typically /media/ovfenv/ovf-env.xml)
 	if fileName != "" {
+		log.Printf("Using OVF environment from %s\n", fileName)
 		ovfEnv, err := ioutil.ReadFile(fileName)
 		if err != nil {
 			ovfEnv = make([]byte, 0)
@@ -72,8 +73,9 @@ func NewDatasource(fileName string) *vmware {
 	}
 
 	// try to read ovf environment from VMware tools
-	data, err := rpcvmx.NewConfig().GetString("ovfenv", "")
-	if err == nil {
+	data, err := readConfig("ovfenv")
+	if err == nil && data != "" {
+		log.Printf("Using OVF environment from guestinfo\n")
 		return &vmware{
 			readConfig:  getOvfReadConfig([]byte(data)),
 			urlDownload: urlDownload,
@@ -81,6 +83,7 @@ func NewDatasource(fileName string) *vmware {
 	}
 
 	// if everything fails, fallback to directly reading variables from the backdoor
+	log.Printf("Using guestinfo variables\n")
 	return &vmware{
 		readConfig:  readConfig,
 		urlDownload: urlDownload,
@@ -222,7 +225,7 @@ func urlDownload(url string) ([]byte, error) {
 }
 
 func readConfig(key string) (string, error) {
-	data, err := rpcvmx.NewConfig().GetString(key, "")
+	data, err := rpcvmx.NewConfig().String(key, "")
 	if err == nil {
 		log.Printf("Read from %q: %q\n", key, data)
 	} else {

@@ -3,7 +3,6 @@ package rpcvmx
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/rpcout"
 )
@@ -16,8 +15,8 @@ func NewConfig() *Config {
 	return &Config{}
 }
 
-// GetString returns the config string in the guestinfo.* namespace
-func (c *Config) GetString(key string, defaultValue string) (string, error) {
+// String returns the config string in the guestinfo.* namespace
+func (c *Config) String(key string, defaultValue string) (string, error) {
 	out, ok, err := rpcout.SendOne("info-get guestinfo.%s", key)
 	if err != nil {
 		return "", err
@@ -27,25 +26,22 @@ func (c *Config) GetString(key string, defaultValue string) (string, error) {
 	return string(out), nil
 }
 
-// GetBool returns the config boolean in the guestinfo.* namespace
-func (c *Config) GetBool(key string, defaultValue bool) (bool, error) {
-	val, err := c.GetString(key, fmt.Sprintf("%t", defaultValue))
+// Bool returns the config boolean in the guestinfo.* namespace
+func (c *Config) Bool(key string, defaultValue bool) (bool, error) {
+	val, err := c.String(key, fmt.Sprintf("%t", defaultValue))
 	if err != nil {
 		return false, err
 	}
-	switch strings.ToLower(val) {
-	case "true":
-		return true, nil
-	case "false":
-		return false, nil
-	default:
+	res, err := strconv.ParseBool(val)
+	if err != nil {
 		return defaultValue, nil
 	}
+	return res, nil
 }
 
-// GetInt returns the config integer in the guestinfo.* namespace
-func (c *Config) GetInt(key string, defaultValue int) (int, error) {
-	val, err := c.GetString(key, "")
+// Int returns the config integer in the guestinfo.* namespace
+func (c *Config) Int(key string, defaultValue int) (int, error) {
+	val, err := c.String(key, "")
 	if err != nil {
 		return 0, err
 	}
@@ -54,4 +50,23 @@ func (c *Config) GetInt(key string, defaultValue int) (int, error) {
 		return defaultValue, nil
 	}
 	return res, nil
+}
+
+// SetString sets the guestinfo.KEY with the string VALUE
+func (c *Config) SetString(key string, value string) error {
+	_, _, err := rpcout.SendOne("info-set guestinfo.%s %s", key, value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetString sets the guestinfo.KEY with the bool VALUE
+func (c *Config) SetBool(key string, value bool) error {
+	return c.SetString(key, strconv.FormatBool(value))
+}
+
+// SetString sets the guestinfo.KEY with the int VALUE
+func (c *Config) SetInt(key string, value int) error {
+	return c.SetString(key, strconv.Itoa(value))
 }
