@@ -500,3 +500,101 @@ users:
 		t.Errorf("ssh import url is %q, expected 'https://token:x-auth-token@github.enterprise.com/api/v3/polvi/keys'", user.SSHImportURL)
 	}
 }
+
+func TestCloudConfigMerge(t *testing.T) {
+	tests := []struct {
+		inputs   []CloudConfig
+		expected CloudConfig
+	}{
+		{
+			inputs: []CloudConfig{
+				CloudConfig{WriteFiles: []File{File{Path: "file1"}}},
+				CloudConfig{WriteFiles: []File{File{Path: "file2"}}},
+			},
+			expected: CloudConfig{WriteFiles: []File{File{Path: "file1"}, File{Path: "file2"}}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{WriteFiles: []File{File{Path: "file1"}}},
+				CloudConfig{WriteFiles: []File{File{Path: "file2"}}},
+				CloudConfig{WriteFiles: []File{File{Path: "file1"}}},
+			},
+			expected: CloudConfig{WriteFiles: []File{File{Path: "file1"}, File{Path: "file2"}}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{SSHAuthorizedKeys: []string{"key1"}},
+				CloudConfig{SSHAuthorizedKeys: []string{"key2"}},
+			},
+			expected: CloudConfig{SSHAuthorizedKeys: []string{"key1", "key2"}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{SSHAuthorizedKeys: []string{"key1"}},
+				CloudConfig{SSHAuthorizedKeys: []string{"key2"}},
+				CloudConfig{SSHAuthorizedKeys: []string{"key1"}},
+				CloudConfig{SSHAuthorizedKeys: []string{"key2"}},
+			},
+			expected: CloudConfig{SSHAuthorizedKeys: []string{"key1", "key2"}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{Users: []User{User{Name: "john"}}},
+				CloudConfig{Users: []User{User{Name: "doe"}}},
+			},
+			expected: CloudConfig{Users: []User{User{Name: "john"}, User{Name: "doe"}}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{Users: []User{User{Name: "john"}}},
+				CloudConfig{Users: []User{User{Name: "doe"}}},
+				CloudConfig{Users: []User{User{Name: "john", SSHAuthorizedKeys: []string{"key"}}}},
+			},
+			expected: CloudConfig{Users: []User{User{Name: "john", SSHAuthorizedKeys: []string{"key"}}, User{Name: "doe"}}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{CoreOS: CoreOS{Units: []Unit{Unit{Name: "unit1"}}}},
+				CloudConfig{CoreOS: CoreOS{Units: []Unit{Unit{Name: "unit2"}}}},
+			},
+			expected: CloudConfig{CoreOS: CoreOS{Units: []Unit{Unit{Name: "unit1"}, Unit{Name: "unit2"}}}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{Hostname: "hostname1"},
+				CloudConfig{Hostname: "hostname2"},
+			},
+			expected: CloudConfig{Hostname: "hostname2"},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{Hostname: "hostname1"},
+				CloudConfig{},
+			},
+			expected: CloudConfig{Hostname: "hostname1"},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{CoreOS: CoreOS{Etcd: Etcd{Addr: "addr1"}}},
+				CloudConfig{CoreOS: CoreOS{Etcd: Etcd{Addr: "addr2"}}},
+			},
+			expected: CloudConfig{CoreOS: CoreOS{Etcd: Etcd{Addr: "addr2"}}},
+		},
+		{
+			inputs: []CloudConfig{
+				CloudConfig{CoreOS: CoreOS{Etcd: Etcd{Addr: "addr1"}}},
+				CloudConfig{CoreOS: CoreOS{Etcd: Etcd{}}},
+			},
+			expected: CloudConfig{CoreOS: CoreOS{Etcd: Etcd{Addr: "addr1"}}},
+		},
+	}
+	for i, tt := range tests {
+		cfg := tt.inputs[0]
+		for _, t := range tt.inputs[1:] {
+			cfg.Merge(&t)
+		}
+		if !reflect.DeepEqual(tt.expected, cfg) {
+			t.Errorf("bad config (test case #%d): want %#v, got %#v", i, tt.expected, cfg)
+		}
+	}
+}

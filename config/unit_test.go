@@ -17,6 +17,7 @@
 package config
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -41,6 +42,31 @@ func TestCommandValid(t *testing.T) {
 		isValid := (nil == AssertStructValid(Unit{Command: tt.value}))
 		if tt.isValid != isValid {
 			t.Errorf("bad assert (%s): want %t, got %t", tt.value, tt.isValid, isValid)
+		}
+	}
+}
+
+func TestUnitMerge(t *testing.T) {
+	tests := []struct {
+		inputs   []Unit
+		expected Unit
+	}{
+		{
+			inputs: []Unit{
+				Unit{DropIns: []UnitDropIn{UnitDropIn{Name: "unit1"}}},
+				Unit{DropIns: []UnitDropIn{UnitDropIn{Name: "unit2"}}},
+				Unit{DropIns: []UnitDropIn{UnitDropIn{Name: "unit1"}}},
+			},
+			expected: Unit{DropIns: []UnitDropIn{UnitDropIn{Name: "unit1"}, UnitDropIn{Name: "unit2"}}},
+		},
+	}
+	for i, tt := range tests {
+		u := tt.inputs[0]
+		for _, t := range tt.inputs[1:] {
+			u.Merge(t)
+		}
+		if !reflect.DeepEqual(tt.expected, u) {
+			t.Errorf("bad unit (test case #%d): want %#v, got %#v", i, tt.expected, u)
 		}
 	}
 }

@@ -113,7 +113,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			config: "{}",
-			report: Report{entries: []Entry{{entryError, `must be "#cloud-config" or begin with "#!"`, 1}}},
+			report: Report{entries: []Entry{{entryError, `must be "#cloud-config" or begin with "#!" or be mime-multipart`, 1}}},
 		},
 		{
 			config: `{"ignitionVersion":0}`,

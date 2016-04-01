@@ -224,7 +224,7 @@ func main() {
 	userdata := env.Apply(string(userdataBytes))
 
 	var ccu *config.CloudConfig
-	var script *config.Script
+	var scripts []*config.Script
 	switch ud, err := initialize.ParseUserData(userdata); err {
 	case initialize.ErrIgnitionConfig:
 		fmt.Printf("Detected an Ignition config. Exiting...")
@@ -234,7 +234,10 @@ func main() {
 		case *config.CloudConfig:
 			ccu = t
 		case *config.Script:
-			script = t
+			scripts = append(scripts, t)
+		case *config.MimeMultiPart:
+			ccu = t.Config
+			scripts = t.Scripts
 		}
 	default:
 		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
@@ -270,10 +273,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if script != nil {
-		if err = runScript(*script, env); err != nil {
-			log.Printf("Failed to run script: %v\n", err)
-			os.Exit(1)
+	if len(scripts) > 0 {
+		for _, s := range scripts {
+			if err = runScript(*s, env); err != nil {
+				log.Printf("Failed to run script: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 
