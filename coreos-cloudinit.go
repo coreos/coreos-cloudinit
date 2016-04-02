@@ -104,28 +104,28 @@ type oemConfig map[string]string
 
 var (
 	oemConfigs = map[string]oemConfig{
-		"digitalocean": oemConfig{
+		"digitalocean": {
 			"from-digitalocean-metadata": "http://169.254.169.254/",
 			"convert-netconf":            "digitalocean",
 		},
-		"ec2-compat": oemConfig{
+		"ec2-compat": {
 			"from-ec2-metadata": "http://169.254.169.254/",
 			"from-configdrive":  "/media/configdrive",
 		},
-		"rackspace-onmetal": oemConfig{
+		"rackspace-onmetal": {
 			"from-configdrive": "/media/configdrive",
 			"convert-netconf":  "debian",
 		},
-		"azure": oemConfig{
+		"azure": {
 			"from-waagent": "/var/lib/waagent",
 		},
-		"cloudsigma": oemConfig{
+		"cloudsigma": {
 			"from-cloudsigma-metadata": "true",
 		},
-		"packet": oemConfig{
+		"packet": {
 			"from-packet-metadata": "https://metadata.packet.net/",
 		},
-		"vmware": oemConfig{
+		"vmware": {
 			"from-vmware-guestinfo": "true",
 			"convert-netconf":       "vmware",
 		},

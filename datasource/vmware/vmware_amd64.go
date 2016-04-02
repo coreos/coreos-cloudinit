@@ -85,7 +85,7 @@ func readConfig(key string) (string, error) {
 	return data, err
 }
 
-func getOvfReadConfig (ovfEnv []byte) readConfigFunction {
+func getOvfReadConfig(ovfEnv []byte) readConfigFunction {
 	env := &ovf.OvfEnvironment{}
 	if len(ovfEnv) != 0 {
 		env = ovf.ReadEnvironment(ovfEnv)
