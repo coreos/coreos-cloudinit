@@ -21,9 +21,9 @@ import (
 
 	"github.com/coreos/coreos-cloudinit/pkg"
 
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/rpcvmx"
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-guestinfo/vmcheck"
-	"github.com/coreos/coreos-cloudinit/Godeps/_workspace/src/github.com/sigma/vmw-ovflib"
+	"github.com/sigma/vmw-guestinfo/rpcvmx"
+	"github.com/sigma/vmw-guestinfo/vmcheck"
+	"github.com/sigma/vmw-ovflib"
 )
 
 type ovfWrapper struct {
@@ -85,7 +85,7 @@ func readConfig(key string) (string, error) {
 	return data, err
 }
 
-func getOvfReadConfig (ovfEnv []byte) readConfigFunction {
+func getOvfReadConfig(ovfEnv []byte) readConfigFunction {
 	env := &ovf.OvfEnvironment{}
 	if len(ovfEnv) != 0 {
 		env = ovf.ReadEnvironment(ovfEnv)

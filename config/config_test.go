@@ -30,11 +30,11 @@ func TestNewCloudConfig(t *testing.T) {
 		{},
 		{
 			contents: "#cloud-config\nwrite_files:\n  - path: underscore",
-			config:   CloudConfig{WriteFiles: []File{File{Path: "underscore"}}},
+			config:   CloudConfig{WriteFiles: []File{{Path: "underscore"}}},
 		},
 		{
 			contents: "#cloud-config\nwrite-files:\n  - path: hyphen",
-			config:   CloudConfig{WriteFiles: []File{File{Path: "hyphen"}}},
+			config:   CloudConfig{WriteFiles: []File{{Path: "hyphen"}}},
 		},
 		{
 			contents: "#cloud-config\ncoreos:\n  update:\n    reboot-strategy: off",
@@ -46,19 +46,19 @@ func TestNewCloudConfig(t *testing.T) {
 		},
 		{
 			contents: "#cloud-config\nwrite_files:\n  - permissions: 0744",
-			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "0744"}}},
+			config:   CloudConfig{WriteFiles: []File{{RawFilePermissions: "0744"}}},
 		},
 		{
 			contents: "#cloud-config\nwrite_files:\n  - permissions: 744",
-			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "744"}}},
+			config:   CloudConfig{WriteFiles: []File{{RawFilePermissions: "744"}}},
 		},
 		{
 			contents: "#cloud-config\nwrite_files:\n  - permissions: '0744'",
-			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "0744"}}},
+			config:   CloudConfig{WriteFiles: []File{{RawFilePermissions: "0744"}}},
 		},
 		{
 			contents: "#cloud-config\nwrite_files:\n  - permissions: '744'",
-			config:   CloudConfig{WriteFiles: []File{File{RawFilePermissions: "744"}}},
+			config:   CloudConfig{WriteFiles: []File{{RawFilePermissions: "744"}}},
 		},
 	}
 
