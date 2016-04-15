@@ -145,7 +145,7 @@ func Apply(cfg config.CloudConfig, ifaces []network.InterfaceGenerator, env *Env
 
 	wroteEnvironment := false
 	for _, file := range writeFiles {
-		fullPath, err := system.WriteFile(&file, env.Root())
+		fullPath, err := env.WriteFile(&file)
 		if err != nil {
 			return err
 		}
