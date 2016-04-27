@@ -15,6 +15,7 @@
 package initialize
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"path"
@@ -51,6 +52,29 @@ func NewEnvironment(root, configRoot, workspace, sshKeyName string, metadata dat
 		"$private_ipv6": firstNonNull(metadata.PrivateIPv6, os.Getenv("COREOS_PRIVATE_IPV6")),
 	}
 	return &Environment{root, configRoot, workspace, sshKeyName, substitutions}
+}
+
+func (e *Environment) WriteFile(f *system.File) (string, error) {
+	if f.Encoding == "" {
+		return system.WriteFile(f, e.root)
+	} else {
+		content, err := config.DecodeContent(f.Content, f.Encoding)
+
+		if err != nil {
+			return "", fmt.Errorf("Unable to decode %s (%v)", f.Path, err)
+		}
+
+		content = []byte(e.Apply(string(content)))
+
+		file := system.File{File: config.File{
+			Content:            string(content),
+			Owner:              f.Owner,
+			Path:               f.Path,
+			RawFilePermissions: f.RawFilePermissions,
+		}}
+
+		return system.WriteFile(&file, e.root)
+	}
 }
 
 func (e *Environment) Workspace() string {
