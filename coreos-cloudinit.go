@@ -30,6 +30,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/config/validate"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
+	"github.com/coreos/coreos-cloudinit/datasource/opennebula_drive"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/cloudsigma"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
@@ -58,6 +59,7 @@ var (
 		sources       struct {
 			file                        string
 			configDrive                 string
+			opennebulaDrive             string
 			waagent                     string
 			metadataService             bool
 			ec2MetadataService          string
@@ -83,6 +85,7 @@ func init() {
 	flag.BoolVar(&flags.ignoreFailure, "ignore-failure", false, "Exits with 0 status in the event of malformed input from user-data")
 	flag.StringVar(&flags.sources.file, "from-file", "", "Read user-data from provided file")
 	flag.StringVar(&flags.sources.configDrive, "from-configdrive", "", "Read data from provided cloud-drive directory")
+	flag.StringVar(&flags.sources.opennebulaDrive, "from-opennebula-drive", "", "Read data from provided opennebula-drive directory")
 	flag.StringVar(&flags.sources.waagent, "from-waagent", "", "Read data from provided waagent directory")
 	flag.BoolVar(&flags.sources.metadataService, "from-metadata-service", false, "[DEPRECATED - Use -from-ec2-metadata] Download data from metadata service")
 	flag.StringVar(&flags.sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
@@ -174,7 +177,7 @@ func main() {
 
 	dss := getDatasources()
 	if len(dss) == 0 {
-		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-packet-metadata, --from-digitalocean-metadata, --from-vmware-guestinfo, --from-waagent, --from-url or --from-proc-cmdline")
+		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-opennebula-drive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-packet-metadata, --from-digitalocean-metadata, --from-vmware-guestinfo, --from-waagent, --from-url or --from-proc-cmdline")
 		os.Exit(2)
 	}
 
@@ -315,6 +318,9 @@ func getDatasources() []datasource.Datasource {
 	}
 	if flags.sources.configDrive != "" {
 		dss = append(dss, configdrive.NewDatasource(flags.sources.configDrive))
+	}
+	if flags.sources.opennebulaDrive != "" {
+		dss = append(dss, opennebula_drive.NewDatasource(flags.sources.opennebulaDrive))
 	}
 	if flags.sources.metadataService {
 		dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))

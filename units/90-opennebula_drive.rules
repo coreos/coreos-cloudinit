@@ -1,0 +1,8 @@
+# Automatically trigger opennebula_drive mounting.
+
+ACTION!="add|change", GOTO="coreos_opennebula_drive_end"
+
+# A normal config drive. Block device formatted with iso9660 or fat
+SUBSYSTEM=="block", ENV{ID_FS_TYPE}=="iso9660|vfat", ENV{ID_FS_LABEL}=="CONTEXT", TAG+="systemd", ENV{SYSTEMD_WANTS}+="media-opennebula_drive.mount"
+
+LABEL="coreos_opennebula_drive_end"
