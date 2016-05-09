@@ -69,7 +69,7 @@ func (ms metadataService) FetchMetadata() (datasource.Metadata, error) {
 	}
 
 	if hostname, err := ms.fetchAttribute(fmt.Sprintf("%s/hostname", ms.MetadataUrl())); err == nil {
-		metadata.Hostname = strings.Split(hostname, " ")[0]
+		metadata.Hostname = strings.Split(strings.Split(hostname, " ")[0], ".")[0]
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
