@@ -34,6 +34,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/cloudsigma"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/gce"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
@@ -61,6 +62,7 @@ var (
 			waagent                     string
 			metadataService             bool
 			ec2MetadataService          string
+			gceMetadataService          string
 			cloudSigmaMetadataService   bool
 			digitalOceanMetadataService string
 			packetMetadataService       string
@@ -86,6 +88,7 @@ func init() {
 	flag.StringVar(&flags.sources.waagent, "from-waagent", "", "Read data from provided waagent directory")
 	flag.BoolVar(&flags.sources.metadataService, "from-metadata-service", false, "[DEPRECATED - Use -from-ec2-metadata] Download data from metadata service")
 	flag.StringVar(&flags.sources.ec2MetadataService, "from-ec2-metadata", "", "Download EC2 data from the provided url")
+	flag.StringVar(&flags.sources.gceMetadataService, "from-gce-metadata", "", "Download GCE data from the provided url")
 	flag.BoolVar(&flags.sources.cloudSigmaMetadataService, "from-cloudsigma-metadata", false, "Download data from CloudSigma server context")
 	flag.StringVar(&flags.sources.digitalOceanMetadataService, "from-digitalocean-metadata", "", "Download DigitalOcean data from the provided url")
 	flag.StringVar(&flags.sources.packetMetadataService, "from-packet-metadata", "", "Download Packet data from metadata service")
@@ -111,6 +114,9 @@ var (
 		"ec2-compat": {
 			"from-ec2-metadata": "http://169.254.169.254/",
 			"from-configdrive":  "/media/configdrive",
+		},
+		"gce": {
+			"from-gce-metadata": "http://metadata.google.internal/",
 		},
 		"rackspace-onmetal": {
 			"from-configdrive": "/media/configdrive",
@@ -174,7 +180,7 @@ func main() {
 
 	dss := getDatasources()
 	if len(dss) == 0 {
-		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-cloudsigma-metadata, --from-packet-metadata, --from-digitalocean-metadata, --from-vmware-guestinfo, --from-waagent, --from-url or --from-proc-cmdline")
+		fmt.Println("Provide at least one of --from-file, --from-configdrive, --from-ec2-metadata, --from-gce-metadata, --from-cloudsigma-metadata, --from-packet-metadata, --from-digitalocean-metadata, --from-vmware-guestinfo, --from-waagent, --from-url or --from-proc-cmdline")
 		os.Exit(2)
 	}
 
@@ -321,6 +327,9 @@ func getDatasources() []datasource.Datasource {
 	}
 	if flags.sources.ec2MetadataService != "" {
 		dss = append(dss, ec2.NewDatasource(flags.sources.ec2MetadataService))
+	}
+	if flags.sources.gceMetadataService != "" {
+		dss = append(dss, gce.NewDatasource(flags.sources.gceMetadataService))
 	}
 	if flags.sources.cloudSigmaMetadataService {
 		dss = append(dss, cloudsigma.NewServerContextService())
