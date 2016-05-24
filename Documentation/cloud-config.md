@@ -119,7 +119,7 @@ For more information about the available configuration parameters, see the [etcd
 
 _Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced in other documents are only supported on Amazon EC2, Google Compute Engine, OpenStack, Rackspace, DigitalOcean, and Vagrant._
 
-[etcd2-config]: https://github.com/coreos/etcd/blob/master/Documentation/configuration.md
+[etcd2-config]: https://github.com/coreos/etcd/blob/v2.3.2/Documentation/configuration.md
 
 #### fleet
 
