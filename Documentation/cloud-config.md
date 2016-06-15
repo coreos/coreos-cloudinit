@@ -5,7 +5,7 @@ CoreOS allows you to declaratively customize various OS-level items, such as net
 Your cloud-config is processed during each boot. Invalid cloud-config won't be processed but will be logged in the journal. You can validate your cloud-config with the [CoreOS online validator](https://coreos.com/validate/) or by running `coreos-cloudinit -validate`.  In addition to these two validation methods you can debug `coreos-cloudinit` system output through the `journalctl` tool:
 
 ```sh
-journalctl _EXE=/usr/bin/coreos-cloudinit
+journalctl --identifier=coreos-cloudinit
 ```
 
 It will show `coreos-cloudinit` run output which was triggered by system boot.
