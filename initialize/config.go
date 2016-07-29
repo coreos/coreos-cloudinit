@@ -73,6 +73,11 @@ func Apply(cfg config.CloudConfig, ifaces []network.InterfaceGenerator, env *Env
 			}
 		}
 
+		if err = system.LockUnlockUser(&user); err != nil {
+			log.Printf("Failed lock/unlock user '%s': %v", user.Name, err)
+			return err
+		}
+
 		if len(user.SSHAuthorizedKeys) > 0 {
 			log.Printf("Authorizing %d SSH keys for user '%s'", len(user.SSHAuthorizedKeys), user.Name)
 			if err := system.AuthorizeSSHKeys(user.Name, env.SSHKeyName(), user.SSHAuthorizedKeys); err != nil {

@@ -209,7 +209,7 @@ func TestConfigCompile(t *testing.T) {
 
 func TestCloudConfigUnknownKeys(t *testing.T) {
 	contents := `
-coreos: 
+coreos:
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
   coreos_unknown:
@@ -272,7 +272,7 @@ func TestCloudConfigEmpty(t *testing.T) {
 // Assert that the parsing of a cloud config file "generally works"
 func TestCloudConfig(t *testing.T) {
 	contents := `
-coreos: 
+coreos:
   etcd:
     discovery: "https://discovery.etcd.io/827c73219eeb2fa5530027c37bf18877"
   update:
@@ -281,14 +281,14 @@ coreos:
     - name: 50-eth0.network
       runtime: yes
       content: '[Match]
- 
+
     Name=eth47
- 
- 
+
+
     [Network]
- 
+
     Address=10.209.171.177/19
- 
+
 '
   oem:
     id: rackspace
@@ -412,6 +412,7 @@ users:
     gecos: arbitrary comment
     homedir: /home/place
     no_create_home: yes
+    lock_passwd: false
     primary_group: things
     groups:
       - ping
