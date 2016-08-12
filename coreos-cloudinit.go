@@ -78,6 +78,8 @@ var (
 		validate       bool
 	}{}
 	version = "was not built properly"
+	// Specific variable to determine the number of Runs of the cloudinit process
+	numberOfRuns = 1
 )
 
 func init() {
@@ -189,97 +191,118 @@ func main() {
 		log.Println("No datasources available in time")
 		os.Exit(1)
 	}
-
-	log.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
-	userdataBytes, err := ds.FetchUserdata()
-	if err != nil {
-		log.Printf("Failed fetching user-data from datasource: %v. Continuing...\n", err)
-		failure = true
-	}
-	userdataBytes, err = decompressIfGzip(userdataBytes)
-	if err != nil {
-		log.Printf("Failed decompressing user-data from datasource: %v. Continuing...\n", err)
-		failure = true
-	}
-
-	if report, err := validate.Validate(userdataBytes); err == nil {
-		ret := 0
-		for _, e := range report.Entries() {
-			log.Println(e)
-			ret = 1
-		}
-		if flags.validate {
-			os.Exit(ret)
-		}
-	} else {
-		log.Printf("Failed while validating user_data (%q)\n", err)
-		if flags.validate {
-			os.Exit(1)
-		}
-	}
-
-	log.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
-	metadata, err := ds.FetchMetadata()
-	if err != nil {
-		log.Printf("Failed fetching meta-data from datasource: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Apply environment to user-data
-	env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.sshKeyName, metadata)
-	userdata := env.Apply(string(userdataBytes))
-
-	var ccu *config.CloudConfig
-	var script *config.Script
-	switch ud, err := initialize.ParseUserData(userdata); err {
-	case initialize.ErrIgnitionConfig:
-		fmt.Printf("Detected an Ignition config. Exiting...")
-		os.Exit(0)
-	case nil:
-		switch t := ud.(type) {
-		case *config.CloudConfig:
-			ccu = t
-		case *config.Script:
-			script = t
-		}
+	// VMWare needs 2 executions, when you don't have a DHCP Server on your Network.
+	// First is to apply the IP Address, the last is to apply the UserData
+	switch ds.Type() {
+	case "vmware":
+		numberOfRuns = 2
 	default:
-		fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
-		failure = true
+		numberOfRuns = 1
 	}
 
-	log.Println("Merging cloud-config from meta-data and user-data")
-	cc := mergeConfigs(ccu, metadata)
+	log.Printf("Number of Runs: %v\n", numberOfRuns)
+	for currentRun := 1; currentRun <= numberOfRuns; currentRun++ {
+		userdataBytes := ""
+		// Only apply the User Data if this is the Last execution.
+		// On most of the systems, this is the first and the last execution.
+		// On VMWare, you need to execute this two times :)
+		if currentRun == numberOfRuns {
+			log.Printf("Fetching user-data from datasource of type %q\n", ds.Type())
+			userdataBytes, err := ds.FetchUserdata()
+			if err != nil {
+				log.Printf("Failed fetching user-data from datasource: %v. Continuing...\n", err)
+				failure = true
+			}
 
-	var ifaces []network.InterfaceGenerator
-	if flags.convertNetconf != "" {
-		var err error
-		switch flags.convertNetconf {
-		case "debian":
-			ifaces, err = network.ProcessDebianNetconf(metadata.NetworkConfig.([]byte))
-		case "digitalocean":
-			ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig.(digitalocean.Metadata))
-		case "packet":
-			ifaces, err = network.ProcessPacketNetconf(metadata.NetworkConfig.(packet.NetworkData))
-		case "vmware":
-			ifaces, err = network.ProcessVMwareNetconf(metadata.NetworkConfig.(map[string]string))
-		default:
-			err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
+			userdataBytes, err = decompressIfGzip(userdataBytes)
+			if err != nil {
+				log.Printf("Failed decompressing user-data from datasource: %v. Continuing...\n", err)
+				failure = true
+			}
+
+			if report, err := validate.Validate(userdataBytes); err == nil {
+				ret := 0
+				for _, e := range report.Entries() {
+					log.Println(e)
+					ret = 1
+				}
+				if flags.validate {
+					os.Exit(ret)
+				}
+			} else {
+				log.Printf("Failed while validating user_data (%q)\n", err)
+				if flags.validate {
+					os.Exit(1)
+				}
+			}
+		} else {
+			log.Printf("User_data is null by now")
 		}
+
+		log.Printf("Fetching meta-data from datasource of type %q\n", ds.Type())
+		metadata, err := ds.FetchMetadata()
 		if err != nil {
-			log.Printf("Failed to generate interfaces: %v\n", err)
+			log.Printf("Failed fetching meta-data from datasource: %v\n", err)
 			os.Exit(1)
 		}
-	}
 
-	if err = initialize.Apply(cc, ifaces, env); err != nil {
-		log.Printf("Failed to apply cloud-config: %v\n", err)
-		os.Exit(1)
-	}
+		// Apply environment to user-data
+		env := initialize.NewEnvironment("/", ds.ConfigRoot(), flags.workspace, flags.sshKeyName, metadata)
 
-	if script != nil {
-		if err = runScript(*script, env); err != nil {
-			log.Printf("Failed to run script: %v\n", err)
+		userdata := env.Apply(string(userdataBytes))
+
+		var ccu *config.CloudConfig
+		var script *config.Script
+		switch ud, err := initialize.ParseUserData(userdata); err {
+		case initialize.ErrIgnitionConfig:
+			fmt.Printf("Detected an Ignition config. Exiting...")
+			os.Exit(0)
+		case nil:
+			switch t := ud.(type) {
+			case *config.CloudConfig:
+				ccu = t
+			case *config.Script:
+				script = t
+			}
+		default:
+			fmt.Printf("Failed to parse user-data: %v\nContinuing...\n", err)
+			failure = true
+		}
+
+		log.Println("Merging cloud-config from meta-data and user-data")
+		cc := mergeConfigs(ccu, metadata)
+
+		var ifaces []network.InterfaceGenerator
+		if flags.convertNetconf != "" {
+			var err error
+			switch flags.convertNetconf {
+			case "debian":
+				ifaces, err = network.ProcessDebianNetconf(metadata.NetworkConfig.([]byte))
+			case "digitalocean":
+				ifaces, err = network.ProcessDigitalOceanNetconf(metadata.NetworkConfig.(digitalocean.Metadata))
+			case "packet":
+				ifaces, err = network.ProcessPacketNetconf(metadata.NetworkConfig.(packet.NetworkData))
+			case "vmware":
+				ifaces, err = network.ProcessVMwareNetconf(metadata.NetworkConfig.(map[string]string))
+			default:
+				err = fmt.Errorf("Unsupported network config format %q", flags.convertNetconf)
+			}
+			if err != nil {
+				log.Printf("Failed to generate interfaces: %v\n", err)
+				os.Exit(1)
+			}
+		}
+
+		if err = initialize.Apply(cc, ifaces, env); err != nil {
+			log.Printf("Failed to apply cloud-config: %v\n", err)
 			os.Exit(1)
+		}
+
+		if script != nil {
+			if err = runScript(*script, env); err != nil {
+				log.Printf("Failed to run script: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 
