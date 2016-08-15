@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"runtime"
 	"sync"
 	"time"
 
