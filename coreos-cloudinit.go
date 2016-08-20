@@ -107,6 +107,10 @@ type oemConfig map[string]string
 
 var (
 	oemConfigs = map[string]oemConfig{
+		"digitalocean-ignition": {
+			"from-file":       "/dev/null",
+			"convert-netconf": "digitalocean",
+		},
 		"digitalocean": {
 			"from-digitalocean-metadata": "http://169.254.169.254/",
 			"convert-netconf":            "digitalocean",
