@@ -17,6 +17,7 @@ After=oem-cloudinit.service
 
 [Service]
 Type=oneshot
+TimeoutSec=10min
 RemainAfterExit=yes
 EnvironmentFile=-/etc/environment
 ExecStart=/usr/bin/coreos-cloudinit --from-configdrive=/media/configdrive
