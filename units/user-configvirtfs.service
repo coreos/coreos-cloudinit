@@ -4,6 +4,9 @@ Requires=coreos-setup-environment.service
 After=coreos-setup-environment.service
 Before=user-config.target
 
+Requires=user-local-config-ready.target
+Before=user-local-config-ready.target
+
 [Service]
 Type=oneshot
 TimeoutSec=10min

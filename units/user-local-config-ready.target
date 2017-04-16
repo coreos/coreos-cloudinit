@@ -1,0 +1,5 @@
+[Unit]
+Description=Indicate that configs loaded from a local filesystem are ready
+
+# Start network after local configs created all-network related config files.
+Before=systemd-networkd.service
