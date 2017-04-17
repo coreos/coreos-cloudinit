@@ -9,4 +9,5 @@ ConditionFileNotEmpty=%f
 Type=oneshot
 TimeoutSec=10min
 RemainAfterExit=yes
+Environment=GOMAXPROCS=1
 ExecStart=/usr/bin/coreos-cloudinit --from-file=%f
