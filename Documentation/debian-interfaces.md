@@ -1,10 +1,10 @@
-#Debian Interfaces#
+# Debian Interfaces #
 
 **WARNING**: This option is EXPERIMENTAL and may change or be removed at any point.
 
 There is basic support for converting from a Debian network configuration to networkd unit files. The -convert-netconf=debian option is used to activate this feature.
 
-#convert-netconf#
+# convert-netconf #
 
 Default: ""
 
