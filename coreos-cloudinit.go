@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"runtime"
 	"sync"
 	"time"
 
@@ -139,12 +138,6 @@ var (
 
 func main() {
 	failure := false
-
-	// Conservative Go 1.5 upgrade strategy:
-	// keep GOMAXPROCS' default at 1 for now.
-	if os.Getenv("GOMAXPROCS") == "" {
-		runtime.GOMAXPROCS(1)
-	}
 
 	flag.Parse()
 
