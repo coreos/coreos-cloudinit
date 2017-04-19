@@ -1,5 +1,8 @@
 # VMWare Guestinfo Interface
 
+The guide to [booting on VMWare][bootvmware] is the starting point for more
+information about configuring and running CoreOS on VMWare. To programatically configure your CoreOS VMs running with VMware, read on below.
+
 ## Cloud-Config VMWare Guestinfo Variables
 
 coreos-cloudinit accepts configuration from the VMware RPC API's *guestinfo*
@@ -29,8 +32,5 @@ property names are prefixed with `guestinfo.` in the VMX, e.g., `guestinfo.hostn
 Note: "n", "m", "l", "x" and "y" are 0-indexed, incrementing integers. The
 identifier for an `interface` does not correspond to anything outside of this
 configuration; it serves only to distinguish between multiple `interface`s.
-
-The guide to [booting on VMWare][bootvmware] is the starting point for more
-information about configuring and running CoreOS on VMWare.
 
 [bootvmware]: https://github.com/coreos/docs/blob/master/os/booting-on-vmware.md
