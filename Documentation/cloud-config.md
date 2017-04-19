@@ -299,7 +299,6 @@ coreos:
       content: |
         [Unit]
         Description=Redis container
-        Author=Me
         After=docker.service
 
         [Service]
