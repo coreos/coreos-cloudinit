@@ -1,5 +1,13 @@
 # Distribution via Config Drive
 
+---
+
+**NOTE**: coreos-cloudinit is no longer under active development and has been superseded by [Ignition][ignition]. For more information about the recommended tools for provisioning Container Linux, refer to the [provisioning documentation][provisioning].
+
+[provisioning]: https://github.com/coreos/docs/blob/master/os/provisioning.md
+
+---
+
 CoreOS supports providing configuration data via [config drive][config-drive]
 disk images. Currently only providing a single script or cloud config file is
 supported.

@@ -1,5 +1,13 @@
 # Using Cloud-Config
 
+---
+
+**NOTE**: coreos-cloudinit is no longer under active development and has been superseded by [Ignition][ignition]. For more information about the recommended tools for provisioning Container Linux, refer to the [provisioning documentation][provisioning].
+
+[provisioning]: https://github.com/coreos/docs/blob/master/os/provisioning.md
+
+---
+
 CoreOS allows you to declaratively customize various OS-level items, such as network configuration, user accounts, and systemd units. This document describes the full list of items we can configure. The `coreos-cloudinit` program uses these files as it configures the OS after startup or during runtime.
 
 Your cloud-config is processed during each boot. Invalid cloud-config won't be processed but will be logged in the journal. You can validate your cloud-config with the [CoreOS online validator](https://coreos.com/validate/) or by running `coreos-cloudinit -validate`.  In addition to these two validation methods you can debug `coreos-cloudinit` system output through the `journalctl` tool:
