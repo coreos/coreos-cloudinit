@@ -1,5 +1,13 @@
 # Cloud-Config Locations
 
+---
+
+**NOTE**: coreos-cloudinit is no longer under active development and has been superseded by [Ignition][ignition]. For more information about the recommended tools for provisioning Container Linux, refer to the [provisioning documentation][provisioning].
+
+[provisioning]: https://github.com/coreos/docs/blob/master/os/provisioning.md
+
+---
+
 On every boot, coreos-cloudinit looks for a config file to configure your host. Here is a list of locations which are used by the Cloud-Config utility, depending on your CoreOS platform:
 
 | Location | Description |
