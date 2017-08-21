@@ -21,7 +21,7 @@ It will show `coreos-cloudinit` run output which was triggered by system boot.
 
 ## Configuration File
 
-The file used by this system initialization program is called a "cloud-config" file. It is inspired by the [cloud-init][cloud-init] project's [cloud-config][cloud-config] file, which is "the defacto multi-distribution package that handles early initialization of a cloud instance" ([cloud-init docs][cloud-init-docs]). Because the cloud-init project includes tools which aren't used by CoreOS, only the relevant subset of its configuration items will be implemented in our cloud-config file. In addition to those, we added a few CoreOS-specific items, such as etcd configuration, OEM definition, and systemd units.
+The file used by this system initialization program is called a "cloud-config" file. It is inspired by the [cloud-init][cloud-init] project's [cloud-config][cloud-config] file, which is "the defacto multi-distribution package that handles early initialization of a cloud instance" ([cloud-init docs][cloud-init-docs]). Because the cloud-init project includes tools which aren't used by CoreOS, only the relevant subset of its configuration items will be implemented in our cloud-config file. In addition to those, we added a few CoreOS-specific items, such as etcd configuration (deprecated), OEM definition, and systemd units.
 
 We've designed our implementation to allow the same cloud-config file to work across all of our supported platforms.
 
@@ -56,7 +56,7 @@ CoreOS tries to conform to each platform's native method to provide user data. E
 
 ### coreos
 
-#### etcd (deprecated. see etcd2)
+#### etcd (deprecated)
 
 The `coreos.etcd.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
 If the platform environment supports the templating feature of coreos-cloudinit it is possible to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. For example, the following cloud-config document...
@@ -90,7 +90,7 @@ _Note: The `$private_ipv4` and `$public_ipv4` substitution variables referenced 
 
 [etcd-config]: https://github.com/coreos/etcd/blob/release-0.4/Documentation/configuration.md
 
-#### etcd2
+#### etcd2 (deprecated)
 
 The `coreos.etcd2.*` parameters will be translated to a partial systemd unit acting as an etcd configuration file.
 If the platform environment supports the templating feature of coreos-cloudinit it is possible to automate etcd configuration with the `$private_ipv4` and `$public_ipv4` fields. When generating a [discovery token](https://discovery.etcd.io/new?size=3), set the `size` parameter, since etcd uses this to determine if all members have joined the cluster. After the cluster is bootstrapped, it can grow or shrink from this configured size.
