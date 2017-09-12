@@ -287,7 +287,7 @@ write_files:
 #cloud-config
 coreos:
   units:
-    - name: systemd-tinesyncd.service
+    - name: systemd-timesyncd.service
       command: stop
       mask: true
     - name: ntpd.service
