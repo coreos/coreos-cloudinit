@@ -253,10 +253,9 @@ The `coreos.update.*` parameters manipulate settings related to how CoreOS insta
 These fields will be written out to and replace `/etc/coreos/update.conf`. If only one of the parameters is given it will only overwrite the given field.
 The `reboot-strategy` parameter also affects the behaviour of [locksmith](https://github.com/coreos/locksmith).
 
-- **reboot-strategy**: One of "reboot", "etcd-lock", "best-effort" or "off" for controlling when reboots are issued after an update is performed.
+- **reboot-strategy**: One of "reboot", "etcd-lock", or "off" for controlling when reboots are issued after an update is performed.
   - _reboot_: Reboot immediately after an update is applied.
   - _etcd-lock_: Reboot after first taking a distributed lock in etcd, this guarantees that only one host will reboot concurrently and that the cluster will remain available during the update.
-  - _best-effort_ - If etcd is running, "etcd-lock", otherwise simply "reboot".
   - _off_ - Disable rebooting after updates are applied (not recommended).
 - **server**: The location of the [CoreUpdate][coreupdate] server which will be queried for updates. Also known as the [omaha][omaha-docs] server endpoint.
 - **group**:  signifies the channel which should be used for automatic updates.  This value defaults to the version of the image initially downloaded. (one of "master", "alpha", "beta", "stable")
