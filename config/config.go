@@ -28,23 +28,23 @@ import (
 // directly to YAML. Fields that cannot be set in the cloud-config (fields
 // used for internal use) have the YAML tag '-' so that they aren't marshalled.
 type CloudConfig struct {
-	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
-	CoreOS            CoreOS   `yaml:"coreos"`
-	WriteFiles        []File   `yaml:"write_files"`
-	Hostname          string   `yaml:"hostname"`
-	Users             []User   `yaml:"users"`
-	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts"`
+	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys,omitempty"`
+	CoreOS            CoreOS   `yaml:"coreos,omitempty"`
+	WriteFiles        []File   `yaml:"write_files,omitempty"`
+	Hostname          string   `yaml:"hostname,omitempty"`
+	Users             []User   `yaml:"users,omitempty"`
+	ManageEtcHosts    EtcHosts `yaml:"manage_etc_hosts,omitempty"`
 }
 
 type CoreOS struct {
-	Etcd      Etcd      `yaml:"etcd"      deprecated:"etcd is no longer shipped in Container Linux"`
-	Etcd2     Etcd2     `yaml:"etcd2"     deprecated:"etcd2 is no longer shipped in Container Linux"`
-	Flannel   Flannel   `yaml:"flannel"`
-	Fleet     Fleet     `yaml:"fleet"     deprecated:"fleet is no longer shipped in Container Linux"`
-	Locksmith Locksmith `yaml:"locksmith"`
-	OEM       OEM       `yaml:"oem"`
-	Update    Update    `yaml:"update"`
-	Units     []Unit    `yaml:"units"`
+	Etcd      Etcd      `yaml:"etcd,omitempty"      deprecated:"etcd is no longer shipped in Container Linux"`
+	Etcd2     Etcd2     `yaml:"etcd2,omitempty"     deprecated:"etcd2 is no longer shipped in Container Linux"`
+	Flannel   Flannel   `yaml:"flannel,omitempty"`
+	Fleet     Fleet     `yaml:"fleet,omitempty"     deprecated:"fleet is no longer shipped in Container Linux"`
+	Locksmith Locksmith `yaml:"locksmith,omitempty"`
+	OEM       OEM       `yaml:"oem,omitempty"`
+	Update    Update    `yaml:"update,omitempty"`
+	Units     []Unit    `yaml:"units,omitempty"`
 }
 
 func IsCloudConfig(userdata string) bool {

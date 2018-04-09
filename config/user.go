@@ -15,19 +15,19 @@
 package config
 
 type User struct {
-	Name                 string   `yaml:"name"`
-	PasswordHash         string   `yaml:"passwd"`
-	SSHAuthorizedKeys    []string `yaml:"ssh_authorized_keys"`
-	SSHImportGithubUser  string   `yaml:"coreos_ssh_import_github"       deprecated:"trying to fetch from a remote endpoint introduces too many intermittent errors"`
-	SSHImportGithubUsers []string `yaml:"coreos_ssh_import_github_users" deprecated:"trying to fetch from a remote endpoint introduces too many intermittent errors"`
-	SSHImportURL         string   `yaml:"coreos_ssh_import_url"          deprecated:"trying to fetch from a remote endpoint introduces too many intermittent errors"`
-	GECOS                string   `yaml:"gecos"`
-	Homedir              string   `yaml:"homedir"`
-	NoCreateHome         bool     `yaml:"no_create_home"`
-	PrimaryGroup         string   `yaml:"primary_group"`
-	Groups               []string `yaml:"groups"`
-	NoUserGroup          bool     `yaml:"no_user_group"`
-	System               bool     `yaml:"system"`
-	NoLogInit            bool     `yaml:"no_log_init"`
-	Shell                string   `yaml:"shell"`
+	Name                 string   `yaml:"name,omitempty"`
+	PasswordHash         string   `yaml:"passwd,omitempty"`
+	SSHAuthorizedKeys    []string `yaml:"ssh_authorized_keys,omitempty"`
+	SSHImportGithubUser  string   `yaml:"coreos_ssh_import_github,omitempty"       deprecated:"trying to fetch from a remote endpoint introduces too many intermittent errors"`
+	SSHImportGithubUsers []string `yaml:"coreos_ssh_import_github_users,omitempty" deprecated:"trying to fetch from a remote endpoint introduces too many intermittent errors"`
+	SSHImportURL         string   `yaml:"coreos_ssh_import_url,omitempty"          deprecated:"trying to fetch from a remote endpoint introduces too many intermittent errors"`
+	GECOS                string   `yaml:"gecos,omitempty"`
+	Homedir              string   `yaml:"homedir,omitempty"`
+	NoCreateHome         bool     `yaml:"no_create_home,omitempty"`
+	PrimaryGroup         string   `yaml:"primary_group,omitempty"`
+	Groups               []string `yaml:"groups,omitempty"`
+	NoUserGroup          bool     `yaml:"no_user_group,omitempty"`
+	System               bool     `yaml:"system,omitempty"`
+	NoLogInit            bool     `yaml:"no_log_init,omitempty"`
+	Shell                string   `yaml:"shell,omitempty"`
 }

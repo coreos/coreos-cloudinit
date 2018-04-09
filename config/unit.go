@@ -15,16 +15,16 @@
 package config
 
 type Unit struct {
-	Name    string       `yaml:"name"`
-	Mask    bool         `yaml:"mask"`
-	Enable  bool         `yaml:"enable"`
-	Runtime bool         `yaml:"runtime"`
-	Content string       `yaml:"content"`
-	Command string       `yaml:"command" valid:"^(start|stop|restart|reload|try-restart|reload-or-restart|reload-or-try-restart)$"`
-	DropIns []UnitDropIn `yaml:"drop_ins"`
+	Name    string       `yaml:"name,omitempty"`
+	Mask    bool         `yaml:"mask,omitempty"`
+	Enable  bool         `yaml:"enable,omitempty"`
+	Runtime bool         `yaml:"runtime,omitempty"`
+	Content string       `yaml:"content,omitempty"`
+	Command string       `yaml:"command,omitempty" valid:"^(start|stop|restart|reload|try-restart|reload-or-restart|reload-or-try-restart)$"`
+	DropIns []UnitDropIn `yaml:"drop_ins,omitempty"`
 }
 
 type UnitDropIn struct {
-	Name    string `yaml:"name"`
-	Content string `yaml:"content"`
+	Name    string `yaml:"name,omitempty"`
+	Content string `yaml:"content,omitempty"`
 }
