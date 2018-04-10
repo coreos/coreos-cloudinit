@@ -15,21 +15,21 @@
 package config
 
 type Fleet struct {
-	AgentTTL                string  `yaml:"agent_ttl"                 env:"FLEET_AGENT_TTL"`
-	AuthorizedKeysFile      string  `yaml:"authorized_keys_file"      env:"FLEET_AUTHORIZED_KEYS_FILE"`
-	DisableEngine           bool    `yaml:"disable_engine"            env:"FLEET_DISABLE_ENGINE"`
-	EngineReconcileInterval float64 `yaml:"engine_reconcile_interval" env:"FLEET_ENGINE_RECONCILE_INTERVAL"`
-	EtcdCAFile              string  `yaml:"etcd_cafile"               env:"FLEET_ETCD_CAFILE"`
-	EtcdCertFile            string  `yaml:"etcd_certfile"             env:"FLEET_ETCD_CERTFILE"`
-	EtcdKeyFile             string  `yaml:"etcd_keyfile"              env:"FLEET_ETCD_KEYFILE"`
-	EtcdKeyPrefix           string  `yaml:"etcd_key_prefix"           env:"FLEET_ETCD_KEY_PREFIX"`
-	EtcdRequestTimeout      float64 `yaml:"etcd_request_timeout"      env:"FLEET_ETCD_REQUEST_TIMEOUT"`
-	EtcdServers             string  `yaml:"etcd_servers"              env:"FLEET_ETCD_SERVERS"`
-	EtcdUsername            string  `yaml:"etcd_username"             env:"FLEET_ETCD_USERNAME"`
-	EtcdPassword            string  `yaml:"etcd_password"             env:"FLEET_ETCD_PASSWORD"`
-	Metadata                string  `yaml:"metadata"                  env:"FLEET_METADATA"`
-	PublicIP                string  `yaml:"public_ip"                 env:"FLEET_PUBLIC_IP"`
-	TokenLimit              int     `yaml:"token_limit"               env:"FLEET_TOKEN_LIMIT"`
-	Verbosity               int     `yaml:"verbosity"                 env:"FLEET_VERBOSITY"`
-	VerifyUnits             bool    `yaml:"verify_units"              env:"FLEET_VERIFY_UNITS"`
+	AgentTTL                string  `yaml:"agent_ttl,omitempty"                 env:"FLEET_AGENT_TTL"`
+	AuthorizedKeysFile      string  `yaml:"authorized_keys_file,omitempty"      env:"FLEET_AUTHORIZED_KEYS_FILE"`
+	DisableEngine           bool    `yaml:"disable_engine,omitempty"            env:"FLEET_DISABLE_ENGINE"`
+	EngineReconcileInterval float64 `yaml:"engine_reconcile_interval,omitempty" env:"FLEET_ENGINE_RECONCILE_INTERVAL"`
+	EtcdCAFile              string  `yaml:"etcd_cafile,omitempty"               env:"FLEET_ETCD_CAFILE"`
+	EtcdCertFile            string  `yaml:"etcd_certfile,omitempty"             env:"FLEET_ETCD_CERTFILE"`
+	EtcdKeyFile             string  `yaml:"etcd_keyfile,omitempty"              env:"FLEET_ETCD_KEYFILE"`
+	EtcdKeyPrefix           string  `yaml:"etcd_key_prefix,omitempty"           env:"FLEET_ETCD_KEY_PREFIX"`
+	EtcdRequestTimeout      float64 `yaml:"etcd_request_timeout,omitempty"      env:"FLEET_ETCD_REQUEST_TIMEOUT"`
+	EtcdServers             string  `yaml:"etcd_servers,omitempty"              env:"FLEET_ETCD_SERVERS"`
+	EtcdUsername            string  `yaml:"etcd_username,omitempty"             env:"FLEET_ETCD_USERNAME"`
+	EtcdPassword            string  `yaml:"etcd_password,omitempty"             env:"FLEET_ETCD_PASSWORD"`
+	Metadata                string  `yaml:"metadata,omitempty"                  env:"FLEET_METADATA"`
+	PublicIP                string  `yaml:"public_ip,omitempty"                 env:"FLEET_PUBLIC_IP"`
+	TokenLimit              int     `yaml:"token_limit,omitempty"               env:"FLEET_TOKEN_LIMIT"`
+	Verbosity               int     `yaml:"verbosity,omitempty"                 env:"FLEET_VERBOSITY"`
+	VerifyUnits             bool    `yaml:"verify_units,omitempty"              env:"FLEET_VERIFY_UNITS"`
 }
